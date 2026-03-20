@@ -1,31 +1,28 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Railway даёт переменную DATABASE_URL или отдельные MYSQL_* переменные
-// Поддерживаем оба варианта
-let poolConfig;
+const url = process.env.MYSQL_PUBLIC_URL || process.env.DATABASE_URL;
 
-if (process.env.DATABASE_URL) {
-    // Railway MySQL URL формат: mysql://user:password@host:port/dbname
-    poolConfig = { uri: process.env.DATABASE_URL };
+let pool;
+
+if (url) {
+    pool = mysql.createPool({
+        uri: url,
+        waitForConnections: true,
+        connectionLimit: 10,
+        ssl: { rejectUnauthorized: false }
+    });
 } else {
-    poolConfig = {
-        host:     process.env.MYSQLHOST     || process.env.DB_HOST     || 'localhost',
-        port:     parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
-        database: process.env.MYSQLDATABASE || process.env.DB_NAME     || 'eduspace',
-        user:     process.env.MYSQLUSER     || process.env.DB_USER     || 'root',
-        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-    };
+    pool = mysql.createPool({
+        host:     process.env.MYSQLHOST     || 'localhost',
+        port:     parseInt(process.env.MYSQLPORT || '3306'),
+        database: process.env.MYSQLDATABASE || 'eduspace',
+        user:     process.env.MYSQLUSER     || 'root',
+        password: process.env.MYSQLPASSWORD || '',
+        waitForConnections: true,
+        connectionLimit: 10
+    });
 }
-
-const pool = mysql.createPool({
-    ...poolConfig,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    charset: 'utf8mb4',
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
-});
 
 pool.getConnection()
     .then(conn => { console.log('✅ MySQL подключён'); conn.release(); })
