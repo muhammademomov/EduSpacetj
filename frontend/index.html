@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EduSpace.tj</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav" id="main-nav">
+  <div class="logo" onclick="go('home')">
+    <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L1 5l7 4 7-4-7-4zM1 9l7 4 7-4M1 12l7 4 7-4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="logo-name">Edu<em>Space</em>.tj</div>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active" id="nl-home" onclick="go('home')">Главная</button>
+    <button class="nav-link" id="nl-catalog" onclick="go('catalog')">Каталог</button>
+    <button class="nav-link" id="nl-about" onclick="go('about')">О нас</button>
+  </div>
+  <div class="nav-right" id="nav-guest">
+    <button class="btn-sm ghost" onclick="go('login')">Войти</button>
+    <button class="btn-sm solid" onclick="go('register')">Регистрация</button>
+  </div>
+  <div class="nav-right" id="nav-user" style="display:none">
+    <div class="nav-user-info" id="nav-user-info" onclick="goDash()">
+      <div class="nav-av" id="nav-av" style="background:var(--g)">?</div>
+      <div>
+        <div class="nav-uname" id="nav-uname">Пользователь</div>
+        <div class="nav-bal" id="nav-bal-disp"></div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HOME ═══ -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <div class="hero-tag">🇹🇯 Первый маркетплейс курсов Таджикистана</div>
+    <h1>Учись онлайн у лучших<br><em>преподавателей</em></h1>
+    <p class="sub">Найди своего учителя, запишись на курс и учись из дома. Безопасная оплата, живые занятия.</p>
+    <div class="hero-btns">
+      <button class="btn-lg green" onclick="go('catalog')">Найти преподавателя</button>
+      <button class="btn-lg white" onclick="go('register')">Зарегистрироваться</button>
+    </div>
+    <div class="hero-stats" id="home-stats">
+      <div class="hs-stat"><div class="hs-num" id="hs-teachers">0<span>+</span></div><div class="hs-label">Преподавателей</div></div>
+      <div class="hs-stat"><div class="hs-num" id="hs-students">0<span>+</span></div><div class="hs-label">Учеников</div></div>
+      <div class="hs-stat"><div class="hs-num" id="hs-courses">0<span>+</span></div><div class="hs-label">Курсов</div></div>
+    </div>
+  </div>
+
+  <div class="hiw">
+    <div style="text-align:center;margin-bottom:2rem;max-width:1180px;margin-left:auto;margin-right:auto">
+      <div class="section-title">Как это работает</div>
+      <div class="section-sub">Четыре простых шага до первого урока</div>
+    </div>
+    <div class="hiw-grid">
+      <div class="hiw-step"><div class="hiw-num">1</div><div class="hiw-title">Выберите преподавателя</div><div class="hiw-desc">Изучите профиль, отзывы и цену. Отправьте запрос.</div></div>
+      <div class="hiw-step"><div class="hiw-num">2</div><div class="hiw-title">Пополните баланс</div><div class="hiw-desc">Безопасная оплата в сомони через карту или банк.</div></div>
+      <div class="hiw-step"><div class="hiw-num">3</div><div class="hiw-title">Учитесь онлайн</div><div class="hiw-desc">Занятия через Zoom, Meet или Telegram в удобное время.</div></div>
+      <div class="hiw-step"><div class="hiw-num">4</div><div class="hiw-title">Оставьте отзыв</div><div class="hiw-desc">Помогите другим найти лучшего преподавателя.</div></div>
+    </div>
+  </div>
+
+  <div style="background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3rem 2rem">
+    <div style="max-width:1180px;margin:0 auto">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.5rem">
+        <div class="section-title">Наши преподаватели</div>
+        <a style="font-size:13px;font-weight:700;color:var(--g);cursor:pointer" onclick="go('catalog')">Все преподаватели →</a>
+      </div>
+      <div id="home-teachers-preview" class="tc-grid"></div>
+      <div style="text-align:center;margin-top:1.5rem" id="home-no-teachers" style="display:none">
+        <div style="font-size:14px;color:var(--text3)">Преподаватели появятся здесь после регистрации</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-block">
+    <h2>Вы преподаватель?</h2>
+    <p>Зарегистрируйтесь и начните зарабатывать. Платформа берёт 15% комиссии.</p>
+    <div class="cta-btns">
+      <button class="btn-cw" onclick="go('register')">Стать преподавателем</button>
+      <button class="btn-co" onclick="go('about')">Узнать подробнее</button>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="logo"><div class="logo-mark" style="width:26px;height:26px;border-radius:7px"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 1L1 5l7 4 7-4-7-4zM1 9l7 4 7-4M1 12l7 4 7-4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="logo-name" style="font-size:15px">Edu<em>Space</em>.tj</div></div>
+    <div class="footer-links"><a onclick="go('about')">О нас</a><a>Условия</a><a>Поддержка</a></div>
+    <div class="footer-copy">© 2025 EduSpace.tj</div>
+  </footer>
+</div>
+
+<!-- ═══ CATALOG ═══ -->
+<div class="page" id="page-catalog">
+  <div class="cat-hero">
+    <h1>Найди своего <em>преподавателя</em></h1>
+    <p>Проверенные специалисты Таджикистана</p>
+    <div class="cat-search-box">
+      <input type="text" placeholder="Имя преподавателя, предмет, курс..." id="cat-srch" oninput="catSearch(this.value)">
+      <button onclick="catSearch(document.getElementById('cat-srch').value)">Найти</button>
+    </div>
+  </div>
+  <div class="cat-wrap">
+    <aside class="filters">
+      <div class="flt-hdr"><div class="flt-title">Фильтры</div><button class="flt-reset" onclick="resetFlt()">Сбросить</button></div>
+      <div class="flt-grp">
+        <div class="flt-lbl">Предмет</div>
+        <div class="chips" id="subj-chips">
+          <button class="chip on" onclick="togChip(this,'subj')">Все</button>
+          <button class="chip" onclick="togChip(this,'subj')">Математика</button>
+          <button class="chip" onclick="togChip(this,'subj')">Английский</button>
+          <button class="chip" onclick="togChip(this,'subj')">IT / Программирование</button>
+          <button class="chip" onclick="togChip(this,'subj')">Дизайн</button>
+          <button class="chip" onclick="togChip(this,'subj')">Бизнес</button>
+          <button class="chip" onclick="togChip(this,'subj')">Физика</button>
+          <button class="chip" onclick="togChip(this,'subj')">Русский язык</button>
+          <button class="chip" onclick="togChip(this,'subj')">Таджикский</button>
+        </div>
+      </div>
+      <div class="flt-grp">
+        <div class="flt-lbl">Уровень</div>
+        <div class="chips">
+          <button class="chip on" onclick="togChip(this,'lvl')">Все</button>
+          <button class="chip" onclick="togChip(this,'lvl')">Начинающий</button>
+          <button class="chip" onclick="togChip(this,'lvl')">Средний</button>
+          <button class="chip" onclick="togChip(this,'lvl')">Продвинутый</button>
+        </div>
+      </div>
+      <div class="flt-grp" style="border-bottom:none">
+        <div class="flt-lbl">Платформа</div>
+        <div class="chips">
+          <button class="chip on" onclick="togChip(this,'plat')">Все</button>
+          <button class="chip" onclick="togChip(this,'plat')">Zoom</button>
+          <button class="chip" onclick="togChip(this,'plat')">Google Meet</button>
+          <button class="chip" onclick="togChip(this,'plat')">Telegram</button>
+          <button class="chip" onclick="togChip(this,'plat')">MS Teams</button>
+        </div>
+      </div>
+      <button class="flt-apply" style="margin-top:16px">Применить фильтры</button>
+    </aside>
+    <div class="cat-main">
+      <div class="cat-toolbar">
+        <div class="cat-count">Найдено <strong id="cat-count">0</strong> преподавателей</div>
+        <select class="sort-sel" onchange="sortTeachers(this.value)">
+          <option value="new">Новые первые</option>
+          <option value="rating">По рейтингу</option>
+          <option value="price-asc">Цена ↑</option>
+          <option value="price-desc">Цена ↓</option>
+          <option value="reviews">По отзывам</option>
+        </select>
+      </div>
+      <div class="cat-tabs">
+        <button class="cat-tab on" onclick="catTab('t',this)">👥 Преподаватели <span class="tab-cnt" id="tab-t-cnt">0</span></button>
+        <button class="cat-tab" onclick="catTab('c',this)">📚 Курсы <span class="tab-cnt" id="tab-c-cnt">0</span></button>
+      </div>
+      <div id="cat-t-sec">
+        <div class="tc-grid" id="tc-grid"></div>
+        <div class="empty-state" id="cat-empty" style="display:none">
+          <div class="empty-icon">👩‍🏫</div>
+          <div class="empty-title">Преподаватели не найдены</div>
+          <div class="empty-sub">Попробуйте изменить запрос или зарегистрируйтесь как преподаватель</div>
+          <button class="btn-lg green" onclick="go('register')">Стать преподавателем</button>
+        </div>
+      </div>
+      <div id="cat-c-sec" style="display:none">
+        <div class="cg" id="cat-cg"></div>
+        <div class="empty-state" id="cat-c-empty" style="display:none">
+          <div class="empty-icon">📚</div>
+          <div class="empty-title">Курсов пока нет</div>
+          <div class="empty-sub">Курсы появятся здесь после того, как преподаватели создадут их</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div class="page" id="page-profile">
+  <div class="pp-bar">
+    <button class="pp-back" onclick="go('catalog')">← Каталог</button>
+    <div class="pp-bc">Каталог › <span id="pp-bc-name">Преподаватель</span></div>
+    <div class="pp-bar-right">
+      <button class="btn-sm ghost" id="pp-top-fav" onclick="toggleFavTeacher()">♡ Сохранить</button>
+      <button class="btn-sm solid" onclick="goPayForProfile()">Записаться</button>
+    </div>
+  </div>
+  <div class="pp-cover" id="pp-cover"></div>
+  <div class="pp-hw">
+    <div class="pp-hcard">
+      <div class="pp-av-wrap"><div class="pp-av" id="pp-av">?</div><div class="pp-ver" id="pp-ver" style="display:none">✓</div></div>
+      <div class="pp-hinfo">
+        <div class="pp-hname" id="pp-hname">Загрузка...</div>
+        <div class="pp-hsubj" id="pp-hsubj"></div>
+        <div class="pp-hbadges" id="pp-hbadges"></div>
+        <div class="pp-hstats">
+          <div class="pp-hstat"><div class="pp-hstat-val g" id="pp-hrat">—</div><div class="pp-hstat-label">Рейтинг</div></div>
+          <div class="pp-hstat-sep"></div>
+          <div class="pp-hstat"><div class="pp-hstat-val" id="pp-hrev">0</div><div class="pp-hstat-label">Отзывов</div></div>
+          <div class="pp-hstat-sep"></div>
+          <div class="pp-hstat"><div class="pp-hstat-val" id="pp-hstu">0</div><div class="pp-hstat-label">Учеников</div></div>
+          <div class="pp-hstat-sep"></div>
+          <div class="pp-hstat"><div class="pp-hstat-val" id="pp-hcou">0</div><div class="pp-hstat-label">Курсов</div></div>
+        </div>
+      </div>
+      <div class="pp-hactions">
+        <button class="btn-bk" onclick="goPayForProfile()">Записаться на курс</button>
+        <button class="btn-mb">💬 Написать</button>
+        <button class="btn-fav" id="pp-fav-btn" onclick="toggleFavTeacher()">♡</button>
+      </div>
+    </div>
+  </div>
+  <div class="pp-body">
+    <div>
+      <div class="pp-tabs">
+        <button class="pp-tab on" onclick="ppTab('pp-about',this)">О себе</button>
+        <button class="pp-tab" onclick="ppTab('pp-courses',this)">Курсы</button>
+        <button class="pp-tab" onclick="ppTab('pp-reviews',this)">Отзывы</button>
+        <button class="pp-tab" onclick="ppTab('pp-docs',this)">Документы</button>
+      </div>
+      <div id="pp-about">
+        <div class="pp-card"><div class="pp-sec"><div class="pp-sec-ico">👤</div>О преподавателе</div><div class="pp-desc" id="pp-desc-txt">Нет описания</div></div>
+        <div class="pp-card"><div class="pp-sec"><div class="pp-sec-ico">🖥️</div>Платформы для занятий</div><div class="plat-chips" id="pp-plats"></div></div>
+        <div class="pp-card"><div class="pp-sec"><div class="pp-sec-ico">📅</div>Расписание</div><div class="day-chips" id="pp-days"></div><div style="font-size:13px;color:var(--text2)" id="pp-hours"></div></div>
+      </div>
+      <div id="pp-courses" style="display:none">
+        <div class="pp-card"><div class="pp-sec"><div class="pp-sec-ico">📚</div>Курсы преподавателя</div><div class="pp-cg" id="pp-cg">
+          <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3);font-size:14px">У этого преподавателя пока нет курсов</div>
+        </div></div>
+      </div>
+      <div id="pp-reviews" style="display:none">
+        <div class="pp-card">
+          <div class="pp-sec"><div class="pp-sec-ico">⭐</div>Отзывы учеников</div>
+          <div class="rev-sum">
+            <div><div class="rev-big" id="pp-rev-big">—</div><div class="rev-big-stars" id="pp-rev-stars"></div><div class="rev-total" id="pp-rev-total">0 отзывов</div></div>
+            <div class="rev-bars" id="pp-rev-bars"></div>
+          </div>
+          <div class="rp-btns">
+            <button class="rp-btn on" onclick="fltRev(this,6)">6 месяцев</button>
+            <button class="rp-btn" onclick="fltRev(this,3)">3 месяца</button>
+            <button class="rp-btn" onclick="fltRev(this,0)">Все</button>
+          </div>
+          <div id="pp-rev-list">
+            <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Отзывов пока нет</div>
+          </div>
+        </div>
+      </div>
+      <div id="pp-docs" style="display:none">
+        <div class="pp-card">
+          <div class="pp-sec"><div class="pp-sec-ico">📄</div>Документы и квалификация</div>
+          <div style="padding:10px 14px;background:var(--gl2);border-radius:9px;font-size:13px;color:var(--g2);margin-bottom:14px;border:1px solid rgba(24,169,106,.2)">🔒 Документы проверены командой EduSpace.tj. Ученики видят только статус проверки.</div>
+          <div class="docs-list" id="pp-docs-list">
+            <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Документы не загружены</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pp-right">
+      <div class="pp-price-card">
+        <div class="ppc-row"><span class="ppc-from">от</span><span class="ppc-val" id="ppc-price">—</span><span class="ppc-per">смн/мес</span></div>
+        <div class="ppc-note" id="ppc-note">Свяжитесь с преподавателем</div>
+        <div class="ppc-feats">
+          <div class="ppc-feat"><div class="ppc-feat-ico">🎥</div>Живые онлайн-занятия</div>
+          <div class="ppc-feat"><div class="ppc-feat-ico">📝</div>Домашние задания</div>
+          <div class="ppc-feat"><div class="ppc-feat-ico">💬</div>Чат с преподавателем</div>
+          <div class="ppc-feat"><div class="ppc-feat-ico">🎓</div>Сертификат по окончании</div>
+          <div class="ppc-feat"><div class="ppc-feat-ico">🛡</div>Гарантия возврата 7 дней</div>
+        </div>
+        <div class="ppc-div"></div>
+        <button class="btn-bkf" onclick="goPayForProfile()">Записаться на курс</button>
+        <button class="btn-trial">Пробный урок — бесплатно</button>
+        <div class="ppc-guar">🛡 Гарантия возврата 7 дней</div>
+      </div>
+      <div class="avail-card">
+        <div class="avail-title">📅 Расписание</div>
+        <div class="avail-slots" id="pp-avail-slots">
+          <div style="grid-column:1/-1;text-align:center;font-size:12px;color:var(--text3);padding:8px">Расписание указано в профиле</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ABOUT ═══ -->
+<div class="page" id="page-about">
+  <div style="background:var(--white);padding:4rem 2rem;text-align:center;border-bottom:1px solid var(--border)">
+    <div style="max-width:640px;margin:0 auto">
+      <div class="section-title" style="font-size:38px">О платформе <span style="color:var(--g);font-style:italic">EduSpace.tj</span></div>
+      <p style="font-size:16px;color:var(--text2);line-height:1.8;margin-top:1rem">Первый маркетплейс онлайн-курсов Таджикистана. Преподаватели регистрируются, создают курсы, а ученики записываются и платят через безопасный баланс платформы.</p>
+    </div>
+  </div>
+  <div style="max-width:900px;margin:3rem auto;padding:0 2rem">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2rem">
+      <div class="card" style="padding:1.5rem;text-align:center"><div style="font-size:32px;margin-bottom:10px">🎓</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Для преподавателей</div><div style="font-size:13px;color:var(--text2)">Регистрируйтесь, создавайте курсы, получайте учеников</div></div>
+      <div class="card" style="padding:1.5rem;text-align:center"><div style="font-size:32px;margin-bottom:10px">👥</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Для учеников</div><div style="font-size:13px;color:var(--text2)">Найдите курс, пополните баланс, учитесь онлайн</div></div>
+      <div class="card" style="padding:1.5rem;text-align:center"><div style="font-size:32px;margin-bottom:10px">💳</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Комиссия 15%</div><div style="font-size:13px;color:var(--text2)">Платформа берёт 15% — преподаватель получает 85%</div></div>
+    </div>
+    <div class="card" style="padding:1.5rem">
+      <div style="font-size:16px;font-weight:800;margin-bottom:1rem">💰 Как работает оплата</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+        <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">1️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Пополнение</div><div style="font-size:12px;color:var(--text2)">Ученик вносит деньги на баланс</div></div>
+        <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">2️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Оплата</div><div style="font-size:12px;color:var(--text2)">Оплачивает курс с баланса</div></div>
+        <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">3️⃣</div><div style="font-size:24px;margin-bottom:6px">3️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Комиссия 15%</div><div style="font-size:12px;color:var(--text2)">Удерживается автоматически</div></div>
+        <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">4️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">85% преподавателю</div><div style="font-size:12px;color:var(--text2)">Зачисляется на счёт</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="cta-block"><h2>Готовы начать?</h2><p>Регистрация бесплатная</p><div class="cta-btns"><button class="btn-cw" onclick="go('register')">Зарегистрироваться</button></div></div>
+</div>
+
+<!-- ═══ REGISTER ═══ -->
+<div class="page" id="page-register">
+<div class="auth-wrap"><div class="auth-card">
+  <div class="auth-logo-wrap"><div class="logo-mark" style="width:32px;height:32px;border-radius:9px"><svg viewBox="0 0 16 16" fill="none" width="16" height="16"><path d="M8 1L1 5l7 4 7-4-7-4zM1 9l7 4 7-4M1 12l7 4 7-4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+  <div class="auth-title">Создайте аккаунт</div>
+  <div class="auth-sub" id="reg-sub">Шаг 1 из 3</div>
+  <div class="step-bar"><div class="step-seg done" id="ss0"></div><div class="step-seg" id="ss1"></div><div class="step-seg" id="ss2"></div></div>
+  <div id="rs1">
+    <div class="auth-tabs"><button class="auth-tab on" id="rt-s" onclick="setRegRole('s')">Я ученик</button><button class="auth-tab" id="rt-t" onclick="setRegRole('t')">Я преподаватель</button></div>
+    <div class="field-row">
+      <div class="field"><label>Имя</label><input type="text" id="r-fn" placeholder="Алишер"></div>
+      <div class="field"><label>Фамилия</label><input type="text" id="r-ln" placeholder="Рахимов"></div>
+    </div>
+    <div class="field"><label>Телефон</label><div class="phone-wrap"><div class="phone-pfx">+992</div><input type="tel" id="r-ph" placeholder="901 234 567"></div></div>
+    <div class="field"><label>Email</label><input type="email" id="r-em" placeholder="email@mail.com"></div>
+    <div class="field"><label>Пароль</label><input type="password" id="r-pw" placeholder="Минимум 8 символов"></div>
+    <div class="field"><label>Повтор пароля</label><input type="password" id="r-pw2" placeholder="Повторите пароль"><div class="err-msg" id="pw-err">Пароли не совпадают</div></div>
+    <div id="t-extra" style="display:none">
+      <div class="field"><label>Предмет / специализация</label><select id="r-sub"><option value="">Выберите...</option><option>Математика</option><option>Физика</option><option>Химия</option><option>Биология</option><option>Английский язык</option><option>Русский язык</option><option>Таджикский язык</option><option>IT / Программирование</option><option>Дизайн</option><option>Бизнес / Маркетинг</option><option>Другое</option></select></div>
+    </div>
+    <button class="btn-full green" style="margin-top:4px" onclick="regStep2()">Далее →</button>
+    <div class="auth-hint">Уже есть аккаунт? <a onclick="go('login')">Войти</a></div>
+  </div>
+  <div id="rs2" style="display:none">
+    <div class="sms-info">📱 <div>SMS отправлен на <strong id="sms-ph">+992...</strong>. Введите код.</div></div>
+    <div style="text-align:center;font-size:14px;color:var(--text2);margin-bottom:4px">Код подтверждения</div>
+    <div class="sms-inputs"><input class="sms-box" id="s0" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,0)"><input class="sms-box" id="s1" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,1)"><input class="sms-box" id="s2" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,2)"><input class="sms-box" id="s3" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,3)"></div>
+    <div class="err-msg" id="sms-err" style="text-align:center;margin-bottom:8px">Неверный код</div>
+    <button class="btn-full green" onclick="verifySMS()">Подтвердить</button>
+    <div class="resend-row" style="margin-top:8px">Отправить снова: <span class="tmr-txt" id="tmr-txt">0:59</span></div>
+    <button class="btn-full outline" style="margin-top:8px" onclick="backReg()">← Назад</button>
+  </div>
+  <div id="rs3" style="display:none;text-align:center">
+    <div class="suc-icon">✓</div>
+    <div class="suc-title">Добро пожаловать!</div>
+    <div class="suc-sub">Аккаунт создан. <span class="role-pill" id="suc-role"></span></div>
+    <button class="btn-full green" onclick="afterReg()">Перейти в кабинет →</button>
+  </div>
+</div></div>
+</div>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="page" id="page-login">
+<div class="auth-wrap"><div class="auth-card">
+  <div class="auth-logo-wrap"><div class="logo-mark" style="width:32px;height:32px;border-radius:9px"><svg viewBox="0 0 16 16" fill="none" width="16" height="16"><path d="M8 1L1 5l7 4 7-4-7-4zM1 9l7 4 7-4M1 12l7 4 7-4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+  <div class="auth-title">Войти в аккаунт</div>
+  <div class="auth-sub">EduSpace.tj</div>
+  <div class="field"><label>Email</label><input type="email" id="l-em" placeholder="email@mail.com"></div>
+  <div class="field"><label>Пароль</label><input type="password" id="l-pw" placeholder="Ваш пароль"><div class="err-msg" id="l-err">Неверный email или пароль</div></div>
+  <div style="text-align:right;margin-bottom:14px"><a style="font-size:13px;color:var(--g);font-weight:700;cursor:pointer">Забыли пароль?</a></div>
+  <button class="btn-full green" onclick="doLogin()">Войти</button>
+  <div style="display:flex;align-items:center;gap:10px;margin:14px 0;font-size:12px;color:var(--text3)"><div style="flex:1;height:1px;background:var(--border)"></div>или<div style="flex:1;height:1px;background:var(--border)"></div></div>
+  <button class="btn-full outline" onclick="go('register')">Создать аккаунт</button>
+</div></div>
+</div>
+
+<!-- ═══ TEACHER SETUP ═══ -->
+<div class="page" id="page-setup">
+<div class="setup-wrap">
+  <div class="setup-hdr"><h1>Настройте профиль преподавателя</h1><p>Заполните профиль — ученики увидят вас в каталоге</p></div>
+  <div class="prog-wrap">
+    <div class="pw-step"><div class="pw-circle on" id="pc1">1</div><div class="pw-label on" id="pl1">Фото</div></div>
+    <div class="pw-line" id="pln1"></div>
+    <div class="pw-step"><div class="pw-circle" id="pc2">2</div><div class="pw-label" id="pl2">Документы</div></div>
+    <div class="pw-line" id="pln2"></div>
+    <div class="pw-step"><div class="pw-circle" id="pc3">3</div><div class="pw-label" id="pl3">Курс и цена</div></div>
+    <div class="pw-line" id="pln3"></div>
+    <div class="pw-step"><div class="pw-circle" id="pc4">4</div><div class="pw-label" id="pl4">Платформы</div></div>
+  </div>
+  <div id="setup1">
+    <div class="setup-card">
+      <div class="setup-sec">📷 Фото профиля</div><div class="setup-sec-sub">Преподаватели с фото получают на 70% больше записей</div>
+      <div class="photo-row">
+        <div class="photo-circle" id="setup-photo"><div style="font-size:28px;color:var(--text3)" id="setup-ph-ico">👤</div><img id="setup-ph-img"><input type="file" accept="image/*" onchange="prevPhoto(this)"></div>
+        <div><p style="font-size:13.5px;font-weight:600;margin-bottom:4px">Загрузите фото профиля</p><small style="font-size:12px;color:var(--text3)">JPG, PNG · до 5 МБ</small></div>
+      </div>
+    </div>
+    <div class="setup-card">
+      <div class="setup-sec">🎓 Тип преподавателя</div><div class="setup-sec-sub">Определяет необходимые документы</div>
+      <div class="type-grid">
+        <div class="type-opt on" id="tp-pro" onclick="setTp('pro')"><div class="type-opt-ico">🏫</div><div class="type-opt-title">Профессиональный</div><div class="type-opt-sub">Педагогическое образование</div></div>
+        <div class="type-opt" id="tp-spec" onclick="setTp('spec')"><div class="type-opt-ico">💼</div><div class="type-opt-title">Специалист-практик</div><div class="type-opt-sub">Разработчик, дизайнер, бизнесмен</div></div>
+      </div>
+      <div class="field"><label>О себе</label><textarea rows="4" id="s-bio" placeholder="Расскажите об опыте, методике и достижениях..."></textarea></div>
+      <div class="field"><label>Теги (через запятую)</label><input type="text" id="s-tags" placeholder="Python, Django, веб-разработка..."></div>
+    </div>
+    <div class="form-nav" style="justify-content:flex-end"><button class="btn-next-nav" style="flex:none;padding:12px 32px" onclick="goSetup(2)">Далее →</button></div>
+  </div>
+  <div id="setup2" style="display:none">
+    <div class="setup-card">
+      <div class="setup-sec">📄 Документы</div><div class="setup-sec-sub">Видны только модераторам EduSpace. Ученики видят «✓ Проверен»</div>
+      <div class="doc-tabs" id="doc-tab-row">
+        <button class="dtab on" id="dt-dip" onclick="setDoc('dip')">🎓 Диплом</button>
+        <button class="dtab" id="dt-cert" onclick="setDoc('cert')">📜 Сертификат</button>
+        <button class="dtab" id="dt-work" onclick="setDoc('work')">📋 Трудовая книжка</button>
+      </div>
+      <div id="doc-dip"><div class="file-drop"><input type="file" accept=".pdf,.jpg,.png" onchange="prevFile(this,'dip')"><div style="font-size:24px;margin-bottom:6px">📎</div><div style="font-size:14px;font-weight:700;margin-bottom:3px">Нажмите или перетащите файл</div><div style="font-size:12px;color:var(--text2)">PDF, JPG, PNG · до 10 МБ</div></div><div class="file-prev" id="fp-dip"><span style="font-size:16px">📄</span><span class="file-prev-name" id="fn-dip"></span><button class="rm-file" onclick="rmFile('dip')">✕</button></div></div>
+      <div id="doc-cert" style="display:none"><div class="file-drop"><input type="file" accept=".pdf,.jpg,.png" onchange="prevFile(this,'cert')"><div style="font-size:24px;margin-bottom:6px">📎</div><div style="font-size:14px;font-weight:700;margin-bottom:3px">Сертификат курса или тренинга</div><div style="font-size:12px;color:var(--text2)">PDF, JPG, PNG · до 10 МБ</div></div><div class="file-prev" id="fp-cert"><span style="font-size:16px">📄</span><span class="file-prev-name" id="fn-cert"></span><button class="rm-file" onclick="rmFile('cert')">✕</button></div></div>
+      <div id="doc-work" style="display:none"><div class="file-drop"><input type="file" accept=".pdf,.jpg,.png" onchange="prevFile(this,'work')"><div style="font-size:24px;margin-bottom:6px">📎</div><div style="font-size:14px;font-weight:700;margin-bottom:3px">Трудовая книжка или справка с работы</div><div style="font-size:12px;color:var(--text2)">PDF, JPG, PNG · до 10 МБ</div></div><div class="file-prev" id="fp-work"><span style="font-size:16px">📄</span><span class="file-prev-name" id="fn-work"></span><button class="rm-file" onclick="rmFile('work')">✕</button></div></div>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--gl2);border-radius:9px;font-size:12px;color:var(--g2);border:1px solid rgba(24,169,106,.2)">🔒 Конфиденциально — только для проверки модераторами EduSpace.tj</div>
+    </div>
+    <div class="form-nav"><button class="btn-back-nav" onclick="goSetup(1)">← Назад</button><button class="btn-next-nav" onclick="goSetup(3)">Далее →</button></div>
+  </div>
+  <div id="setup3" style="display:none">
+    <div class="setup-card">
+      <div class="setup-sec">📚 Первый курс</div><div class="setup-sec-sub">Добавьте ваш первый курс</div>
+      <div class="field"><label>Название курса</label><input type="text" id="s-course-name" placeholder="Напр: Математика для 9–11 классов"></div>
+      <div class="field-row">
+        <div class="field"><label>Категория</label><select id="s-course-cat"><option value="">Выберите...</option><option>Математика</option><option>Физика</option><option>Химия</option><option>Биология</option><option>Английский язык</option><option>Русский язык</option><option>Таджикский язык</option><option>IT / Программирование</option><option>Дизайн</option><option>Бизнес / Маркетинг</option><option>Другое</option></select></div>
+        <div class="field"><label>Уровень</label><select id="s-course-lvl"><option>Начинающий</option><option>Средний</option><option>Продвинутый</option></select></div>
+      </div>
+      <div class="field"><label>Описание курса</label><textarea rows="3" id="s-course-desc" placeholder="Чему научатся ученики? Что входит в программу?"></textarea></div>
+      <div class="field"><label>Цена курса (смн)</label>
+        <div class="price-field"><input type="number" id="s-price" placeholder="500" oninput="setupComm()"><span>смн/мес</span></div>
+        <div class="comm-box" id="setup-comm">💡 Комиссия платформы 15% = <strong id="sc-sum"></strong> смн · Вы получите: <strong id="sc-earn"></strong> смн</div>
+      </div>
+    </div>
+    <div class="form-nav"><button class="btn-back-nav" onclick="goSetup(2)">← Назад</button><button class="btn-next-nav" onclick="goSetup(4)">Далее →</button></div>
+  </div>
+  <div id="setup4" style="display:none">
+    <div class="setup-card">
+      <div class="setup-sec">🖥️ Платформы для занятий</div><div class="setup-sec-sub">Выберите где проводите занятия</div>
+      <div class="platsel">
+        <div class="ps" id="ps-zoom" onclick="togPs('zoom')"><span>🔵</span>Zoom<div class="ps-ck"></div></div>
+        <div class="ps" id="ps-meet" onclick="togPs('meet')"><span>🟢</span>Google Meet<div class="ps-ck"></div></div>
+        <div class="ps" id="ps-teams" onclick="togPs('teams')"><span>🟣</span>MS Teams<div class="ps-ck"></div></div>
+        <div class="ps" id="ps-tg" onclick="togPs('tg')"><span>✈️</span>Telegram<div class="ps-ck"></div></div>
+        <div class="ps" id="ps-sk" onclick="togPs('sk')"><span>💬</span>Skype<div class="ps-ck"></div></div>
+      </div>
+      <div class="field" style="margin-top:1.25rem"><label>Рабочие дни</label>
+        <div class="days-row">
+          <button class="day-btn" onclick="this.classList.toggle('on')">Пн</button>
+          <button class="day-btn" onclick="this.classList.toggle('on')">Вт</button>
+          <button class="day-btn" onclick="this.classList.toggle('on')">Ср</button>
+          <button class="day-btn" onclick="this.classList.toggle('on')">Чт</button>
+          <button class="day-btn" onclick="this.classList.toggle('on')">Пт</button>
+          <button class="day-btn" onclick="this.classList.toggle('on')">Сб</button>
+          <button class="day-btn" onclick="this.classList.toggle('on')">Вс</button>
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:12px">
+        <div class="field"><label>Начало работы</label><input type="time" id="s-time-from" value="09:00"></div>
+        <div class="field"><label>Конец работы</label><input type="time" id="s-time-to" value="20:00"></div>
+      </div>
+    </div>
+    <div class="form-nav"><button class="btn-back-nav" onclick="goSetup(3)">← Назад</button><button class="btn-next-nav" onclick="finishSetup()">Отправить на проверку ✓</button></div>
+  </div>
+  <div id="setup5" style="display:none;text-align:center;padding:1rem">
+    <div class="suc-icon" style="font-size:28px">🎉</div>
+    <div class="suc-title">Профиль отправлен!</div>
+    <div style="display:inline-block;padding:5px 14px;border-radius:20px;background:#FEF3C7;color:#92400E;font-size:12px;font-weight:800;margin-bottom:1rem;border:1px solid #FCD34D">⏳ На модерации 1–2 рабочих дня</div>
+    <div class="suc-sub">Проверим ваши документы и пришлём SMS. Пока вы можете заполнить кабинет.</div>
+    <button class="btn-full green" onclick="goDash()">Перейти в кабинет →</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ STUDENT DASH ═══ -->
+<div class="page" id="page-student-dash">
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sb-user">
+      <div class="sb-av" id="sd-av" style="background:var(--g)">?</div>
+      <div>
+        <div class="sb-uname" id="sd-uname">Пользователь</div>
+        <div class="sb-urole" style="color:var(--g)">Ученик</div>
+      </div>
+    </div>
+    <div class="sb-item on" onclick="sdShow('overview')"><span class="sb-ico">📊</span>Главная</div>
+    <div class="sb-item" onclick="sdShow('my-courses')"><span class="sb-ico">📚</span>Мои курсы<span class="sb-badge" id="sb-courses-cnt">0</span></div>
+    <div class="sb-item" onclick="go('catalog')"><span class="sb-ico">🔍</span>Найти преподавателя</div>
+    <div class="sb-item" onclick="sdShow('favorites')"><span class="sb-ico">♡</span>Избранное<span class="sb-badge red" id="sb-fav-cnt" style="display:none">0</span></div>
+    <div class="sb-lbl">Финансы</div>
+    <div class="sb-item" onclick="sdShow('balance')"><span class="sb-ico">💳</span>Баланс<span class="sb-badge" id="sb-bal-badge" style="background:#0F7A4D">0</span></div>
+    <div class="sb-item" onclick="sdShow('payment-flow')"><span class="sb-ico">💰</span>Оплата</div>
+    <div class="sb-lbl">Аккаунт</div>
+    <div class="sb-item" onclick="sdShow('notifications')"><span class="sb-ico">🔔</span>Уведомления<span class="sb-badge" id="sb-notif-cnt" style="display:none">0</span></div>
+    <div class="sb-item" onclick="sdShow('settings')"><span class="sb-ico">⚙️</span>Настройки</div>
+    <div class="sb-bottom"><div class="sb-item" style="color:#EF4444" onclick="logout()"><span class="sb-ico">🚪</span>Выйти</div></div>
+  </aside>
+  <div class="dash-main">
+    <!-- OVERVIEW -->
+    <div class="dpanel on" id="sdp-overview">
+      <div class="dash-hero">
+        <div style="position:relative;z-index:1">
+          <div class="dh-greet">Добро пожаловать 👋</div>
+          <div class="dh-name">Привет, <span id="sd-greet">Ученик!</span></div>
+          <button class="btn-sm solid" style="height:40px;padding:0 20px;font-size:13.5px" onclick="go('catalog')">🔍 Найти преподавателя</button>
+        </div>
+        <div class="dh-stats">
+          <div class="dh-stat"><div class="dh-n" id="dh-courses">0</div><div class="dh-l">Курса</div></div>
+          <div class="dh-stat"><div class="dh-n g" id="dh-balance">0</div><div class="dh-l">Баланс (смн)</div></div>
+        </div>
+      </div>
+      <div class="d-metrics">
+        <div class="d-metric"><div class="d-metric-label">Активных курса</div><div class="d-metric-val g" id="dm-courses">0</div><div class="d-metric-sub">Записей</div></div>
+        <div class="d-metric"><div class="d-metric-label">Баланс (смн)</div><div class="d-metric-val g" id="dm-balance" onclick="sdShow('balance')" style="cursor:pointer">0</div><div class="d-metric-sub">Пополнить →</div></div>
+        <div class="d-metric"><div class="d-metric-label">В избранном</div><div class="d-metric-val" id="dm-favs">0</div><div class="d-metric-sub">Сохранено</div></div>
+        <div class="d-metric"><div class="d-metric-label">Уведомления</div><div class="d-metric-val" id="dm-notifs">0</div><div class="d-metric-sub">Непрочитанных</div></div>
+      </div>
+      <div class="d-card">
+        <div class="d-card-title">📚 Мои курсы <a class="d-card-link" onclick="sdShow('my-courses')">Все →</a></div>
+        <div id="sd-courses-preview">
+          <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Вы ещё не записались ни на один курс. <a style="color:var(--g);cursor:pointer" onclick="go('catalog')">Найти преподавателя →</a></div>
+        </div>
+      </div>
+    </div>
+    <!-- MY COURSES -->
+    <div class="dpanel" id="sdp-my-courses">
+      <div class="dp-hdr"><div class="dp-title">Мои курсы</div><button class="btn-sm solid" onclick="go('catalog')">+ Найти новый</button></div>
+      <div id="sd-my-courses-list">
+        <div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Курсов пока нет</div><div class="empty-sub">Найдите преподавателя и запишитесь на курс</div><button class="btn-lg green" onclick="go('catalog')">Найти преподавателя</button></div>
+      </div>
+    </div>
+    <!-- FAVORITES -->
+    <div class="dpanel" id="sdp-favorites">
+      <div class="dp-hdr"><div class="dp-title">Избранное</div></div>
+      <div id="sd-fav-list">
+        <div class="empty-state"><div class="empty-icon">♡</div><div class="empty-title">Избранное пусто</div><div class="empty-sub">Сохраняйте понравившихся преподавателей нажав ♡</div><button class="btn-lg green" onclick="go('catalog')">Смотреть каталог</button></div>
+      </div>
+    </div>
+    <!-- BALANCE -->
+    <div class="dpanel" id="sdp-balance">
+      <div class="dp-hdr"><div class="dp-title">Баланс</div></div>
+      <div class="bal-layout">
+        <div>
+          <div class="bal-card">
+            <div class="bal-label">Текущий баланс</div>
+            <div class="bal-amount" id="bal-big-disp">0 <span>смн</span></div>
+            <div class="bal-sub">EduSpace.tj</div>
+            <button class="btn-topup" onclick="sdShow('payment-flow')">+ Пополнить</button>
+            <div class="bal-quick">
+              <div class="bal-qa" onclick="setQuickTopup(500)">+500</div>
+              <div class="bal-qa" onclick="setQuickTopup(1000)">+1 000</div>
+              <div class="bal-qa" onclick="setQuickTopup(2000)">+2 000</div>
+            </div>
+          </div>
+          <div class="card" style="padding:16px;margin-top:12px">
+            <div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Итого</div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px"><span style="color:var(--text2)">Потрачено</span><span style="font-weight:700" id="bal-spent">0 смн</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px"><span style="color:var(--text2)">Пополнено</span><span style="font-weight:700;color:var(--g2)" id="bal-added">0 смн</span></div>
+            <div style="height:1px;background:var(--border);margin:10px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:700">Баланс</span><span style="font-weight:800;color:var(--g2)" id="bal-total-disp">0 смн</span></div>
+          </div>
+        </div>
+        <div class="tx-card">
+          <div class="tx-hdr"><div class="tx-title">История операций</div></div>
+          <div class="tx-list" id="tx-list">
+            <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Операций пока нет</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- PAYMENT FLOW -->
+    <div class="dpanel" id="sdp-payment-flow">
+      <div class="dp-hdr"><div class="dp-title">Система оплаты</div></div>
+      <div class="payment-wrap">
+        <div id="pf-topup">
+          <div class="step-ind">
+            <div class="step-ind-item active"><div class="step-ind-circle">1</div><div class="step-ind-label">Пополнение</div></div>
+            <div class="step-ind-line"></div>
+            <div class="step-ind-item pend"><div class="step-ind-circle">2</div><div class="step-ind-label">Оплата курса</div></div>
+            <div class="step-ind-line"></div>
+            <div class="step-ind-item pend"><div class="step-ind-circle">3</div><div class="step-ind-label">Готово</div></div>
+          </div>
+          <div class="topup-card">
+            <div style="font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Сумма пополнения</div>
+            <div class="amt-grid">
+              <div class="amt-chip" onclick="selAmt(this,500)"><div class="amt-chip-val">500</div><div class="amt-chip-lbl">смн</div></div>
+              <div class="amt-chip on" onclick="selAmt(this,1000)"><div class="amt-chip-val">1 000</div><div class="amt-chip-lbl">смн</div></div>
+              <div class="amt-chip" onclick="selAmt(this,1500)"><div class="amt-chip-val">1 500</div><div class="amt-chip-lbl">смн</div></div>
+              <div class="amt-chip" onclick="selAmt(this,2000)"><div class="amt-chip-val">2 000</div><div class="amt-chip-lbl">смн</div></div>
+              <div class="amt-chip" onclick="selAmt(this,3000)"><div class="amt-chip-val">3 000</div><div class="amt-chip-lbl">смн</div></div>
+              <div class="amt-chip" onclick="selAmt(this,5000)"><div class="amt-chip-val">5 000</div><div class="amt-chip-lbl">смн</div></div>
+            </div>
+            <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;margin-top:14px">Или введите сумму</div>
+            <div class="custom-inp-wrap"><div class="custom-inp-pfx">смн</div><input type="number" id="custom-amt" placeholder="Введите сумму..." oninput="onCustomAmt(this.value)" min="50"></div>
+          </div>
+          <div class="topup-card">
+            <div style="font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Способ оплаты</div>
+            <div class="pay-methods">
+              <div class="pay-m on" onclick="selPayM(this)">💳 Карта</div>
+              <div class="pay-m" onclick="selPayM(this)">📱 Телефон</div>
+              <div class="pay-m" onclick="selPayM(this)">🏦 Банк</div>
+            </div>
+            <div id="card-fields" style="display:flex;flex-direction:column;gap:10px">
+              <input type="text" placeholder="1234 5678 9012 3456" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <input type="text" placeholder="ММ/ГГ" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+                <input type="text" placeholder="CVV" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+              </div>
+            </div>
+          </div>
+          <div class="topup-card" style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:12px;color:var(--text3)">Сумма пополнения</div><div style="font-size:22px;font-weight:800" id="topup-preview">1 000 смн</div></div>
+            <div style="text-align:right"><div style="font-size:12px;color:var(--text3)">Баланс после</div><div style="font-size:22px;font-weight:800;color:var(--g2)" id="bal-after-disp">1 000 смн</div></div>
+          </div>
+          <button class="btn-full green" style="margin-bottom:8px" id="topup-btn-main" onclick="doTopup()">🔒 Пополнить 1 000 смн</button>
+          <div class="secure-note">🔒 SSL шифрование · Безопасная оплата</div>
+        </div>
+        <div id="pf-checkout" style="display:none">
+          <div class="step-ind">
+            <div class="step-ind-item done"><div class="step-ind-circle">✓</div><div class="step-ind-label">Пополнение</div></div>
+            <div class="step-ind-line done"></div>
+            <div class="step-ind-item active"><div class="step-ind-circle">2</div><div class="step-ind-label">Оплата курса</div></div>
+            <div class="step-ind-line"></div>
+            <div class="step-ind-item pend"><div class="step-ind-circle">3</div><div class="step-ind-label">Готово</div></div>
+          </div>
+          <div id="checkout-courses-list">
+            <div class="empty-state" style="padding:2rem"><div class="empty-icon">📚</div><div class="empty-title">Выберите курс</div><div class="empty-sub">Сначала найдите преподавателя в каталоге</div><button class="btn-lg green" onclick="go('catalog')">В каталог</button></div>
+          </div>
+          <div class="bal-check ok" id="bc-ok" style="margin-top:12px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:18px;height:18px;flex-shrink:0;color:var(--g)"><polyline points="20 6 9 17 4 12"/></svg>
+            <div><div class="bc-title">Достаточно средств</div><div class="bc-sub">Баланс: <strong id="co-bal">0 смн</strong></div></div>
+          </div>
+          <div class="bal-check err" id="bc-err" style="display:none;margin-top:12px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" style="width:18px;height:18px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div style="flex:1"><div class="bc-title">Недостаточно средств</div><div class="bc-sub" id="shortage-txt">Пополните баланс</div></div>
+            <button class="btn-topup-sm" onclick="document.getElementById('pf-checkout').style.display='none';document.getElementById('pf-topup').style.display='block'">Пополнить</button>
+          </div>
+          <button class="btn-full green" id="pay-btn-main" onclick="doPayCourse()" style="margin-top:12px;margin-bottom:8px" disabled>Оплатить</button>
+          <div class="secure-note">🔒 Безопасная оплата через EduSpace</div>
+        </div>
+        <div id="pf-success" style="display:none">
+          <div class="step-ind">
+            <div class="step-ind-item done"><div class="step-ind-circle">✓</div><div class="step-ind-label">Пополнение</div></div>
+            <div class="step-ind-line done"></div>
+            <div class="step-ind-item done"><div class="step-ind-circle">✓</div><div class="step-ind-label">Оплата</div></div>
+            <div class="step-ind-line done"></div>
+            <div class="step-ind-item done"><div class="step-ind-circle">✓</div><div class="step-ind-label">Готово</div></div>
+          </div>
+          <div class="suc-card">
+            <div class="suc-big-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2.2" stroke-linecap="round" style="width:28px;height:28px"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div style="font-family:'Instrument Serif',serif;font-size:22px;color:var(--g2);margin-bottom:6px">Оплата прошла!</div>
+            <div style="font-size:14px;color:var(--text2);margin-bottom:1.75rem;line-height:1.6">Вы записаны на курс. Преподаватель получил уведомление.</div>
+            <div class="receipt-rows" id="receipt-rows"></div>
+            <button class="btn-full green" style="margin-bottom:8px" onclick="sdShow('my-courses')">📚 Перейти к курсу</button>
+            <button class="btn-full outline" onclick="sdShow('balance')">История баланса</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- NOTIFICATIONS -->
+    <div class="dpanel" id="sdp-notifications">
+      <div class="dp-hdr"><div class="dp-title">Уведомления</div></div>
+      <div class="d-card" id="notif-list">
+        <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Уведомлений нет</div>
+      </div>
+    </div>
+    <!-- SETTINGS -->
+    <div class="dpanel" id="sdp-settings">
+      <div class="dp-hdr"><div class="dp-title">Настройки</div></div>
+      <div class="settings-grid">
+        <div class="set-card">
+          <div class="set-title">👤 Профиль</div>
+          <div class="upload-row">
+            <div class="upload-av" id="settings-av" style="background:var(--g)">?</div>
+            <div><p style="font-size:13.5px;font-weight:700" id="settings-name">Пользователь</p><small style="font-size:12px;color:var(--text3)">JPG, PNG · до 5 МБ</small><div><button class="btn-upload-sm">Загрузить фото</button></div></div>
+          </div>
+          <div class="field"><label>Имя</label><input type="text" id="sett-name" placeholder="Ваше имя"></div>
+          <div class="field"><label>Email</label><input type="email" id="sett-email" placeholder="email@mail.com"></div>
+          <div class="field"><label>Телефон</label><input type="tel" id="sett-phone" placeholder="+992..."></div>
+          <button class="btn-save" onclick="saveSettings()">Сохранить</button>
+        </div>
+        <div class="set-card">
+          <div class="set-title">🔒 Безопасность</div>
+          <div class="field"><label>Текущий пароль</label><input type="password" placeholder="••••••••"></div>
+          <div class="field"><label>Новый пароль</label><input type="password" placeholder="Минимум 8 символов"></div>
+          <div class="field"><label>Подтверждение</label><input type="password" placeholder="Повторите пароль"></div>
+          <button class="btn-save">Изменить пароль</button>
+        </div>
+        <div class="set-card">
+          <div class="set-title">🌐 Язык</div>
+          <div class="lang-opts"><div class="lo on" onclick="setLang(this)">🇷🇺 Русский</div><div class="lo" onclick="setLang(this)">🇹🇯 Тоҷикӣ</div><div class="lo" onclick="setLang(this)">🇬🇧 English</div></div>
+        </div>
+        <div class="set-card">
+          <div class="set-title">🔔 Уведомления</div>
+          <div class="toggle-row"><div class="toggle-info"><p>SMS о занятиях</p><small>Напоминания за 30 мин</small></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-row"><div class="toggle-info"><p>Email-рассылка</p><small>Новые курсы и акции</small></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-row"><div class="toggle-info"><p>Оплата и баланс</p><small>Уведомления о транзакциях</small></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ TEACHER DASH ═══ -->
+<div class="page" id="page-teacher-dash">
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sb-user">
+      <div class="sb-av" id="td-av" style="background:#7C3AED">?</div>
+      <div>
+        <div class="sb-uname" id="td-uname">Преподаватель</div>
+        <div class="sb-urole" style="color:#7C3AED">✓ Преподаватель</div>
+      </div>
+    </div>
+    <div class="sb-item on" onclick="tdShow('t-overview')"><span class="sb-ico">📊</span>Обзор</div>
+    <div class="sb-item" onclick="tdShow('t-courses')"><span class="sb-ico">📚</span>Мои курсы<span class="sb-badge" id="td-courses-cnt">0</span></div>
+    <div class="sb-item" onclick="tdShow('t-students')"><span class="sb-ico">👥</span>Ученики<span class="sb-badge" id="td-students-cnt">0</span></div>
+    <div class="sb-item" onclick="tdShow('t-add-course')"><span class="sb-ico">➕</span>Добавить курс</div>
+    <div class="sb-lbl">Финансы</div>
+    <div class="sb-item" onclick="tdShow('t-earnings')"><span class="sb-ico">💰</span>Мои доходы</div>
+    <div class="sb-lbl">Аккаунт</div>
+    <div class="sb-item" onclick="tdShow('t-notifs')"><span class="sb-ico">🔔</span>Уведомления<span class="sb-badge" id="td-notifs-cnt" style="display:none">0</span></div>
+    <div class="sb-item" onclick="tdShow('t-profile')"><span class="sb-ico">👤</span>Мой профиль</div>
+    <div class="sb-bottom"><div class="sb-item" style="color:#EF4444" onclick="logout()"><span class="sb-ico">🚪</span>Выйти</div></div>
+  </aside>
+  <div class="dash-main">
+    <!-- OVERVIEW -->
+    <div class="dpanel on" id="tdp-t-overview">
+      <div class="dp-hdr"><div class="dp-title">Обзор</div><button class="btn-sm solid" onclick="tdShow('t-add-course')">+ Добавить курс</button></div>
+      <div class="d-metrics">
+        <div class="d-metric"><div class="d-metric-label">Учеников</div><div class="d-metric-val g" id="tdm-students">0</div><div class="d-metric-sub">Записались</div></div>
+        <div class="d-metric"><div class="d-metric-label">Курсов</div><div class="d-metric-val" id="tdm-courses">0</div><div class="d-metric-sub">Опубликовано</div></div>
+        <div class="d-metric"><div class="d-metric-label">Заработано</div><div class="d-metric-val g" id="tdm-earn">0 смн</div><div class="d-metric-sub">После 15% комиссии</div></div>
+        <div class="d-metric"><div class="d-metric-label">Рейтинг</div><div class="d-metric-val" id="tdm-rating">—</div><div class="d-metric-sub">Средний балл</div></div>
+      </div>
+      <div class="d-grid2">
+        <div class="d-card">
+          <div class="d-card-title">📚 Мои курсы <a class="d-card-link" onclick="tdShow('t-courses')">Все →</a></div>
+          <div id="td-courses-preview">
+            <div style="text-align:center;padding:1.5rem;color:var(--text3);font-size:14px">Курсов пока нет. <a style="color:var(--g);cursor:pointer" onclick="tdShow('t-add-course')">Добавить →</a></div>
+          </div>
+        </div>
+        <div class="d-card">
+          <div class="d-card-title">💰 Статус профиля</div>
+          <div id="td-status-card">
+            <div style="padding:12px;background:var(--bg);border-radius:9px;font-size:13px">
+              <div style="font-weight:700;margin-bottom:6px" id="td-moderation-status">Профиль на модерации</div>
+              <div style="color:var(--text2);font-size:12px" id="td-moderation-sub">Проверка документов занимает 1–2 рабочих дня</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- COURSES -->
+    <div class="dpanel" id="tdp-t-courses">
+      <div class="dp-hdr"><div class="dp-title">Мои курсы</div><button class="btn-sm solid" onclick="tdShow('t-add-course')">+ Добавить</button></div>
+      <div id="td-all-courses">
+        <div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Курсов пока нет</div><div class="empty-sub">Добавьте первый курс чтобы ученики могли записаться</div><button class="btn-lg green" onclick="tdShow('t-add-course')">Добавить курс</button></div>
+      </div>
+    </div>
+    <!-- STUDENTS -->
+    <div class="dpanel" id="tdp-t-students">
+      <div class="dp-hdr"><div class="dp-title">Мои ученики</div></div>
+      <div id="td-students-list">
+        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Учеников пока нет</div><div class="empty-sub">Ученики появятся после того как кто-то запишется на ваш курс</div></div>
+      </div>
+    </div>
+    <!-- ADD COURSE -->
+    <div class="dpanel" id="tdp-t-add-course">
+      <div class="dp-hdr"><div class="dp-title">Добавить курс</div><button class="btn-sm ghost" onclick="tdShow('t-courses')">Отмена</button></div>
+      <div class="ac-toast" id="ac-toast">🎉 Курс отправлен на проверку! Ответ в течение 1–2 дней.</div>
+      <div class="d-card" style="padding:1.5rem">
+        <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border2)">
+          <div style="font-size:14px;font-weight:800;margin-bottom:12px">📋 Основная информация</div>
+          <div class="field"><label>Название курса</label><input type="text" id="ac-name" placeholder="Напр: Основы Python с нуля"></div>
+          <div class="field-row">
+            <div class="field"><label>Категория</label><select id="ac-cat"><option value="">Выберите...</option><option>Математика</option><option>Физика</option><option>Химия</option><option>Английский язык</option><option>Русский язык</option><option>Таджикский язык</option><option>IT / Программирование</option><option>Дизайн</option><option>Бизнес / Маркетинг</option><option>Другое</option></select></div>
+            <div class="field"><label>Уровень</label><select id="ac-lvl"><option>Начинающий</option><option>Средний</option><option>Продвинутый</option></select></div>
+          </div>
+          <div class="field"><label>Описание</label><textarea rows="3" id="ac-desc" placeholder="Чему научатся ученики?"></textarea></div>
+        </div>
+        <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border2)">
+          <div style="font-size:14px;font-weight:800;margin-bottom:12px">📖 Программа курса</div>
+          <div id="ac-lessons">
+            <div class="lesson-item"><div class="l-num">1</div><div class="l-title">Введение и знакомство</div><button class="l-del" onclick="delL(this)">✕</button></div>
+          </div>
+          <div class="add-l-row"><input type="text" id="ac-les" placeholder="Название урока..."><button class="add-l-btn" onclick="addL()">+ Добавить урок</button></div>
+        </div>
+        <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border2)">
+          <div style="font-size:14px;font-weight:800;margin-bottom:12px">💰 Цена</div>
+          <div class="price-field"><input type="number" id="ac-price" placeholder="500" oninput="acComm()"><span>смн / мес</span></div>
+          <div class="comm-box" id="ac-comm">💡 Комиссия платформы 15% = <strong id="ac-cs"></strong> смн · Вы получите: <strong id="ac-ce"></strong> смн</div>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:800;margin-bottom:12px">🖥️ Платформы</div>
+          <div class="platsel">
+            <div class="ps" id="acp-zoom" onclick="acTog('zoom')"><span>🔵</span>Zoom<div class="ps-ck"></div></div>
+            <div class="ps" id="acp-meet" onclick="acTog('meet')"><span>🟢</span>Google Meet<div class="ps-ck"></div></div>
+            <div class="ps" id="acp-teams" onclick="acTog('teams')"><span>🟣</span>Teams<div class="ps-ck"></div></div>
+            <div class="ps" id="acp-tg" onclick="acTog('tg')"><span>✈️</span>Telegram<div class="ps-ck"></div></div>
+            <div class="ps" id="acp-sk" onclick="acTog('sk')"><span>💬</span>Skype<div class="ps-ck"></div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;padding-top:16px;border-top:1px solid var(--border2);margin-top:1.5rem">
+          <button class="btn-sm ghost" style="height:44px;padding:0 20px">Черновик</button>
+          <button class="btn-sm solid" style="flex:1;height:44px;font-size:14px;font-weight:800;border-radius:10px" onclick="submitCourse()">Отправить на проверку →</button>
+        </div>
+      </div>
+    </div>
+    <!-- EARNINGS -->
+    <div class="dpanel" id="tdp-t-earnings">
+      <div class="dp-hdr"><div class="dp-title">Мои доходы</div></div>
+      <div class="d-metrics" style="grid-template-columns:repeat(3,1fr)">
+        <div class="d-metric"><div class="d-metric-label">Всего продаж</div><div class="d-metric-val" id="earn-gross">0 смн</div></div>
+        <div class="d-metric"><div class="d-metric-label">Комиссия (15%)</div><div class="d-metric-val" style="color:#EF4444" id="earn-comm">0 смн</div></div>
+        <div class="d-metric"><div class="d-metric-label">Ваш доход (85%)</div><div class="d-metric-val g" id="earn-net">0 смн</div></div>
+      </div>
+      <div class="d-card">
+        <div class="d-card-title">💳 История выплат</div>
+        <div id="td-payments-list">
+          <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Выплат пока нет. Продажи появятся после записи учеников.</div>
+        </div>
+      </div>
+    </div>
+    <!-- NOTIFS -->
+    <div class="dpanel" id="tdp-t-notifs">
+      <div class="dp-hdr"><div class="dp-title">Уведомления</div></div>
+      <div class="d-card" id="td-notif-list">
+        <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Уведомлений нет</div>
+      </div>
+    </div>
+    <!-- PROFILE -->
+    <div class="dpanel" id="tdp-t-profile">
+      <div class="dp-hdr"><div class="dp-title">Мой профиль</div><button class="btn-sm solid" onclick="saveTeacherProfile()">Сохранить</button></div>
+      <div class="d-card" style="padding:1.5rem">
+        <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border2)">
+          <div class="sb-av" id="td-prof-av" style="width:68px;height:68px;border-radius:18px;font-size:22px;background:#7C3AED">?</div>
+          <div><div style="font-size:16px;font-weight:800" id="td-prof-name">Преподаватель</div><div style="font-size:13px;color:var(--g);font-weight:700;margin-top:2px" id="td-prof-status">⏳ На модерации</div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Имя</label><input type="text" id="tp-fname"></div>
+          <div class="field"><label>Фамилия</label><input type="text" id="tp-lname"></div>
+        </div>
+        <div class="field"><label>Email</label><input type="email" id="tp-email"></div>
+        <div class="field"><label>Телефон</label><input type="tel" id="tp-phone"></div>
+        <div class="field"><label>Предмет / специализация</label><input type="text" id="tp-subject"></div>
+        <div class="field"><label>О себе</label><textarea rows="4" id="tp-bio" placeholder="Расскажите об опыте..."></textarea></div>
+        <div class="field"><label>Цена (смн/мес)</label><input type="number" id="tp-price" placeholder="500"></div>
+        <button class="btn-save" onclick="saveTeacherProfile()">Сохранить изменения</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
