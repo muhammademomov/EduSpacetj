@@ -6,7 +6,7 @@
 // Всё общается с бэкендом через /api/...
 // ═══════════════════════════════════════════════════════
 
-const API = 'http://localhost:3000/api'; // Поменяйте на ваш домен в продакшене
+const API = 'https://eduspacetj-production.up.railway.app/api'; // Поменяйте на ваш домен в продакшене
 
 // ─── HTTP helper ──────────────────────────────────────
 async function req(method, url, data = null) {
