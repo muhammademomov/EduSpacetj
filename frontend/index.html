@@ -486,7 +486,7 @@
     <div class="sb-item" onclick="sdShow('payment-flow')"><span class="sb-ico">💰</span>Оплата</div>
     <div class="sb-lbl">Аккаунт</div>
     <div class="sb-item" onclick="sdShow('notifications')"><span class="sb-ico">🔔</span>Уведомления<span class="sb-badge" id="sb-notif-cnt" style="display:none">0</span></div>
-    <div class="sb-item" onclick="sdShow('settings')"><span class="sb-ico">⚙️</span>Настройки</div>
+    <div class="sb-item" onclick="sdShow('settings');loadSettingsPage()"><span class="sb-ico">⚙️</span>Настройки</div>
     <div class="sb-bottom"><div class="sb-item" style="color:#EF4444" onclick="logout()"><span class="sb-ico">🚪</span>Выйти</div></div>
   </aside>
   <div class="dash-main">
@@ -676,9 +676,9 @@
         <div class="set-card">
           <div class="set-title">🔒 Безопасность</div>
           <div class="field"><label>Текущий пароль</label><input type="password" id="sett-cur-pw" placeholder="••••••••"></div>
-<div class="field"><label>Новый пароль</label><input type="password" id="sett-new-pw" placeholder="Минимум 8 символов"></div>
-<div class="field"><label>Подтверждение</label><input type="password" id="sett-cf-pw" placeholder="Повторите пароль"></div>
-<button class="btn-save" onclick="changePassword()">Изменить пароль</button>
+          <div class="field"><label>Новый пароль</label><input type="password" id="sett-new-pw" placeholder="Минимум 8 символов"></div>
+          <div class="field"><label>Подтверждение</label><input type="password" id="sett-cf-pw" placeholder="Повторите пароль"></div>
+          <button class="btn-save" onclick="changePassword()">Изменить пароль</button>
         </div>
         <div class="set-card">
           <div class="set-title">🌐 Язык</div>
