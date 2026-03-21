@@ -110,12 +110,12 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
                 work_hours = COALESCE(?, work_hours),
                 teacher_type = COALESCE(?, teacher_type)
              WHERE user_id = ?`,
-            [subject, bio,
+            [subject || null, bio || null,
              tags ? JSON.stringify(tags) : null,
-             price,
+             price || null,
              platforms ? JSON.stringify(platforms) : null,
              workDays ? JSON.stringify(workDays) : null,
-             workHours, teacherType, req.user.id]
+             workHours || null, teacherType || null, req.user.id]
         );
         if (firstName || lastName) {
             await db.query(
