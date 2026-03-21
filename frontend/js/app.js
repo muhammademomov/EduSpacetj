@@ -1,33 +1,24 @@
 // ═══════════════════════════════════════════════════════
 // EduSpace.tj — Frontend App
 // ═══════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════
-// EduSpace.tj — Frontend API Client
-// Всё общается с бэкендом через /api/...
-// ═══════════════════════════════════════════════════════
 
-const API = 'https://eduspacetj-production.up.railway.app/api'; // Поменяйте на ваш домен в продакшене
+const API = 'https://eduspacetj-production.up.railway.app/api';
 
-// ─── HTTP helper ──────────────────────────────────────
+// ─── HTTP helpers ─────────────────────────────────────
 async function req(method, url, data = null) {
-    const opts = {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-    };
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
     const token = localStorage.getItem('token');
     if (token) opts.headers['Authorization'] = 'Bearer ' + token;
     if (data) opts.body = JSON.stringify(data);
-
     const res = await fetch(API + url, opts);
     const json = await res.json();
-    if (!res.ok) throw { status: res.status, message: json.error || 'Ошибка', errors: json.errors };
+    if (!res.ok) throw { status: res.status, message: json.error || 'Ошибка' };
     return json;
 }
 const get = (url) => req('GET', url);
 const post = (url, data) => req('POST', url, data);
 const put = (url, data) => req('PUT', url, data);
 
-// ─── Upload helper (для файлов) ──────────────────────
 async function upload(url, formData) {
     const token = localStorage.getItem('token');
     const res = await fetch(API + url, {
@@ -58,13 +49,11 @@ let acLc = 1;
 async function init() {
     if (currentUser) {
         try {
-            // Проверяем токен — получаем свежие данные
             const fresh = await get('/auth/me');
             currentUser = { ...currentUser, ...fresh };
             localStorage.setItem('user', JSON.stringify(currentUser));
             showLoggedIn();
         } catch {
-            // Токен истёк
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             currentUser = null;
@@ -120,22 +109,16 @@ function showLoggedIn() {
 // ═══════════════════════════════════════════════════════
 async function loadHomeStats() {
     try {
-        const [teachers, courses] = await Promise.all([
-            get('/teachers'),
-            get('/courses'),
-        ]);
+        const [teachers, courses] = await Promise.all([get('/teachers'), get('/courses')]);
         document.getElementById('hs-teachers').innerHTML = teachers.length + '<span>+</span>';
         document.getElementById('hs-courses').innerHTML = courses.length + '<span>+</span>';
-
         const preview = document.getElementById('home-teachers-preview');
         if (!teachers.length) {
             preview.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text3)">Преподаватели появятся здесь после регистрации</div>';
         } else {
             preview.innerHTML = teachers.slice(0, 3).map(buildTccard).join('');
         }
-    } catch (e) {
-        console.log('loadHomeStats error:', e);
-    }
+    } catch(e) { console.log('loadHomeStats error:', e); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -146,29 +129,21 @@ let catalogTeachers = [], catalogCourses = [];
 async function loadCatalog(searchQ = '') {
     try {
         const params = searchQ ? `?search=${encodeURIComponent(searchQ)}` : '';
-        const [teachers, courses] = await Promise.all([
-            get('/teachers' + params),
-            get('/courses' + params),
-        ]);
+        const [teachers, courses] = await Promise.all([get('/teachers' + params), get('/courses' + params)]);
         catalogTeachers = teachers;
         catalogCourses = courses;
-
         document.getElementById('cat-count').textContent = teachers.length;
         document.getElementById('tab-t-cnt').textContent = teachers.length;
         document.getElementById('tab-c-cnt').textContent = courses.length;
-
         const grid = document.getElementById('tc-grid');
         const empty = document.getElementById('cat-empty');
         if (!teachers.length) { grid.innerHTML = ''; empty.style.display = 'block'; }
         else { empty.style.display = 'none'; grid.innerHTML = teachers.map(buildTccard).join(''); }
-
         const cgrid = document.getElementById('cat-cg');
         const cempty = document.getElementById('cat-c-empty');
         if (!courses.length) { cgrid.innerHTML = ''; cempty.style.display = 'block'; }
         else { cempty.style.display = 'none'; cgrid.innerHTML = courses.map(buildCcard).join(''); }
-    } catch (e) {
-        console.error('loadCatalog error:', e);
-    }
+    } catch(e) { console.error('loadCatalog error:', e); }
 }
 
 function catSearch(q) { loadCatalog(q); }
@@ -177,7 +152,7 @@ async function sortTeachers(v) {
     try {
         const teachers = await get('/teachers?sort=' + v);
         document.getElementById('tc-grid').innerHTML = teachers.map(buildTccard).join('');
-    } catch(e){}
+    } catch(e) {}
 }
 
 function catTab(tab, btn) {
@@ -201,9 +176,7 @@ async function openProfile(id) {
         const t = await get('/teachers/' + id);
         renderProfile(t);
         go('profile');
-    } catch (e) {
-        alert('Не удалось загрузить профиль'); console.error(e);
-    }
+    } catch(e) { alert('Не удалось загрузить профиль'); console.error(e); }
 }
 
 function renderProfile(t) {
@@ -244,14 +217,10 @@ function renderProfile(t) {
             <button class="pp-cc-btn" onclick="startEnroll('${c.id}')">Записаться</button>
           </div>`).join('') :
         '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3)">Курсов пока нет</div>';
-
-    // Отзывы
     document.getElementById('pp-rev-big').textContent = t.rating > 0 ? t.rating.toFixed(1) : '—';
     document.getElementById('pp-rev-stars').textContent = t.rating > 0 ? '★'.repeat(Math.round(t.rating)) : '';
     document.getElementById('pp-rev-total').textContent = (t.reviews?.length || 0) + ' отзывов';
     renderRevList(t.reviews || [], 0);
-
-    // Документы
     document.getElementById('pp-docs-list').innerHTML = (t.documents||[]).length ?
         t.documents.map(d => `
           <div class="doc-row">
@@ -261,7 +230,6 @@ function renderProfile(t) {
             <span class="doc-ok-badge">${d.isVerified?'✓ Проверен':'⏳ На проверке'}</span>
           </div>`).join('') :
         '<div style="text-align:center;padding:2rem;color:var(--text3)">Документы не загружены</div>';
-
     document.querySelectorAll('.pp-tab').forEach((t,i) => t.classList.toggle('on', i===0));
     ['pp-about','pp-courses','pp-reviews','pp-docs'].forEach((id,i) => document.getElementById(id).style.display = i===0?'':'none');
 }
@@ -310,15 +278,12 @@ function startEnroll(courseId) {
     if (!currentUser) { go('login'); return; }
     if (currentUser.role === 'teacher') { alert('Преподаватели не могут записываться на курсы'); return; }
     pendingCourseId = courseId;
-    go('student-dash');
-    loadStudentDash();
-    sdShow('payment-flow');
+    go('student-dash'); loadStudentDash(); sdShow('payment-flow');
 }
 
 function goPayForProfile() {
     if (!currentUser) { go('login'); return; }
     if (currentUser.role === 'teacher') { alert('Преподаватели не могут записываться на курсы'); return; }
-    // Берём первый курс преподавателя
     get('/teachers/' + currentProfileId).then(t => {
         if (t.courses?.length) { pendingCourseId = t.courses[0].id; go('student-dash'); loadStudentDash(); sdShow('payment-flow'); }
         else alert('У этого преподавателя пока нет курсов');
@@ -364,18 +329,15 @@ function smsIn(el, idx) {
 }
 
 async function verifySMS() {
-    // В демо — любые 4 цифры работают. В продакшене здесь проверка SMS через сервис.
     const code = [0,1,2,3].map(i => document.getElementById('s'+i).value).join('');
     if (code.length < 4) { document.getElementById('sms-err').style.display = 'block'; return; }
     document.getElementById('sms-err').style.display = 'none';
     clearInterval(regTimer);
-
     try {
         const result = await post('/auth/register', regData);
         localStorage.setItem('token', result.token);
         localStorage.setItem('user', JSON.stringify(result.user));
         currentUser = result.user;
-
         document.getElementById('rs2').style.display = 'none';
         document.getElementById('rs3').style.display = 'block';
         document.getElementById('reg-sub').textContent = 'Готово!';
@@ -467,19 +429,13 @@ async function finishSetup() {
     const courseCat = document.getElementById('s-course-cat')?.value || '';
     const courseLvl = document.getElementById('s-course-lvl')?.value || 'Начинающий';
     const courseDesc = document.getElementById('s-course-desc')?.value || '';
-
     try {
-        // Обновляем профиль преподавателя
         await put('/teachers/profile/update', { bio, tags, price, platforms, workDays: days, workHours: timeFrom+'–'+timeTo, teacherType: setupTp });
-
-        // Загружаем фото если выбрано
         const photoInput = document.querySelector('#setup-photo input[type=file]');
         if (photoInput?.files?.[0]) {
             const fd = new FormData(); fd.append('photo', photoInput.files[0]);
             await upload('/teachers/profile/photo', fd);
         }
-
-        // Загружаем документ
         const docTypes = ['dip','cert','work'];
         const docTypeMap = {dip:'diploma', cert:'certificate', work:'work_book'};
         for (const dt of docTypes) {
@@ -492,17 +448,12 @@ async function finishSetup() {
                 await upload('/teachers/profile/documents', fd);
             }
         }
-
-        // Создаём курс
         if (courseName && courseCat) {
             const lessons = Array.from(document.querySelectorAll('#ac-lessons .l-title')).map(el => el.textContent);
             await post('/courses', { title: courseName, description: courseDesc, category: courseCat, level: courseLvl, price, lessons });
         }
-
         goSetup(5);
-    } catch(e) {
-        alert('Ошибка: ' + (e.message || 'Неизвестная ошибка'));
-    }
+    } catch(e) { alert('Ошибка: ' + (e.message || 'Неизвестная ошибка')); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -519,42 +470,30 @@ async function loadStudentDash() {
     document.getElementById('settings-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sett-name').value = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sett-email').value = currentUser.email || '';
-
-    // Загружаем данные параллельно
     try {
-        const [balData, enrollments] = await Promise.all([
-            get('/payments/balance'),
-            get('/payments/enrollments'),
-        ]);
-        // Обновляем currentUser.balance
+        const [balData, enrollments] = await Promise.all([get('/payments/balance'), get('/payments/enrollments')]);
         currentUser.balance = balData.balance;
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
-
         const bal = balData.balance;
         document.getElementById('dh-balance').textContent = bal;
         document.getElementById('dm-balance').textContent = bal;
         document.getElementById('sb-bal-badge').textContent = bal;
-
         document.getElementById('dh-courses').textContent = enrollments.length;
         document.getElementById('dm-courses').textContent = enrollments.length;
         document.getElementById('sb-courses-cnt').textContent = enrollments.length;
-
-        // Показываем первые 3 курса
         if (enrollments.length > 0) {
             document.getElementById('sd-courses-preview').innerHTML = enrollments.slice(0,3).map(e =>
                 `<div class="d-cr-row"><div class="d-cr-ico">${e.emoji}</div><div class="d-cr-inf"><div class="d-cr-t">${e.title}</div><div class="d-cr-m">${e.first_name} ${e.last_name}</div></div><span class="st-badge2 st-on">Активен</span></div>`
             ).join('');
         }
     } catch(e) { console.error('loadStudentDash:', e); }
-
-    // Уведомления
     try {
         const notifs = await get('/users/notifications');
         const unread = notifs.filter(n => !n.is_read).length;
         if (unread > 0) { document.getElementById('sb-notif-cnt').textContent = unread; document.getElementById('sb-notif-cnt').style.display = ''; }
         document.getElementById('dm-notifs').textContent = unread;
-    } catch(e){}
+    } catch(e) {}
 }
 
 function sdShow(panel) {
@@ -597,7 +536,6 @@ async function loadBalance() {
         document.getElementById('bal-total-disp').textContent = bal.balance + ' смн';
         document.getElementById('bal-spent').textContent = bal.totalSpent + ' смн';
         document.getElementById('bal-added').textContent = bal.totalAdded + ' смн';
-
         const txns = await get('/payments/history');
         const list = document.getElementById('tx-list');
         if (!txns.length) { list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Операций пока нет</div>'; return; }
@@ -622,43 +560,10 @@ async function loadNotifications() {
     } catch(e) { console.error(e); }
 }
 
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
 async function saveSettings() {
-    async function changePassword() {
-    const cur = document.getElementById('sett-cur-pw').value;
-    const nw  = document.getElementById('sett-new-pw').value;
-    const cf  = document.getElementById('sett-cf-pw').value;
-    if (!cur || !nw) return alert('Заполните все поля');
-    if (nw.length < 8) return alert('Пароль минимум 8 символов');
-    if (nw !== cf) return alert('Пароли не совпадают');
-    try {
-        await put('/auth/password', { currentPassword: cur, newPassword: nw });
-        alert('Пароль изменён!');
-        document.getElementById('sett-cur-pw').value = '';
-        document.getElementById('sett-new-pw').value = '';
-        document.getElementById('sett-cf-pw').value = '';
-    } catch(e) { alert('Ошибка: ' + e.message); }
-}
-
-async function forgotPassword() {
-    const email = document.getElementById('login-email')?.value;
-    if (!email) return alert('Введите email в поле входа');
-    alert('Для восстановления пароля напишите на admin@eduspace.tj');
-}
-    async function changePassword() {
-    const cur = document.getElementById('sett-cur-pw').value;
-    const nw  = document.getElementById('sett-new-pw').value;
-    const cf  = document.getElementById('sett-cf-pw').value;
-    if (!cur || !nw) return alert('Заполните все поля');
-    if (nw.length < 8) return alert('Пароль минимум 8 символов');
-    if (nw !== cf) return alert('Пароли не совпадают');
-    try {
-        await put('/auth/password', { currentPassword: cur, newPassword: nw });
-        alert('Пароль изменён!');
-        document.getElementById('sett-cur-pw').value = '';
-        document.getElementById('sett-new-pw').value = '';
-        document.getElementById('sett-cf-pw').value = '';
-    } catch(e) { alert('Ошибка: ' + e.message); }
-}
     const name = document.getElementById('sett-name').value.trim().split(' ');
     try {
         await put('/users/profile', { firstName: name[0], lastName: name.slice(1).join(' ') || currentUser.lastName });
@@ -666,11 +571,31 @@ async function forgotPassword() {
         currentUser = { ...currentUser, ...fresh };
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
-        alert('Сохранено!');
+        alert('✅ Сохранено!');
     } catch(e) { alert('Ошибка: ' + e.message); }
 }
 
-function setLang(el) { document.querySelectorAll('.lang-opts .lo').forEach(l => l.classList.remove('on')); el.classList.add('on'); }
+async function changePassword() {
+    const cur = document.getElementById('sett-cur-pw')?.value;
+    const nw  = document.getElementById('sett-new-pw')?.value;
+    const cf  = document.getElementById('sett-cf-pw')?.value;
+    if (!cur || !nw) return alert('Заполните все поля');
+    if (nw.length < 8) return alert('Пароль минимум 8 символов');
+    if (nw !== cf) return alert('Пароли не совпадают');
+    try {
+        await put('/auth/password', { currentPassword: cur, newPassword: nw });
+        alert('✅ Пароль изменён!');
+        document.getElementById('sett-cur-pw').value = '';
+        document.getElementById('sett-new-pw').value = '';
+        document.getElementById('sett-cf-pw').value = '';
+    } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+function setLang(el) {
+    document.querySelectorAll('.lang-opts .lo').forEach(l => l.classList.remove('on'));
+    el.classList.add('on');
+    alert('Смена языка будет добавлена в следующей версии');
+}
 
 // ═══════════════════════════════════════════════════════
 // PAYMENT FLOW
@@ -683,7 +608,6 @@ async function initPayFlow() {
         const bal = await get('/payments/balance');
         currentUser.balance = bal.balance;
         updateTopupPreview();
-        // Если pendingCourseId — сразу показываем checkout
         if (pendingCourseId) {
             document.getElementById('pf-topup').style.display = 'none';
             document.getElementById('pf-checkout').style.display = 'block';
@@ -726,12 +650,10 @@ async function doTopup() {
         showLoggedIn();
         updateTopupPreview();
         document.getElementById('topup-btn-main').disabled = false;
-
         document.getElementById('pf-topup').style.display = 'none';
         document.getElementById('pf-checkout').style.display = 'block';
         if (pendingCourseId) await renderCheckout(pendingCourseId, result.balance);
         else {
-            // Нет выбранного курса — предлагаем выбрать
             document.getElementById('checkout-courses-list').innerHTML = '<div class="empty-state" style="padding:2rem"><div class="empty-icon">📚</div><div class="empty-title">Баланс пополнен! Выберите курс</div><button class="btn-lg green" onclick="go(\'catalog\')">В каталог</button></div>';
             document.getElementById('pay-btn-main').disabled = true;
         }
@@ -774,7 +696,6 @@ async function doPayCourse() {
         currentUser.balance = result.newBalance;
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
-
         const e = result.enrollment;
         document.getElementById('receipt-rows').innerHTML = `
             <div class="receipt-row"><div class="rl">Курс</div><div class="rv">${e.courseTitle}</div></div>
@@ -783,7 +704,6 @@ async function doPayCourse() {
             <div class="receipt-row"><div class="rl">Преподаватель получил</div><div class="rv g">${e.teacherAmount} смн</div></div>
             <div class="receipt-row"><div class="rl">Ваш баланс</div><div class="rv g">${result.newBalance} смн</div></div>
             <div class="receipt-row"><div class="rl">Дата</div><div class="rv">${new Date().toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'})}</div></div>`;
-
         document.getElementById('pf-checkout').style.display = 'none';
         document.getElementById('pf-success').style.display = 'block';
         pendingCourseId = null;
@@ -808,29 +728,21 @@ async function loadTeacherDash() {
     document.getElementById('td-prof-av').textContent = currentUser.initials;
     document.getElementById('td-prof-av').style.background = currentUser.color;
     document.getElementById('td-prof-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
-
     try {
-        const [stats, courses] = await Promise.all([
-            get('/teachers/my/stats'),
-            get('/courses/my/list'),
-        ]);
+        const [stats, courses] = await Promise.all([get('/teachers/my/stats'), get('/courses/my/list')]);
         document.getElementById('tdm-students').textContent = stats.totalStudents;
         document.getElementById('tdm-courses').textContent = stats.totalCourses;
         document.getElementById('tdm-earn').textContent = stats.netRevenue + ' смн';
         document.getElementById('td-courses-cnt').textContent = courses.length;
-
         document.getElementById('earn-gross').textContent = stats.grossRevenue + ' смн';
         document.getElementById('earn-comm').textContent = stats.commission + ' смн';
         document.getElementById('earn-net').textContent = stats.netRevenue + ' смн';
-
         if (courses.length > 0) {
             document.getElementById('td-courses-preview').innerHTML = courses.slice(0,3).map(c =>
                 `<div class="d-cr-row"><div class="d-cr-ico">${c.emoji}</div><div class="d-cr-inf"><div class="d-cr-t">${c.title}</div><div class="d-cr-m">${c.category} · ${c.student_count||0} уч. · <span class="st-badge2 ${c.status==='active'?'st-on':'st-rev'}">${c.status==='active'?'Активен':'На проверке'}</span></div></div><div class="d-cr-price">${c.price} смн</div></div>`
             ).join('');
         }
     } catch(e) { console.error('loadTeacherDash:', e); }
-
-    // Prefill profile form
     document.getElementById('tp-fname').value = currentUser.firstName || '';
     document.getElementById('tp-lname').value = currentUser.lastName || '';
     document.getElementById('tp-email').value = currentUser.email || '';
@@ -874,12 +786,11 @@ async function saveTeacherProfile() {
             bio: document.getElementById('tp-bio').value,
             price: parseFloat(document.getElementById('tp-price').value) || 0,
         });
-        // Обновляем пользователя
         const fresh = await get('/auth/me');
         currentUser = { ...currentUser, ...fresh };
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
-        alert('Профиль сохранён!');
+        alert('✅ Профиль сохранён!');
     } catch(e) { alert('Ошибка: ' + e.message); }
 }
 
