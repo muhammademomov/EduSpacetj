@@ -148,7 +148,7 @@ router.post('/profile/documents', auth, teacherOnly, upload.single('document'), 
         const fileUrl = `/uploads/${req.file.filename}`;
         await db.query(
             'INSERT INTO teacher_documents (id, teacher_id, doc_type, doc_name, institution, year, file_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [randomUUID(), tp[0].id, docType, docName, institution, year, fileUrl]
+            [randomUUID(), tp[0].id, docType, docName, institution || null, year || null, fileUrl]
         );
         // Уведомление admin
         const [admins] = await db.query("SELECT id FROM users WHERE role='admin' LIMIT 1");
