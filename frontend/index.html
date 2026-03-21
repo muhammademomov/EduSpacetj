@@ -675,10 +675,10 @@
         </div>
         <div class="set-card">
           <div class="set-title">🔒 Безопасность</div>
-          <div class="field"><label>Текущий пароль</label><input type="password" placeholder="••••••••"></div>
-          <div class="field"><label>Новый пароль</label><input type="password" placeholder="Минимум 8 символов"></div>
-          <div class="field"><label>Подтверждение</label><input type="password" placeholder="Повторите пароль"></div>
-          <button class="btn-save">Изменить пароль</button>
+          <div class="field"><label>Текущий пароль</label><input type="password" id="sett-cur-pw" placeholder="••••••••"></div>
+<div class="field"><label>Новый пароль</label><input type="password" id="sett-new-pw" placeholder="Минимум 8 символов"></div>
+<div class="field"><label>Подтверждение</label><input type="password" id="sett-cf-pw" placeholder="Повторите пароль"></div>
+<button class="btn-save" onclick="changePassword()">Изменить пароль</button>
         </div>
         <div class="set-card">
           <div class="set-title">🌐 Язык</div>
