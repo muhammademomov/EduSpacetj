@@ -623,6 +623,21 @@ async function loadNotifications() {
 }
 
 async function saveSettings() {
+    async function changePassword() {
+    const cur = document.getElementById('sett-cur-pw').value;
+    const nw  = document.getElementById('sett-new-pw').value;
+    const cf  = document.getElementById('sett-cf-pw').value;
+    if (!cur || !nw) return alert('Заполните все поля');
+    if (nw.length < 8) return alert('Пароль минимум 8 символов');
+    if (nw !== cf) return alert('Пароли не совпадают');
+    try {
+        await put('/auth/password', { currentPassword: cur, newPassword: nw });
+        alert('Пароль изменён!');
+        document.getElementById('sett-cur-pw').value = '';
+        document.getElementById('sett-new-pw').value = '';
+        document.getElementById('sett-cf-pw').value = '';
+    } catch(e) { alert('Ошибка: ' + e.message); }
+}
     const name = document.getElementById('sett-name').value.trim().split(' ');
     try {
         await put('/users/profile', { firstName: name[0], lastName: name.slice(1).join(' ') || currentUser.lastName });
