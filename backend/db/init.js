@@ -28,6 +28,7 @@ async function init() {
         [randomUUID(), hash]
     );
     console.log('✅ Администратор создан');
+    await conn.query(`UPDATE users SET role='admin' WHERE email='admin@eduspace.tj'`);
 
     await conn.end();
     console.log('🎉 Готово!');
