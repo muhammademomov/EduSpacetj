@@ -1,15 +1,8 @@
--- EduSpace.tj — MySQL схема
--- Запустить один раз: node db/init.js
--- Или через phpMyAdmin: Импорт → этот файл
-
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ═══════════════════════════════════
--- ПОЛЬЗОВАТЕЛИ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS users (
-    id          VARCHAR(36)  PRIMARY KEY DEFAULT (UUID()),
+    id          VARCHAR(36)  PRIMARY KEY,
     first_name  VARCHAR(100) NOT NULL,
     last_name   VARCHAR(100) NOT NULL,
     email       VARCHAR(255) NOT NULL UNIQUE,
@@ -26,11 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_role  (role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- ПРОФИЛИ УЧЕНИКОВ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS student_profiles (
-    id          VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    id          VARCHAR(36) PRIMARY KEY,
     user_id     VARCHAR(36) NOT NULL UNIQUE,
     balance     DECIMAL(12,2) DEFAULT 0,
     total_added DECIMAL(12,2) DEFAULT 0,
@@ -38,21 +28,18 @@ CREATE TABLE IF NOT EXISTS student_profiles (
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- ПРОФИЛИ ПРЕПОДАВАТЕЛЕЙ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS teacher_profiles (
-    id            VARCHAR(36)  PRIMARY KEY DEFAULT (UUID()),
+    id            VARCHAR(36)  PRIMARY KEY,
     user_id       VARCHAR(36)  NOT NULL UNIQUE,
     subject       VARCHAR(200),
     bio           TEXT,
-    tags          TEXT,        -- JSON строка: ["Python","Django"]
+    tags          TEXT,
     price         DECIMAL(10,2) DEFAULT 0,
-    platforms     TEXT,        -- JSON строка: ["zoom","meet"]
-    work_days     TEXT,        -- JSON строка: ["Пн","Вт","Ср"]
-    work_hours    VARCHAR(20),  -- "09:00–18:00"
+    platforms     TEXT,
+    work_days     TEXT,
+    work_hours    VARCHAR(20),
     teacher_type  ENUM('pro','specialist') DEFAULT 'pro',
     is_moderated  TINYINT(1)   DEFAULT 0,
     is_visible    TINYINT(1)   DEFAULT 0,
@@ -64,13 +51,10 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- ДОКУМЕНТЫ ПРЕПОДАВАТЕЛЕЙ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS teacher_documents (
-    id          VARCHAR(36)  PRIMARY KEY DEFAULT (UUID()),
+    id          VARCHAR(36)  PRIMARY KEY,
     teacher_id  VARCHAR(36)  NOT NULL,
     doc_type    ENUM('diploma','certificate','work_book') NOT NULL,
     doc_name    VARCHAR(300) NOT NULL,
@@ -80,13 +64,10 @@ CREATE TABLE IF NOT EXISTS teacher_documents (
     is_verified TINYINT(1) DEFAULT 0,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- КУРСЫ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS courses (
-    id           VARCHAR(36)  PRIMARY KEY DEFAULT (UUID()),
+    id           VARCHAR(36)  PRIMARY KEY,
     teacher_id   VARCHAR(36)  NOT NULL,
     title        VARCHAR(300) NOT NULL,
     description  TEXT,
@@ -105,25 +86,19 @@ CREATE TABLE IF NOT EXISTS courses (
     INDEX idx_category (category),
     INDEX idx_teacher  (teacher_id),
     FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- УРОКИ КУРСА
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS course_lessons (
-    id        VARCHAR(36)  PRIMARY KEY DEFAULT (UUID()),
+    id        VARCHAR(36)  PRIMARY KEY,
     course_id VARCHAR(36)  NOT NULL,
     title     VARCHAR(300) NOT NULL,
     order_num INT          NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- ЗАПИСИ НА КУРС
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS enrollments (
-    id                VARCHAR(36)   PRIMARY KEY DEFAULT (UUID()),
+    id                VARCHAR(36)   PRIMARY KEY,
     student_id        VARCHAR(36)   NOT NULL,
     course_id         VARCHAR(36)   NOT NULL,
     teacher_id        VARCHAR(36)   NOT NULL,
@@ -133,67 +108,53 @@ CREATE TABLE IF NOT EXISTS enrollments (
     status            ENUM('active','completed','refunded') DEFAULT 'active',
     enrolled_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_student_course (student_id, course_id),
-    INDEX idx_student (student_id),
-    INDEX idx_teacher (teacher_id),
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id)  REFERENCES courses(id) ON DELETE CASCADE,
     FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- ТРАНЗАКЦИИ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS transactions (
-    id                  VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    user_id             VARCHAR(36) NOT NULL,
-    type                ENUM('topup','payment','refund','payout') NOT NULL,
-    amount              DECIMAL(12,2) NOT NULL,
-    description         VARCHAR(500),
-    related_course_id   VARCHAR(36),
+    id                    VARCHAR(36) PRIMARY KEY,
+    user_id               VARCHAR(36) NOT NULL,
+    type                  ENUM('topup','payment','refund','payout') NOT NULL,
+    amount                DECIMAL(12,2) NOT NULL,
+    description           VARCHAR(500),
+    related_course_id     VARCHAR(36),
     related_enrollment_id VARCHAR(36),
-    status              VARCHAR(20) DEFAULT 'completed',
-    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status                VARCHAR(20) DEFAULT 'completed',
+    created_at            DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- ИЗБРАННОЕ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS favorites (
-    id         VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    id         VARCHAR(36) PRIMARY KEY,
     student_id VARCHAR(36) NOT NULL,
     teacher_id VARCHAR(36) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_fav (student_id, teacher_id),
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- ОТЗЫВЫ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS reviews (
-    id         VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    id         VARCHAR(36) PRIMARY KEY,
     student_id VARCHAR(36) NOT NULL,
     teacher_id VARCHAR(36) NOT NULL,
     course_id  VARCHAR(36) NOT NULL,
-    stars      TINYINT     NOT NULL CHECK (stars BETWEEN 1 AND 5),
+    stars      TINYINT     NOT NULL,
     text       TEXT,
-    tags       TEXT,       -- JSON: ["Понятно","Практика"]
+    tags       TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_student_course_review (student_id, course_id),
     INDEX idx_teacher (teacher_id),
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id)  REFERENCES courses(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════
--- УВЕДОМЛЕНИЯ
--- ═══════════════════════════════════
 CREATE TABLE IF NOT EXISTS notifications (
-    id         VARCHAR(36)  PRIMARY KEY DEFAULT (UUID()),
+    id         VARCHAR(36)  PRIMARY KEY,
     user_id    VARCHAR(36)  NOT NULL,
     type       VARCHAR(50)  NOT NULL,
     title      VARCHAR(300) NOT NULL,
@@ -202,6 +163,6 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
