@@ -179,65 +179,99 @@ async function openProfile(id) {
 }
 
 function renderProfile(t) {
+    // Breadcrumb
     document.getElementById('pp-bc-name').textContent = t.fullName;
-    document.getElementById('pp-cover').style.cssText = `height:180px;background:linear-gradient(135deg,${t.color}33,${t.color}66);position:relative;overflow:hidden`;
-    document.getElementById('pp-cover').innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:flex-end;justify-content:flex-end;padding:20px;font-size:80px;opacity:.15">${catEmoji(t.subject)}</div>`;
-    if (t.avatarUrl) {
-        document.getElementById('pp-av').style.background = t.color;
-        document.getElementById('pp-av').style.padding = '0';
-        document.getElementById('pp-av').style.overflow = 'hidden';
-        document.getElementById('pp-av').innerHTML = `<img src="${t.avatarUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${t.initials}'">`;
-    } else {
-        document.getElementById('pp-av').style.background = t.color;
-        document.getElementById('pp-av').textContent = t.initials;
+
+    // Cover background - blurred avatar
+    var coverBg = document.getElementById('pp-cover-bg');
+    if (coverBg && t.avatarUrl) {
+        coverBg.style.backgroundImage = 'url(' + t.avatarUrl + ')';
+    } else if (coverBg) {
+        coverBg.style.background = 'linear-gradient(135deg,' + (t.color||'#18A96A') + '44,' + (t.color||'#18A96A') + '22)';
     }
+
+    // Avatar
+    var av = document.getElementById('pp-av');
+    if (av) {
+        if (t.avatarUrl) {
+            av.style.padding = '0';
+            av.style.fontSize = '0';
+            av.innerHTML = '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block">';
+        } else {
+            av.textContent = t.initials || '?';
+            av.style.background = t.color || '#18A96A';
+        }
+    }
+
+    // Name & subject
     document.getElementById('pp-hname').textContent = t.fullName;
-    document.getElementById('pp-hsubj').textContent = t.subject || '';
+    document.getElementById('pp-hsubj').textContent = (t.subject || '') + (t.isModerated ? ' · ✓ Проверен' : '');
+
+    // Stats
     document.getElementById('pp-hrat').textContent = t.rating > 0 ? t.rating.toFixed(1) : '—';
-    document.getElementById('pp-hrev').textContent = t.reviewCount;
-    document.getElementById('pp-hstu').textContent = t.studentCount;
-    document.getElementById('pp-hcou').textContent = t.courses?.length || 0;
+    document.getElementById('pp-hrev').textContent = t.reviewCount || 0;
+    document.getElementById('pp-hstu').textContent = t.studentCount || 0;
+    document.getElementById('pp-hcou').textContent = (t.courses||[]).length;
+
+    // Price card
     document.getElementById('ppc-price').textContent = t.price > 0 ? t.price : '—';
     document.getElementById('ppc-note').textContent = t.price > 0 ? 'Первый урок бесплатно' : 'Свяжитесь с преподавателем';
-    if (t.isModerated) document.getElementById('pp-ver').style.display = ''; else document.getElementById('pp-ver').style.display = 'none';
-    document.getElementById('pp-hbadges').innerHTML =
-        (t.isModerated ? '<span class="pp-hbadge g">✓ Проверен</span>' : '<span class="pp-hbadge gr">⏳ На проверке</span>') +
-        (t.subject ? `<span class="pp-hbadge au">${t.subject}</span>` : '');
+
+    // About
     document.getElementById('pp-desc-txt').textContent = t.bio || 'Описание не добавлено';
-    document.getElementById('pp-plats').innerHTML = ['Zoom','Google Meet','Microsoft Teams','Telegram','Skype'].map(p => {
-        const platMap = {'Zoom':'zoom','Google Meet':'meet','Microsoft Teams':'teams','Telegram':'tg','Skype':'sk'};
-        const on = (t.platforms || []).includes(platMap[p]);
-        return `<div class="plat-chip${on?' on':''}">${on?'✓ ':''} ${p}</div>`;
+
+    // Platforms
+    var platMap = {zoom:'Zoom',meet:'Google Meet',teams:'MS Teams',tg:'Telegram',sk:'Skype'};
+    var platIcons = {zoom:'🎥',meet:'📹',teams:'💼',tg:'✈️',sk:'💬'};
+    document.getElementById('pp-plats').innerHTML = ['zoom','meet','teams','tg','sk'].map(function(p) {
+        var on = (t.platforms||[]).indexOf(p) !== -1;
+        return '<div class="plat-chip' + (on?' on':'') + '">' + (platIcons[p]||'') + ' ' + platMap[p] + '</div>';
     }).join('');
-    document.getElementById('pp-days').innerHTML = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d =>
-        `<div class="day-chip${(t.workDays||[]).includes(d)?' on':''}">${d}</div>`
-    ).join('');
-    document.getElementById('pp-hours').innerHTML = t.workHours ? `<span style="font-weight:700">Часы:</span> ${t.workHours}` : '';
-    document.getElementById('pp-cg').innerHTML = (t.courses||[]).length ?
-        t.courses.map(c => `
-          <div class="pp-cc">
-            <div style="font-size:22px;margin-bottom:7px">${c.emoji}</div>
-            <div style="font-size:13.5px;font-weight:700;margin-bottom:5px">${c.title}</div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:8px"><span>${c.level}</span><span style="background:var(--gl2);color:var(--g2);padding:2px 7px;border-radius:6px;font-size:11px">${c.category}</span></div>
-            <div style="font-size:15px;font-weight:800;color:var(--g2)">${c.price > 0 ? c.price + ' смн' : 'Договорная'}</div>
-            <button class="pp-cc-btn" onclick="startEnroll('${c.id}')">Записаться</button>
-          </div>`).join('') :
-        '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3)">Курсов пока нет</div>';
+
+    // Days
+    document.getElementById('pp-days').innerHTML = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(function(d) {
+        var on = (t.workDays||[]).indexOf(d) !== -1;
+        return '<div class="day-chip' + (on?' on':'') + '">' + d + '</div>';
+    }).join('');
+    document.getElementById('pp-hours').innerHTML = t.workHours ? '⏰ ' + t.workHours : '';
+
+    // Courses
+    document.getElementById('pp-cg').innerHTML = (t.courses||[]).length
+        ? t.courses.map(function(c) {
+            return '<div class="pp-cc">' +
+                '<div style="font-size:28px;margin-bottom:8px">' + (c.emoji||'📖') + '</div>' +
+                '<div style="font-size:14px;font-weight:700;margin-bottom:4px">' + c.title + '</div>' +
+                '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:10px"><span>' + c.level + '</span><span style="background:var(--gl2);color:var(--g2);padding:2px 7px;border-radius:6px">' + c.category + '</span></div>' +
+                '<div style="font-size:16px;font-weight:800;color:var(--g2);margin-bottom:8px">' + (c.price > 0 ? c.price + ' смн' : 'Договорная') + '</div>' +
+                '<button class="pp-cc-btn" onclick="startEnroll('' + c.id + '')">Записаться</button>' +
+                '</div>';
+        }).join('')
+        : '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3)">Курсов пока нет</div>';
+
+    // Reviews
     document.getElementById('pp-rev-big').textContent = t.rating > 0 ? t.rating.toFixed(1) : '—';
     document.getElementById('pp-rev-stars').textContent = t.rating > 0 ? '★'.repeat(Math.round(t.rating)) : '';
-    document.getElementById('pp-rev-total').textContent = (t.reviews?.length || 0) + ' отзывов';
+    document.getElementById('pp-rev-total').textContent = (t.reviews||[]).length + ' отзывов';
     renderRevList(t.reviews || [], 0);
-    document.getElementById('pp-docs-list').innerHTML = (t.documents||[]).length ?
-        t.documents.map(d => `
-          <div class="doc-row">
-            <div class="doc-ico">${d.type==='diploma'?'🎓':d.type==='certificate'?'📜':'📋'}</div>
-            <div class="doc-info"><div class="doc-type-lbl">${d.type==='diploma'?'Диплом':d.type==='certificate'?'Сертификат':'Трудовая'}</div>
-            <div class="doc-name">${d.name}</div><div class="doc-meta">${d.institution||''} ${d.year?'· '+d.year:''}</div></div>
-            <span class="doc-ok-badge">${d.isVerified?'✓ Проверен':'⏳ На проверке'}</span>
-          </div>`).join('') :
-        '<div style="text-align:center;padding:2rem;color:var(--text3)">Документы не загружены</div>';
-    document.querySelectorAll('.pp-tab').forEach((t,i) => t.classList.toggle('on', i===0));
-    ['pp-about','pp-courses','pp-reviews','pp-docs'].forEach((id,i) => document.getElementById(id).style.display = i===0?'':'none');
+
+    // Documents
+    document.getElementById('pp-docs-list').innerHTML = (t.documents||[]).length
+        ? t.documents.map(function(d) {
+            return '<div class="doc-row">' +
+                '<div class="doc-ico">' + (d.type==='diploma'?'🎓':d.type==='certificate'?'📜':'📋') + '</div>' +
+                '<div class="doc-info"><div class="doc-type-lbl">' + (d.type==='diploma'?'Диплом':d.type==='certificate'?'Сертификат':'Трудовая') + '</div>' +
+                '<div class="doc-name">' + d.name + '</div>' +
+                '<div class="doc-meta">' + (d.institution||'') + (d.year?' · '+d.year:'') + '</div></div>' +
+                '<span class="doc-ok-badge">' + (d.isVerified?'✓ Проверен':'⏳ На проверке') + '</span>' +
+                '</div>';
+        }).join('')
+        : '<div style="text-align:center;padding:2rem;color:var(--text3)">Документы не загружены</div>';
+
+    // Reset tabs
+    document.querySelectorAll('.pp-tab').forEach(function(t,i){ t.classList.toggle('on', i===0); });
+    ['pp-about','pp-courses','pp-reviews','pp-docs'].forEach(function(id,i){
+        document.getElementById(id).style.display = i===0 ? '' : 'none';
+    });
 }
 
 function renderRevList(reviews, months) {
@@ -285,6 +319,11 @@ function startEnroll(courseId) {
     if (currentUser.role === 'teacher') { alert('Преподаватели не могут записываться на курсы'); return; }
     pendingCourseId = courseId;
     go('student-dash'); loadStudentDash(); sdShow('payment-flow');
+}
+
+function goPayForProfileById(id) {
+    currentProfileId = id;
+    goPayForProfile();
 }
 
 function goPayForProfile() {
@@ -840,24 +879,43 @@ function catEmoji(cat) {
 
 function buildTccard(t) {
     var av = t.avatarUrl
-        ? '<div class="tcc-av"><img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block"></div>'
-        : '<div class="tcc-av" style="background:' + (t.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff">' + (t.initials||'?') + '</div>';
-    return `
-        <div class="tccard${t.isModerated?' verified':''}" onclick="openProfile('${t.id}')">
-            <div class="tcc-cover">
-                <div class="tcc-cover-bg" style="background:linear-gradient(135deg,${t.color||'#18A96A'}22,${t.color||'#18A96A'}44);width:100%;height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:14px;font-size:26px;opacity:.3">${catEmoji(t.subject)}</div>
-                ${t.isModerated ? '<div class="tcc-badge top">✓ Проверен</div>' : ''}
-            </div>
-            ` + av + `
-            <div class="tcc-body">
-                <div class="tcc-name">${t.firstName||t.first_name} ${t.lastName||t.last_name}</div>
-                <div class="tcc-subj">${t.subject || 'Предмет не указан'}</div>
-                <div class="tcc-desc">${t.bio || ''}</div>
-                <div class="tcc-meta"><span style="color:#F59E0B">★</span><span style="font-weight:700">${t.rating > 0 ? parseFloat(t.rating).toFixed(1) : '—'}</span><span style="color:var(--text3)">· ${t.reviewCount||t.review_count||0} отз.</span></div>
-                ${(t.tags||[]).length ? '<div class="tcc-tags">'+(t.tags||[]).slice(0,3).map(tag=>`<span class="tcc-tag">${tag}</span>`).join('')+'</div>' : ''}
-                <div class="tcc-foot"><div><div class="tcc-price-lbl">от</div><span class="tcc-price">${t.price > 0 ? t.price + ' смн' : 'Договорная'}</span></div><button class="btn-vp" onclick="event.stopPropagation();openProfile('${t.id}')">Смотреть →</button></div>
-            </div>
-        </div>`;
+        ? '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block">'
+        : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#fff;background:' + (t.color||'#18A96A') + '">' + (t.initials||'?') + '</div>';
+    var stars = '';
+    if (t.rating > 0) {
+        var r = Math.round(parseFloat(t.rating));
+        for (var i = 0; i < 5; i++) stars += i < r ? '★' : '☆';
+    }
+    var tags = (t.tags||[]).slice(0,3).map(function(tag){ return '<span class="tc2-tag">' + tag + '</span>'; }).join('');
+    var price = t.price > 0 ? '<span class="tc2-price-num">' + t.price + '</span><span class="tc2-price-unit"> смн/мес</span>' : '<span class="tc2-price-num">—</span>';
+
+    return '<div class="tc2card' + (t.isModerated?' verified':'') + '" onclick="openProfile('' + t.id + '')">' +
+        '<div class="tc2-photo-wrap">' +
+            av +
+            (t.isModerated ? '<div class="tc2-check">✓</div>' : '') +
+        '</div>' +
+        '<div class="tc2-body">' +
+            '<div class="tc2-top">' +
+                '<div>' +
+                    '<div class="tc2-name">' + (t.firstName||t.first_name||'') + ' ' + (t.lastName||t.last_name||'') + '</div>' +
+                    '<div class="tc2-subj">' + (t.subject||'Предмет не указан') + '</div>' +
+                '</div>' +
+                (t.isModerated ? '<span class="tc2-verified-badge">✓ Проверен</span>' : '<span class="tc2-pending-badge">⏳ На проверке</span>') +
+            '</div>' +
+            (t.bio ? '<div class="tc2-desc">' + t.bio + '</div>' : '') +
+            (tags ? '<div class="tc2-tags">' + tags + '</div>' : '') +
+            '<div class="tc2-stats">' +
+                (t.rating > 0 ? '<span class="tc2-stars">' + stars + ' <strong>' + parseFloat(t.rating).toFixed(1) + '</strong></span>' : '') +
+                '<span>👨‍🎓 ' + (t.studentCount||t.student_count||0) + ' учеников</span>' +
+                '<span>💬 ' + (t.reviewCount||t.review_count||0) + ' отзывов</span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="tc2-aside">' +
+            '<div class="tc2-price">' + price + '</div>' +
+            '<button class="tc2-btn-view" onclick="event.stopPropagation();openProfile('' + t.id + '')">Смотреть профиль →</button>' +
+            '<button class="tc2-btn-enroll" onclick="event.stopPropagation();goPayForProfileById('' + t.id + '')">Записаться</button>' +
+        '</div>' +
+    '</div>';
 }
 
 function buildCcard(c) {
