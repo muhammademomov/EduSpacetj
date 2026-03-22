@@ -109,10 +109,17 @@ router.post('/admin/approve/:userId', auth, adminOnly, async (req, res) => {
 router.post('/admin/reject/:userId', auth, adminOnly, async (req, res) => {
     const { reason } = req.body;
     try {
-        await db.query(
-            'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
-            [randomUUID(), req.params.userId, 'rejected', '❌ Профиль отклонён', reason||'Документы не прошли проверку. Обратитесь в поддержку.']
-        );
+        await db.transaction(async (conn) => {
+            // is_moderated=2 = отклонён
+            await conn.execute(
+                'UPDATE teacher_profiles SET is_moderated=2, is_visible=0 WHERE user_id=?',
+                [req.params.userId]
+            );
+            await conn.execute(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), req.params.userId, 'rejected', '❌ Профиль отклонён', reason||'Документы не прошли проверку. Обратитесь в поддержку.']
+            );
+        });
         res.json({ message: 'Отклонено' });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
@@ -161,6 +168,28 @@ router.get('/admin/stats', auth, adminOnly, async (req, res) => {
             pendingTeachers: pending_t.cnt, pendingCourses: pending_c.cnt,
             totalRevenue: parseFloat(revenue.total),
         });
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+
+// GET /api/users/admin/rejected — отклонённые учителя
+router.get('/admin/rejected', auth, adminOnly, async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.created_at,
+                    tp.id AS profile_id, tp.subject, tp.is_moderated, tp.teacher_type
+             FROM users u JOIN teacher_profiles tp ON tp.user_id=u.id
+             WHERE u.role='teacher' AND tp.is_moderated=2 ORDER BY u.created_at DESC`
+        );
+        res.json(rows);
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// POST /api/users/admin/restore/:userId — восстановить отклонённого
+router.post('/admin/restore/:userId', auth, adminOnly, async (req, res) => {
+    try {
+        await db.query('UPDATE teacher_profiles SET is_moderated=0 WHERE user_id=?', [req.params.userId]);
+        res.json({ message: 'Возвращён на проверку' });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
