@@ -44,7 +44,16 @@ async function init() {
     const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
     await conn.query(sql);
     // Add video_url column if not exists
-    try { await conn.query('ALTER TABLE teacher_profiles ADD COLUMN video_url VARCHAR(500) DEFAULT NULL'); } catch(e) { /* column already exists */ }
+    try {
+        await conn.query('ALTER TABLE teacher_profiles ADD COLUMN video_url VARCHAR(500) DEFAULT NULL');
+        console.log('✅ Колонка video_url добавлена');
+    } catch(e) {
+        if (e.code === 'ER_DUP_FIELDNAME') {
+            console.log('✅ Колонка video_url уже существует');
+        } else {
+            console.log('⚠️ video_url:', e.message);
+        }
+    }
     console.log('✅ Таблицы созданы');
 
     // Администратор
