@@ -1,27 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const multer  = require('multer');
-const path    = require('path');
-const fs      = require('fs');
 const db      = require('../db');
 const { auth, teacherOnly } = require('../middleware/auth');
 const { randomUUID } = require('crypto');
-
-const uploadDir = process.env.UPLOAD_DIR || './uploads';
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-    destination: (_, __, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => cb(null, `${req.user.id}_${Date.now()}${path.extname(file.originalname)}`),
-});
-const upload = multer({
-    storage,
-    limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024 },
-    fileFilter: (_, file, cb) => {
-        const ok = ['.pdf','.jpg','.jpeg','.png'].includes(path.extname(file.originalname).toLowerCase());
-        ok ? cb(null, true) : cb(new Error('Только PDF, JPG, PNG'));
-    },
-});
+const { uploadPhoto, uploadDoc } = require('../cloudinary');
 
 const safeJson = (v, d=[]) => { if (!v) return d; try { return JSON.parse(v); } catch { return d; } };
 
@@ -130,22 +112,22 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
 });
 
 // ─── POST /api/teachers/profile/photo ─────────────────────────────
-router.post('/profile/photo', auth, teacherOnly, upload.single('photo'), async (req, res) => {
+router.post('/profile/photo', auth, teacherOnly, uploadPhoto.single('photo'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
-    const url = `/uploads/${req.file.filename}`;
+    const url = req.file.path || req.file.secure_url;
     await db.query('UPDATE users SET avatar_url = ? WHERE id = ?', [url, req.user.id]);
     res.json({ avatarUrl: url });
 });
 
 // ─── POST /api/teachers/profile/documents ─────────────────────────
-router.post('/profile/documents', auth, teacherOnly, upload.single('document'), async (req, res) => {
+router.post('/profile/documents', auth, teacherOnly, uploadDoc.single('document'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
     const { docType, docName, institution, year } = req.body;
     if (!docType || !docName) return res.status(400).json({ error: 'Тип и название обязательны' });
     try {
         const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id = ?', [req.user.id]);
         if (!tp.length) return res.status(404).json({ error: 'Профиль не найден' });
-        const fileUrl = `/uploads/${req.file.filename}`;
+        const fileUrl = req.file.path || req.file.secure_url;
         await db.query(
             'INSERT INTO teacher_documents (id, teacher_id, doc_type, doc_name, institution, year, file_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [randomUUID(), tp[0].id, docType, docName, institution || null, year || null, fileUrl]
