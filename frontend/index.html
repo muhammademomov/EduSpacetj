@@ -215,6 +215,12 @@
   <div id="pp-hw" style="display:none"></div>
   <div class="pp-body">
     <div>
+      <div id="pp-video-section" style="display:none;margin-bottom:16px">
+        <div class="pp-card" style="padding:0;overflow:hidden">
+          <div style="padding:14px 16px;font-size:14px;font-weight:700;border-bottom:1px solid var(--border2)">🎥 Видео-визитка преподавателя</div>
+          <div id="pp-video-container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000"></div>
+        </div>
+      </div>
       <div class="pp-tabs">
         <button class="pp-tab on" onclick="ppTab('pp-about',this)">О себе</button>
         <button class="pp-tab" onclick="ppTab('pp-courses',this)">Курсы</button>
@@ -851,6 +857,11 @@
         <div class="field"><label>Предмет / специализация</label><input type="text" id="tp-subject"></div>
         <div class="field"><label>О себе</label><textarea rows="4" id="tp-bio" placeholder="Расскажите об опыте..."></textarea></div>
         <div class="field"><label>Цена (смн/мес)</label><input type="number" id="tp-price" placeholder="500"></div>
+        <div class="field">
+          <label>🎥 Видео-визитка (YouTube / Vimeo)</label>
+          <input type="url" id="tp-video" placeholder="https://youtube.com/watch?v=...">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Вставьте ссылку на YouTube или Vimeo — ученики увидят ваше видео в профиле</div>
+        </div>
         <button class="btn-save" onclick="saveTeacherProfile()">Сохранить изменения</button>
       </div>
     </div>
