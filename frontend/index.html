@@ -858,9 +858,16 @@
         <div class="field"><label>О себе</label><textarea rows="4" id="tp-bio" placeholder="Расскажите об опыте..."></textarea></div>
         <div class="field"><label>Цена (смн/мес)</label><input type="number" id="tp-price" placeholder="500"></div>
         <div class="field">
-          <label>🎥 Видео-визитка (YouTube / Vimeo)</label>
-          <input type="url" id="tp-video" placeholder="https://youtube.com/watch?v=...">
-          <div style="font-size:11px;color:var(--text3);margin-top:4px">Вставьте ссылку на YouTube или Vimeo — ученики увидят ваше видео в профиле</div>
+          <label>🎥 Видео-визитка</label>
+          <div id="tp-video-preview" style="display:none;margin-bottom:10px;border-radius:9px;overflow:hidden;background:#000;position:relative;padding-bottom:40%;"><video id="tp-video-player" style="position:absolute;top:0;left:0;width:100%;height:100%" controls></video></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="flex:1;height:44px;background:var(--bg);border:1.5px dashed var(--border);border-radius:9px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .2s" id="tp-video-label">
+              <span>📁</span><span id="tp-video-fname">Выбрать видео (MP4, до 100 МБ)</span>
+              <input type="file" id="tp-video-input" accept="video/*" style="display:none" onchange="previewVideo(this)">
+            </label>
+            <button type="button" onclick="uploadTeacherVideo()" id="tp-video-btn" style="height:44px;padding:0 16px;background:var(--g);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;display:none">Загрузить</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Расскажите о себе в коротком видео — ученики увидят его в профиле</div>
         </div>
         <button class="btn-save" onclick="saveTeacherProfile()">Сохранить изменения</button>
       </div>
