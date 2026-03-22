@@ -193,4 +193,13 @@ router.post('/admin/restore/:userId', auth, adminOnly, async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// POST /api/users/admin/verify-doc/:docId — одобрить документ
+router.post('/admin/verify-doc/:docId', auth, adminOnly, async (req, res) => {
+    try {
+        await db.query('UPDATE teacher_documents SET is_verified=1 WHERE id=?', [req.params.docId]);
+        res.json({ message: 'Документ одобрен' });
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 module.exports = router;
