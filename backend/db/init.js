@@ -44,7 +44,7 @@ async function init() {
     const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
     await conn.query(sql);
     // Add video_url column if not exists
-    await conn.query('ALTER TABLE teacher_profiles ADD COLUMN IF NOT EXISTS video_url VARCHAR(500) DEFAULT NULL').catch(function(){});
+    try { await conn.query('ALTER TABLE teacher_profiles ADD COLUMN video_url VARCHAR(500) DEFAULT NULL'); } catch(e) { /* column already exists */ }
     console.log('✅ Таблицы созданы');
 
     // Администратор
