@@ -119,6 +119,20 @@ router.post('/profile/photo', auth, teacherOnly, uploadPhoto.single('photo'), as
     res.json({ avatarUrl: url });
 });
 
+// ─── POST /api/teachers/profile/video ──────────────────────────
+router.post('/profile/video', auth, teacherOnly, async (req, res) => {
+    const { videoUrl } = req.body;
+    if (!videoUrl) return res.status(400).json({ error: 'URL видео обязателен' });
+    // Accept YouTube, Vimeo, or direct video URLs
+    const allowed = ['youtube.com', 'youtu.be', 'vimeo.com', 'drive.google.com'];
+    const isAllowed = allowed.some(function(d) { return videoUrl.includes(d); });
+    if (!isAllowed) return res.status(400).json({ error: 'Поддерживается YouTube, Vimeo или Google Drive' });
+    try {
+        await db.query('UPDATE teacher_profiles SET video_url = ? WHERE user_id = ?', [videoUrl, req.user.id]);
+        res.json({ message: 'Видео сохранено', videoUrl });
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 // ─── POST /api/teachers/profile/documents ─────────────────────────
 router.post('/profile/documents', auth, teacherOnly, uploadDoc.single('document'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
@@ -191,7 +205,7 @@ function fmt(t) {
         initials: t.initials, color: t.color, avatarUrl: t.avatar_url,
         subject: t.subject, bio: t.bio,
         tags: safeJson(t.tags, []), platforms: safeJson(t.platforms, []), workDays: safeJson(t.work_days, []),
-        workHours: t.work_hours, price: parseFloat(t.price)||0,
+        workHours: t.work_hours, price: parseFloat(t.price)||0, videoUrl: t.video_url||null,
         isModerated: !!t.is_moderated, rating: parseFloat(t.rating)||0,
         reviewCount: t.review_count, studentCount: t.student_count, createdAt: t.created_at,
     };
