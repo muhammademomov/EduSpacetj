@@ -732,8 +732,15 @@ async function loadTeacherDash() {
     document.getElementById('td-av').textContent = currentUser.initials;
     document.getElementById('td-av').style.background = currentUser.color;
     document.getElementById('td-uname').textContent = currentUser.firstName + ' ' + currentUser.lastName;
-    document.getElementById('td-prof-av').textContent = currentUser.initials;
-    document.getElementById('td-prof-av').style.background = currentUser.color;
+    const tdAv = document.getElementById('td-prof-av');
+    if (currentUser.avatarUrl) {
+        tdAv.style.padding = '0';
+        tdAv.style.overflow = 'hidden';
+        tdAv.innerHTML = `<img src="${currentUser.avatarUrl}" style="width:100%;height:100%;object-fit:cover">`;
+    } else {
+        tdAv.textContent = currentUser.initials;
+        tdAv.style.background = currentUser.color;
+    }
     document.getElementById('td-prof-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     try {
         const [stats, courses] = await Promise.all([get('/teachers/my/stats'), get('/courses/my/list')]);
@@ -868,4 +875,32 @@ function buildCcard(c) {
 // ═══════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════
+
+async function uploadTeacherPhoto(input) {
+    if (!input.files?.[0]) return;
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) { alert('Файл слишком большой. Максимум 5 МБ'); return; }
+
+    // Preview immediately
+    const reader = new FileReader();
+    reader.onload = e => {
+        const av = document.getElementById('td-prof-av');
+        av.style.padding = '0';
+        av.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+        const fd = new FormData();
+        fd.append('photo', file);
+        const result = await upload('/teachers/profile/photo', fd);
+        currentUser.avatarUrl = result.avatarUrl;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        alert('✅ Фото обновлено!');
+    } catch(e) {
+        alert('Ошибка загрузки: ' + e.message);
+    }
+}
+
 init();
