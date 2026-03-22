@@ -840,7 +840,7 @@ function catEmoji(cat) {
 
 function buildTccard(t) {
     var av = t.avatarUrl
-        ? '<div class="tcc-av"><img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display='none'"></div>'
+        ? '<div class="tcc-av"><img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block"></div>'
         : '<div class="tcc-av" style="background:' + (t.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff">' + (t.initials||'?') + '</div>';
     return `
         <div class="tccard${t.isModerated?' verified':''}" onclick="openProfile('${t.id}')">
