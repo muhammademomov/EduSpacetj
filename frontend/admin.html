@@ -7,24 +7,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--g:#18A96A;--g2:#0F7A4D;--gl2:#ECFDF5;--text:#0C1810;--text2:#4A5E52;--text3:#8FA89A;--bg:#F4F8F5;--white:#FFFFFF;--border:#DDE8E2;--border2:#EBF3EE;--red:#DC2626;--red2:#FEF2F2;--yellow:#D97706;--yellow2:#FFFBEB;--r:10px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-button{font-family:inherit;cursor:pointer}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}button{font-family:inherit;cursor:pointer}
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh}
 .login-box{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:400px;box-shadow:0 16px 48px rgba(0,0,0,.08)}
 .login-logo{display:flex;align-items:center;gap:10px;margin-bottom:2rem;justify-content:center}
 .login-logo-mark{width:40px;height:40px;background:linear-gradient(135deg,var(--g),var(--g2));border-radius:10px;display:flex;align-items:center;justify-content:center}
 .login-logo-mark svg{width:20px;height:20px}
-.login-logo-name{font-size:20px;font-weight:800}
-.login-logo-name em{color:var(--g);font-style:normal}
+.login-logo-name{font-size:20px;font-weight:800}.login-logo-name em{color:var(--g);font-style:normal}
 .login-title{font-size:22px;font-weight:800;margin-bottom:6px;text-align:center}
 .login-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:2rem}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.field{margin-bottom:14px}.field label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
 .field input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;color:var(--text);background:var(--white);outline:none;font-family:inherit;transition:border-color .2s}
 .field input:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(24,169,106,.1)}
-.btn-login{width:100%;height:44px;background:var(--g);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;margin-top:4px}
-.btn-login:hover{background:var(--g2)}
+.btn-login{width:100%;height:44px;background:var(--g);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}.btn-login:hover{background:var(--g2)}
 .login-err{color:var(--red);font-size:13px;text-align:center;margin-top:10px;display:none}
 #admin-screen{display:none;min-height:100vh}
 .admin-nav{height:60px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2rem;gap:16px;position:sticky;top:0;z-index:100}
@@ -34,15 +29,13 @@ button{font-family:inherit;cursor:pointer}
 .admin-badge{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:4px}
 .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
 .admin-user{font-size:13px;font-weight:600;color:var(--text2)}
-.btn-logout{height:34px;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;background:transparent;border:1.5px solid var(--border);color:var(--text2);cursor:pointer}
-.btn-logout:hover{border-color:var(--red);color:var(--red)}
+.btn-logout{height:34px;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;background:transparent;border:1.5px solid var(--border);color:var(--text2);cursor:pointer}.btn-logout:hover{border-color:var(--red);color:var(--red)}
 .admin-body{display:flex;min-height:calc(100vh - 60px)}
 .sidebar{width:220px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);padding:1.5rem 1rem}
 .sb-section{margin-bottom:1.5rem}
 .sb-label{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 8px}
 .sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s}
-.sb-item:hover{background:var(--bg);color:var(--text)}
-.sb-item.on{background:var(--gl2);color:var(--g2)}
+.sb-item:hover{background:var(--bg);color:var(--text)}.sb-item.on{background:var(--gl2);color:var(--g2)}
 .sb-item .sb-ico{font-size:16px;width:20px;text-align:center}
 .sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:10px}
 .sb-badge.yellow{background:var(--yellow)}
@@ -50,45 +43,33 @@ button{font-family:inherit;cursor:pointer}
 .panel{display:none}.panel.on{display:block}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:2rem}
 .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem}
-.stat-ico{font-size:24px;margin-bottom:8px}
-.stat-num{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.stat-ico{font-size:24px;margin-bottom:8px}.stat-num{font-size:28px;font-weight:800;letter-spacing:-.5px}
 .stat-lbl{font-size:12px;color:var(--text2);font-weight:600;margin-top:2px}
-.stat-card.green{border-color:rgba(24,169,106,.3);background:var(--gl2)}
-.stat-card.green .stat-num{color:var(--g2)}
+.stat-card.green{border-color:rgba(24,169,106,.3);background:var(--gl2)}.stat-card.green .stat-num{color:var(--g2)}
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
-.sec-title{font-size:18px;font-weight:800}
-.sec-sub{font-size:13px;color:var(--text2);margin-top:2px}
-.btn-refresh{height:36px;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;background:var(--white);border:1.5px solid var(--border);color:var(--text2);cursor:pointer}
-.btn-refresh:hover{border-color:var(--g);color:var(--g2)}
+.sec-title{font-size:18px;font-weight:800}.sec-sub{font-size:13px;color:var(--text2);margin-top:2px}
+.btn-refresh{height:36px;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;background:var(--white);border:1.5px solid var(--border);color:var(--text2);cursor:pointer}.btn-refresh:hover{border-color:var(--g);color:var(--g2)}
 .table-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 table{width:100%;border-collapse:collapse}
 th{background:var(--bg);padding:10px 16px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;text-align:left;border-bottom:1px solid var(--border)}
 td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border2);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--bg)}
+tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg)}
 .user-cell{display:flex;align-items:center;gap:10px}
 .user-av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
-.user-name{font-weight:700;font-size:13px}
-.user-email{font-size:11px;color:var(--text2)}
+.user-name{font-weight:700;font-size:13px}.user-email{font-size:11px;color:var(--text2)}
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge.pending{background:var(--yellow2);color:var(--yellow)}
-.badge.active{background:var(--gl2);color:var(--g2)}
+.badge.pending{background:var(--yellow2);color:var(--yellow)}.badge.active{background:var(--gl2);color:var(--g2)}
 .action-btns{display:flex;gap:6px;flex-wrap:wrap}
-.btn-approve{height:30px;padding:0 14px;background:var(--g);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
-.btn-approve:hover{background:var(--g2)}
-.btn-reject{height:30px;padding:0 14px;background:transparent;border:1.5px solid var(--red);color:var(--red);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
-.btn-reject:hover{background:var(--red);color:#fff}
-.btn-detail{height:30px;padding:0 14px;background:var(--bg);border:1.5px solid var(--border);color:var(--text2);border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}
-.btn-detail:hover{border-color:var(--g);color:var(--g2)}
+.btn-approve{height:30px;padding:0 14px;background:var(--g);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}.btn-approve:hover{background:var(--g2)}
+.btn-reject{height:30px;padding:0 14px;background:transparent;border:1.5px solid var(--red);color:var(--red);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}.btn-reject:hover{background:var(--red);color:#fff}
+.btn-detail{height:30px;padding:0 14px;background:var(--bg);border:1.5px solid var(--border);color:var(--text2);border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}.btn-detail:hover{border-color:var(--g);color:var(--g2)}
 .empty-row td{text-align:center;padding:3rem;color:var(--text3)}
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem}
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:16px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.15)}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:1}
 .modal-title{font-size:17px;font-weight:800}
-.modal-close{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:transparent;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.modal-close:hover{background:var(--bg)}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:transparent;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}.modal-close:hover{background:var(--bg)}
 .modal-body{padding:1.5rem}
 .m-section{margin-bottom:1.5rem}
 .m-section-title{font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border2)}
@@ -105,18 +86,14 @@ tr:hover td{background:var(--bg)}
 .m-day{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--bg);color:var(--text3);border:1.5px solid var(--border)}
 .m-day.on{background:var(--gl2);border-color:var(--g);color:var(--g2)}
 .doc-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:9px;margin-bottom:8px}
-.doc-ico{font-size:24px}
-.doc-info{flex:1}
-.doc-name{font-size:13px;font-weight:700}
-.doc-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.doc-ico{font-size:24px}.doc-info{flex:1}
+.doc-name{font-size:13px;font-weight:700}.doc-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.doc-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .doc-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
-.doc-badge.ok{background:var(--gl2);color:var(--g2)}
-.doc-badge.pending{background:var(--yellow2);color:var(--yellow)}
+.doc-badge.ok{background:var(--gl2);color:var(--g2)}.doc-badge.pending{background:var(--yellow2);color:var(--yellow)}
 .course-item{padding:12px;background:var(--bg);border-radius:9px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
-.course-emoji{font-size:24px}
-.course-info{flex:1}
-.course-title{font-size:13px;font-weight:700}
-.course-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.course-emoji{font-size:24px}.course-info{flex:1}
+.course-title{font-size:13px;font-weight:700}.course-meta{font-size:11px;color:var(--text2);margin-top:2px}
 .course-price{font-size:14px;font-weight:800;color:var(--g2)}
 .modal-foot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:var(--white)}
 .btn-lg{height:40px;padding:0 24px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;border:none}
@@ -131,6 +108,7 @@ tr:hover td{background:var(--bg)}
 </style>
 </head>
 <body>
+
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">
@@ -140,8 +118,8 @@ tr:hover td{background:var(--bg)}
     <div class="login-title">Панель администратора</div>
     <div class="login-sub">Войдите с правами администратора</div>
     <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="admin@eduspace.tj"></div>
-    <div class="field"><label>Пароль</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="btn-login" onclick="doLogin()">Войти</button>
+    <div class="field"><label>Пароль</label><input type="password" id="l-pass" placeholder="••••••••"></div>
+    <button class="btn-login" id="login-btn">Войти</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
@@ -154,32 +132,31 @@ tr:hover td{background:var(--bg)}
     </div>
     <div class="nav-right">
       <span class="admin-user" id="admin-name"></span>
-      <button class="btn-logout" onclick="doLogout()">Выйти</button>
+      <button class="btn-logout" id="logout-btn">Выйти</button>
     </div>
   </nav>
   <div class="admin-body">
     <aside class="sidebar">
       <div class="sb-section">
         <div class="sb-label">Обзор</div>
-        <button class="sb-item on" onclick="showPanel('stats',this)"><span class="sb-ico">📊</span> Статистика</button>
+        <button class="sb-item on" data-panel="stats"><span class="sb-ico">📊</span> Статистика</button>
       </div>
       <div class="sb-section">
         <div class="sb-label">Модерация</div>
-        <button class="sb-item" onclick="showPanel('teachers',this)"><span class="sb-ico">👨‍🏫</span> Учителя <span class="sb-badge" id="sb-teachers-cnt">0</span></button>
-        <button class="sb-item" onclick="showPanel('courses',this)"><span class="sb-ico">📚</span> Курсы <span class="sb-badge yellow" id="sb-courses-cnt">0</span></button>
+        <button class="sb-item" data-panel="teachers"><span class="sb-ico">👨‍🏫</span> Учителя <span class="sb-badge" id="sb-teachers-cnt">0</span></button>
+        <button class="sb-item" data-panel="courses"><span class="sb-ico">📚</span> Курсы <span class="sb-badge yellow" id="sb-courses-cnt">0</span></button>
       </div>
       <div class="sb-section">
         <div class="sb-label">Пользователи</div>
-        <button class="sb-item" onclick="showPanel('all-teachers',this)"><span class="sb-ico">🏫</span> Все учителя</button>
-        <button class="sb-item" onclick="showPanel('all-students',this)"><span class="sb-ico">🎓</span> Все ученики</button>
-        <button class="sb-item" onclick="showPanel('rejected',this)"><span class="sb-ico">❌</span> Отклонённые <span class="sb-badge" id="sb-rejected-cnt" style="background:#D97706">0</span></button>
+        <button class="sb-item" data-panel="all-teachers"><span class="sb-ico">🏫</span> Все учителя</button>
+        <button class="sb-item" data-panel="rejected"><span class="sb-ico">❌</span> Отклонённые <span class="sb-badge yellow" id="sb-rejected-cnt">0</span></button>
       </div>
     </aside>
     <main class="admin-main">
       <div class="panel on" id="panel-stats">
         <div class="sec-hdr">
           <div><div class="sec-title">📊 Статистика платформы</div><div class="sec-sub">Общие показатели EduSpace.tj</div></div>
-          <button class="btn-refresh" onclick="loadStats()">🔄 Обновить</button>
+          <button class="btn-refresh" id="refresh-stats">🔄 Обновить</button>
         </div>
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-ico">🎓</div><div class="stat-num" id="st-students">—</div><div class="stat-lbl">Учеников</div></div>
@@ -195,32 +172,28 @@ tr:hover td{background:var(--bg)}
       <div class="panel" id="panel-teachers">
         <div class="sec-hdr">
           <div><div class="sec-title">👨‍🏫 Учителя на проверке</div><div class="sec-sub">Нажмите "Подробнее" — документы, курсы, расписание, платформы</div></div>
-          <button class="btn-refresh" onclick="loadPendingTeachers()">🔄 Обновить</button>
+          <button class="btn-refresh" id="refresh-teachers">🔄 Обновить</button>
         </div>
         <div class="table-wrap" id="teachers-table"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
       </div>
       <div class="panel" id="panel-courses">
         <div class="sec-hdr">
           <div><div class="sec-title">📚 Курсы на модерации</div></div>
-          <button class="btn-refresh" onclick="loadPendingCourses()">🔄 Обновить</button>
+          <button class="btn-refresh" id="refresh-courses">🔄 Обновить</button>
         </div>
         <div class="table-wrap" id="courses-table"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
       </div>
       <div class="panel" id="panel-all-teachers">
         <div class="sec-hdr">
           <div><div class="sec-title">🏫 Все учителя</div></div>
-          <button class="btn-refresh" onclick="loadAllTeachers()">🔄 Обновить</button>
+          <button class="btn-refresh" id="refresh-all-teachers">🔄 Обновить</button>
         </div>
         <div class="table-wrap" id="all-teachers-table"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
-      </div>
-      <div class="panel" id="panel-all-students">
-        <div class="sec-hdr"><div><div class="sec-title">🎓 Все ученики</div></div></div>
-        <div class="table-wrap" id="all-students-table"><div style="padding:2rem;text-align:center;color:var(--text3)">Раздел в разработке</div></div>
       </div>
       <div class="panel" id="panel-rejected">
         <div class="sec-hdr">
           <div><div class="sec-title">❌ Отклонённые учителя</div><div class="sec-sub">Можно вернуть на проверку</div></div>
-          <button class="btn-refresh" onclick="loadRejected()">🔄 Обновить</button>
+          <button class="btn-refresh" id="refresh-rejected">🔄 Обновить</button>
         </div>
         <div class="table-wrap" id="rejected-table"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
       </div>
@@ -228,16 +201,15 @@ tr:hover td{background:var(--bg)}
   </div>
 </div>
 
-<!-- TEACHER MODAL -->
 <div class="modal-overlay" id="teacher-modal">
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" id="modal-teacher-name">Профиль учителя</div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <button class="modal-close" id="modal-close-btn">✕</button>
     </div>
     <div class="modal-body" id="modal-body"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
     <div class="modal-foot">
-      <button class="btn-lg gray" onclick="closeModal()">Закрыть</button>
+      <button class="btn-lg gray" id="modal-close-btn2">Закрыть</button>
       <button class="btn-lg red" id="modal-reject-btn">✕ Отклонить</button>
       <button class="btn-lg green" id="modal-approve-btn">✓ Одобрить</button>
     </div>
@@ -245,66 +217,362 @@ tr:hover td{background:var(--bg)}
 </div>
 
 <div id="toast"></div>
+
 <script>
-const API='https://eduspacetj-production.up.railway.app/api';
-let token=localStorage.getItem('admin_token');
-let currentUser=null,modalUserId=null;
-async function req(method,url,data=null){const opts={method,headers:{'Content-Type':'application/json'}};if(token)opts.headers['Authorization']='Bearer '+token;if(data)opts.body=JSON.stringify(data);const res=await fetch(API+url,opts);const json=await res.json();if(!res.ok)throw new Error(json.error||'Ошибка');return json;}
-const get=url=>req('GET',url);
-const post=(url,data)=>req('POST',url,data);
-function toast(msg,type='success'){const el=document.getElementById('toast');el.textContent=(type==='success'?'✅ ':'❌ ')+msg;el.style.background=type==='success'?'#0C1810':'#DC2626';el.className='show';setTimeout(()=>el.className='',3000);}
-async function doLogin(){const email=document.getElementById('l-email').value,pass=document.getElementById('l-pass').value,err=document.getElementById('login-err');try{const r=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.user.role!=='admin')throw new Error('Нет прав администратора');token=d.token;localStorage.setItem('admin_token',token);currentUser=d.user;err.style.display='none';showAdmin();}catch(e){err.style.display='block';err.textContent=e.message;}}
-function doLogout(){localStorage.removeItem('admin_token');token=null;document.getElementById('login-screen').style.display='flex';document.getElementById('admin-screen').style.display='none';}
-function showAdmin(){document.getElementById('login-screen').style.display='none';document.getElementById('admin-screen').style.display='block';document.getElementById('admin-name').textContent=currentUser.firstName+' '+currentUser.lastName;loadStats();loadPendingTeachers();loadPendingCourses();}
-function showPanel(name,btn){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('on'));document.getElementById('panel-'+name).classList.add('on');btn.classList.add('on');if(name==='teachers')loadPendingTeachers();if(name==='courses')loadPendingCourses();if(name==='all-teachers')loadAllTeachers();if(name==='rejected')loadRejected();}
-async function loadRejectedCount(){try{const r=await get('/users/admin/rejected');document.getElementById('sb-rejected-cnt').textContent=r.length;}catch(e){}}
-async function loadStats(){try{const s=await get('/users/admin/stats');document.getElementById('st-students').textContent=s.students;document.getElementById('st-teachers').textContent=s.teachers;document.getElementById('st-courses').textContent=s.courses;document.getElementById('st-revenue').textContent=parseFloat(s.totalRevenue).toLocaleString('ru');document.getElementById('st-pending-t').textContent=s.pendingTeachers;document.getElementById('st-pending-c').textContent=s.pendingCourses;document.getElementById('sb-teachers-cnt').textContent=s.pendingTeachers;document.getElementById('sb-courses-cnt').textContent=s.pendingCourses;loadRejectedCount();}catch(e){toast(e.message,'error');}}
-async function loadPendingTeachers(){const el=document.getElementById('teachers-table');try{const teachers=await get('/users/admin/moderation');if(!teachers.length){el.innerHTML='<table><tbody><tr class="empty-row"><td>✅ Нет учителей на проверке</td></tr></tbody></table>';return;}el.innerHTML=`<table><thead><tr><th>Учитель</th><th>Предмет</th><th>Тип</th><th>Дата</th><th>Действия</th></tr></thead><tbody>${teachers.map(t=>`<tr><td><div class="user-cell"><div class="user-av" style="background:#18A96A">${(t.first_name[0]+t.last_name[0]).toUpperCase()}</div><div><div class="user-name">${t.first_name} ${t.last_name}</div><div class="user-email">${t.email}</div></div></div></td><td>${t.subject||'—'}</td><td><span class="badge pending">${t.teacher_type==='specialist'?'Специалист':'Репетитор'}</span></td><td>${new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})}</td><td><div class="action-btns"><button class="btn-detail" onclick="openDetail('${t.id}','${t.first_name} ${t.last_name}')">🔍 Подробнее</button><button class="btn-approve" onclick="approveTeacher('${t.id}',this)">✓</button><button class="btn-reject" onclick="rejectTeacher('${t.id}',this)">✕</button></div></td></tr>`).join('')}</tbody></table>`;}catch(e){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка: '+e.message+'</div>';}}
-async function openDetail(userId,name){modalUserId=userId;document.getElementById('modal-teacher-name').textContent=name;document.getElementById('modal-body').innerHTML='<div class="loading"><div class="spinner"></div><br>Загрузка данных учителя...</div>';document.getElementById('teacher-modal').classList.add('open');document.getElementById('modal-approve-btn').onclick=()=>approveTeacher(userId,document.getElementById('modal-approve-btn'),true);document.getElementById('modal-reject-btn').onclick=()=>rejectTeacher(userId,document.getElementById('modal-reject-btn'),true);try{const t=await get('/teachers/'+userId);const pn={zoom:'Zoom',meet:'Google Meet',teams:'MS Teams',tg:'Telegram',sk:'Skype'};const ap=['zoom','meet','teams','tg','sk'];const ad=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];document.getElementById('modal-body').innerHTML=`
-<div class="m-section"><div class="m-section-title">👤 Основная информация</div><div class="m-grid"><div class="m-field"><div class="m-field-lbl">Имя</div><div class="m-field-val">${t.fullName||name}</div></div><div class="m-field"><div class="m-field-lbl">Предмет</div><div class="m-field-val">${t.subject||'Не указан'}</div></div><div class="m-field"><div class="m-field-lbl">Цена (смн/мес)</div><div class="m-field-val">${t.price>0?t.price+' смн':'Не указана'}</div></div><div class="m-field"><div class="m-field-lbl">Тип</div><div class="m-field-val">${t.teacherType==='specialist'?'Специалист':'Репетитор'}</div></div></div></div>
-${t.bio?`<div class="m-section"><div class="m-section-title">📝 О себе</div><div style="background:var(--bg);padding:12px 16px;border-radius:9px;font-size:13px;line-height:1.6">${t.bio}</div></div>`:''}
-${(t.tags||[]).length?`<div class="m-section"><div class="m-section-title">🏷 Навыки / Теги</div><div class="m-tags">${t.tags.map(tag=>`<span class="m-tag">${tag}</span>`).join('')}</div></div>`:''}
-<div class="m-section"><div class="m-section-title">💻 Платформы для занятий</div><div class="m-plat">${ap.map(p=>`<span class="m-plat-item ${(t.platforms||[]).includes(p)?'on':''}">${(t.platforms||[]).includes(p)?'✓ ':''}${pn[p]}</span>`).join('')}</div></div>
-<div class="m-section"><div class="m-section-title">📅 Расписание</div><div class="m-days" style="margin-bottom:10px">${ad.map(d=>`<div class="m-day ${(t.workDays||[]).includes(d)?'on':''}">${d}</div>`).join('')}</div>${t.workHours?`<div style="font-size:13px;color:var(--text2)">⏰ Часы работы: <strong>${t.workHours}</strong></div>`:''}</div>
-<div class="m-section"><div class="m-section-title">📋 Документы (${(t.documents||[]).length})</div>${(t.documents||[]).length?t.documents.map(d=>`
-<div class="doc-item">
-  <div class="doc-ico">${d.type==='diploma'?'🎓':d.type==='certificate'?'📜':'📋'}</div>
-  <div class="doc-info">
-    <div class="doc-name">${d.name}</div>
-    <div class="doc-meta">${d.institution||''} ${d.year?'· '+d.year:''}</div>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-    ${d.fileUrl
-      ? `<a href="${d.fileUrl.startsWith('http')?d.fileUrl:'https://eduspacetj-production.up.railway.app'+d.fileUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#2563EB;color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none">👁 Открыть</a>`
-      : `<span style="font-size:11px;color:var(--text3);padding:5px 8px;background:var(--bg);border-radius:6px">Файл не загружен</span>`
-    }
-    ${!d.isVerified
-      ? `<button onclick="verifyDoc('${d.id}',this)" style="height:28px;padding:0 12px;background:var(--g);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">✓ Одобрить</button>`
-      : ''
-    }
-    <span class="doc-badge ${d.isVerified?'ok':'pending'}">${d.isVerified?'✓ Проверен':'⏳ На проверке'}</span>
-  </div>
-</div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:12px;background:var(--bg);border-radius:9px">Документы не загружены</div>'}</div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:12px;background:var(--bg);border-radius:9px">Документы не загружены</div>'}</div>
-<div class="m-section"><div class="m-section-title">📚 Курсы (${(t.courses||[]).length})</div>${(t.courses||[]).length?t.courses.map(c=>`<div class="course-item"><div class="course-emoji">${c.emoji||'📖'}</div><div class="course-info"><div class="course-title">${c.title}</div><div class="course-meta">${c.category} · ${c.level}</div></div><div class="course-price">${c.price} смн</div></div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:12px;background:var(--bg);border-radius:9px">Курсов пока нет</div>'}</div>`;}catch(e){document.getElementById('modal-body').innerHTML=`<div style="color:var(--red);padding:2rem;text-align:center">Ошибка: ${e.message}</div>`;}}
-function closeModal(){document.getElementById('teacher-modal').classList.remove('open');modalUserId=null;}
-async function approveTeacher(userId,btn,fromModal=false){btn.disabled=true;btn.textContent='...';try{await post('/users/admin/approve/'+userId);toast('Учитель одобрен и опубликован!');if(fromModal)closeModal();loadPendingTeachers();loadStats();}catch(e){toast(e.message,'error');btn.disabled=false;btn.textContent=fromModal?'✓ Одобрить':'✓';}}
-async function rejectTeacher(userId,btn,fromModal=false){const reason=prompt('Причина отклонения:');if(reason===null)return;btn.disabled=true;btn.textContent='...';try{await post('/users/admin/reject/'+userId,{reason:reason||'Документы не прошли проверку'});toast('Учитель отклонён');if(fromModal)closeModal();loadPendingTeachers();loadStats();}catch(e){toast(e.message,'error');btn.disabled=false;btn.textContent=fromModal?'✕ Отклонить':'✕';}}
-async function loadPendingCourses(){const el=document.getElementById('courses-table');try{const courses=await get('/users/admin/courses');if(!courses.length){el.innerHTML='<table><tbody><tr class="empty-row"><td>✅ Нет курсов на модерации</td></tr></tbody></table>';return;}el.innerHTML=`<table><thead><tr><th>Курс</th><th>Учитель</th><th>Цена</th><th>Дата</th><th>Действия</th></tr></thead><tbody>${courses.map(c=>`<tr><td><div style="font-weight:700">${c.title}</div><div style="font-size:11px;color:var(--text2)">${c.category}</div></td><td><div class="user-name">${c.first_name} ${c.last_name}</div><div class="user-email">${c.email}</div></td><td style="font-weight:700;color:var(--g2)">${c.price} смн</td><td>${new Date(c.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</td><td><button class="btn-approve" onclick="approveCourse('${c.id}',this)">✓ Одобрить</button></td></tr>`).join('')}</tbody></table>`;}catch(e){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка</div>';}}
-async function approveCourse(id,btn){btn.disabled=true;btn.textContent='...';try{await post('/users/admin/courses/'+id+'/approve');toast('Курс одобрен!');loadPendingCourses();loadStats();}catch(e){toast(e.message,'error');btn.disabled=false;btn.textContent='✓ Одобрить';}}
-async function loadAllTeachers(){const el=document.getElementById('all-teachers-table');try{const all=await get('/teachers');if(!all.length){el.innerHTML='<table><tbody><tr class="empty-row"><td>Учителей пока нет</td></tr></tbody></table>';return;}el.innerHTML=`<table><thead><tr><th>Учитель</th><th>Предмет</th><th>Рейтинг</th><th>Учеников</th><th>Цена</th><th>Статус</th></tr></thead><tbody>${all.map(t=>`<tr><td><div class="user-cell"><div class="user-av" style="background:${t.color||'#18A96A'}">${t.initials||'?'}</div><div class="user-name">${t.firstName} ${t.lastName}</div></div></td><td>${t.subject||'—'}</td><td>${t.rating>0?'★ '+parseFloat(t.rating).toFixed(1):'—'}</td><td>${t.studentCount||0}</td><td>${t.price>0?t.price+' смн':'—'}</td><td><span class="badge ${t.isModerated?'active':'pending'}">${t.isModerated?'✓ Одобрен':'⏳ На проверке'}</span></td></tr>`).join('')}</tbody></table>`;}catch(e){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка</div>';}}
-document.getElementById('teacher-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
-async function verifyDoc(docId, btn) {
-    btn.disabled = true; btn.textContent = '...';
-    try {
-        await post('/users/admin/verify-doc/' + docId);
-        toast('Документ одобрен!');
-        // Refresh modal
-        if (modalUserId) openDetail(modalUserId, document.getElementById('modal-teacher-name').textContent);
-    } catch(e) { toast(e.message, 'error'); btn.disabled = false; btn.textContent = '✓ Одобрить'; }
+var API = 'https://eduspacetj-production.up.railway.app/api';
+var token = localStorage.getItem('admin_token');
+var currentUser = null;
+var modalUserId = null;
+
+function req(method, url, data) {
+    var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+    if (data) opts.body = JSON.stringify(data);
+    return fetch(API + url, opts).then(function(res) {
+        return res.json().then(function(json) {
+            if (!res.ok) throw new Error(json.error || 'Ошибка');
+            return json;
+        });
+    });
 }
-async function loadRejected(){const el=document.getElementById('rejected-table');try{const teachers=await get('/users/admin/rejected');document.getElementById('sb-rejected-cnt').textContent=teachers.length;if(!teachers.length){el.innerHTML='<table><tbody><tr class="empty-row"><td>Отклонённых учителей нет</td></tr></tbody></table>';return;}el.innerHTML=`<table><thead><tr><th>Учитель</th><th>Предмет</th><th>Дата регистрации</th><th>Действия</th></tr></thead><tbody>${teachers.map(t=>`<tr><td><div class="user-cell"><div class="user-av" style="background:#DC2626">${(t.first_name[0]+t.last_name[0]).toUpperCase()}</div><div><div class="user-name">${t.first_name} ${t.last_name}</div><div class="user-email">${t.email}</div></div></div></td><td>${t.subject||'—'}</td><td>${new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})}</td><td><button class="btn-detail" onclick="restoreTeacher('${t.id}',this)">↩️ Вернуть на проверку</button></td></tr>`).join('')}</tbody></table>`;}catch(e){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка</div>';}}
-async function restoreTeacher(userId,btn){btn.disabled=true;btn.textContent='...';try{await post('/users/admin/restore/'+userId);toast('Учитель возвращён на проверку');loadRejected();loadPendingTeachers();loadStats();}catch(e){toast(e.message,'error');btn.disabled=false;btn.textContent='↩️ Вернуть на проверку';}}
-if(token){fetch(API+'/auth/me',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()).then(u=>{if(u.role==='admin'){currentUser=u;showAdmin();}}).catch(()=>{});}
+
+function showToast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = (type === 'error' ? '❌ ' : '✅ ') + msg;
+    el.style.background = type === 'error' ? '#DC2626' : '#0C1810';
+    el.className = 'show';
+    setTimeout(function() { el.className = ''; }, 3000);
+}
+
+function doLogin() {
+    var email = document.getElementById('l-email').value;
+    var pass = document.getElementById('l-pass').value;
+    var err = document.getElementById('login-err');
+    fetch(API + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: pass })
+    }).then(function(r) {
+        return r.json().then(function(d) {
+            if (!r.ok) throw new Error(d.error || 'Ошибка');
+            if (d.user.role !== 'admin') throw new Error('Нет прав администратора');
+            token = d.token;
+            localStorage.setItem('admin_token', token);
+            currentUser = d.user;
+            err.style.display = 'none';
+            showAdmin();
+        });
+    }).catch(function(e) {
+        err.style.display = 'block';
+        err.textContent = e.message;
+    });
+}
+
+function doLogout() {
+    localStorage.removeItem('admin_token');
+    token = null;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-screen').style.display = 'none';
+}
+
+function showAdmin() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    document.getElementById('admin-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+    loadStats();
+    loadPendingTeachers();
+    loadPendingCourses();
+    loadRejectedCount();
+}
+
+function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
+    document.querySelectorAll('.sb-item').forEach(function(b) { b.classList.remove('on'); });
+    document.getElementById('panel-' + name).classList.add('on');
+    document.querySelector('[data-panel="' + name + '"]').classList.add('on');
+    if (name === 'teachers') loadPendingTeachers();
+    if (name === 'courses') loadPendingCourses();
+    if (name === 'all-teachers') loadAllTeachers();
+    if (name === 'rejected') loadRejected();
+}
+
+function loadStats() {
+    req('GET', '/users/admin/stats').then(function(s) {
+        document.getElementById('st-students').textContent = s.students;
+        document.getElementById('st-teachers').textContent = s.teachers;
+        document.getElementById('st-courses').textContent = s.courses;
+        document.getElementById('st-revenue').textContent = parseFloat(s.totalRevenue).toLocaleString('ru');
+        document.getElementById('st-pending-t').textContent = s.pendingTeachers;
+        document.getElementById('st-pending-c').textContent = s.pendingCourses;
+        document.getElementById('sb-teachers-cnt').textContent = s.pendingTeachers;
+        document.getElementById('sb-courses-cnt').textContent = s.pendingCourses;
+    }).catch(function(e) { showToast(e.message, 'error'); });
+}
+
+function loadRejectedCount() {
+    req('GET', '/users/admin/rejected').then(function(r) {
+        document.getElementById('sb-rejected-cnt').textContent = r.length;
+    }).catch(function() {});
+}
+
+function loadPendingTeachers() {
+    var el = document.getElementById('teachers-table');
+    req('GET', '/users/admin/moderation').then(function(teachers) {
+        if (!teachers.length) {
+            el.innerHTML = '<table><tbody><tr class="empty-row"><td>✅ Нет учителей на проверке</td></tr></tbody></table>';
+            return;
+        }
+        var rows = teachers.map(function(t) {
+            return '<tr><td><div class="user-cell"><div class="user-av" style="background:#18A96A">' +
+                (t.first_name[0] + t.last_name[0]).toUpperCase() +
+                '</div><div><div class="user-name">' + t.first_name + ' ' + t.last_name +
+                '</div><div class="user-email">' + t.email + '</div></div></div></td>' +
+                '<td>' + (t.subject || '—') + '</td>' +
+                '<td><span class="badge pending">' + (t.teacher_type === 'specialist' ? 'Специалист' : 'Репетитор') + '</span></td>' +
+                '<td>' + new Date(t.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',year:'numeric'}) + '</td>' +
+                '<td><div class="action-btns">' +
+                '<button class="btn-detail" onclick="openDetail(\'' + t.id + '\',\'' + t.first_name + ' ' + t.last_name + '\')">🔍 Подробнее</button>' +
+                '<button class="btn-approve" onclick="approveTeacher(\'' + t.id + '\',this)">✓</button>' +
+                '<button class="btn-reject" onclick="rejectTeacher(\'' + t.id + '\',this)">✕</button>' +
+                '</div></td></tr>';
+        }).join('');
+        el.innerHTML = '<table><thead><tr><th>Учитель</th><th>Предмет</th><th>Тип</th><th>Дата</th><th>Действия</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }).catch(function(e) {
+        el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка: ' + e.message + '</div>';
+    });
+}
+
+function openDetail(userId, name) {
+    modalUserId = userId;
+    document.getElementById('modal-teacher-name').textContent = name;
+    document.getElementById('modal-body').innerHTML = '<div class="loading"><div class="spinner"></div><br>Загрузка данных...</div>';
+    document.getElementById('teacher-modal').classList.add('open');
+    document.getElementById('modal-approve-btn').onclick = function() { approveTeacher(userId, this, true); };
+    document.getElementById('modal-reject-btn').onclick = function() { rejectTeacher(userId, this, true); };
+
+    req('GET', '/teachers/' + userId).then(function(t) {
+        var pn = {zoom:'Zoom', meet:'Google Meet', teams:'MS Teams', tg:'Telegram', sk:'Skype'};
+        var ap = ['zoom','meet','teams','tg','sk'];
+        var ad = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+        var platsHtml = ap.map(function(p) {
+            var on = (t.platforms || []).indexOf(p) !== -1;
+            return '<span class="m-plat-item ' + (on ? 'on' : '') + '">' + (on ? '✓ ' : '') + pn[p] + '</span>';
+        }).join('');
+
+        var daysHtml = ad.map(function(d) {
+            var on = (t.workDays || []).indexOf(d) !== -1;
+            return '<div class="m-day ' + (on ? 'on' : '') + '">' + d + '</div>';
+        }).join('');
+
+        var tagsHtml = (t.tags || []).length
+            ? '<div class="m-section"><div class="m-section-title">🏷 Навыки / Теги</div><div class="m-tags">' +
+              t.tags.map(function(tag) { return '<span class="m-tag">' + tag + '</span>'; }).join('') +
+              '</div></div>' : '';
+
+        var docsHtml = (t.documents || []).length
+            ? (t.documents || []).map(function(d) {
+                var ico = d.type === 'diploma' ? '🎓' : d.type === 'certificate' ? '📜' : '📋';
+                var typeName = d.type === 'diploma' ? 'Диплом' : d.type === 'certificate' ? 'Сертификат' : 'Трудовая';
+                var fileBtn = d.fileUrl
+                    ? '<a href="' + (d.fileUrl.startsWith('http') ? d.fileUrl : 'https://eduspacetj-production.up.railway.app' + d.fileUrl) +
+                      '" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#2563EB;color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none">👁 Открыть</a>'
+                    : '<span style="font-size:11px;color:var(--text3);padding:4px 8px;background:var(--bg);border-radius:6px">Файл не загружен</span>';
+                var verifyBtn = !d.isVerified
+                    ? '<button onclick="verifyDoc(\'' + d.id + '\',\'' + userId + '\',this)" style="height:28px;padding:0 12px;background:var(--g);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">✓ Одобрить</button>'
+                    : '';
+                var badge = '<span class="doc-badge ' + (d.isVerified ? 'ok' : 'pending') + '">' + (d.isVerified ? '✓ Проверен' : '⏳ На проверке') + '</span>';
+                return '<div class="doc-item"><div class="doc-ico">' + ico + '</div>' +
+                    '<div class="doc-info"><div class="doc-name">' + d.name + '</div>' +
+                    '<div class="doc-meta">' + (d.institution || '') + (d.year ? ' · ' + d.year : '') + '</div></div>' +
+                    '<div class="doc-actions">' + fileBtn + verifyBtn + badge + '</div></div>';
+            }).join('')
+            : '<div style="color:var(--text3);font-size:13px;padding:12px;background:var(--bg);border-radius:9px">Документы не загружены</div>';
+
+        var coursesHtml = (t.courses || []).length
+            ? (t.courses || []).map(function(c) {
+                return '<div class="course-item"><div class="course-emoji">' + (c.emoji || '📖') + '</div>' +
+                    '<div class="course-info"><div class="course-title">' + c.title + '</div>' +
+                    '<div class="course-meta">' + c.category + ' · ' + c.level + '</div></div>' +
+                    '<div class="course-price">' + c.price + ' смн</div></div>';
+            }).join('')
+            : '<div style="color:var(--text3);font-size:13px;padding:12px;background:var(--bg);border-radius:9px">Курсов пока нет</div>';
+
+        document.getElementById('modal-body').innerHTML =
+            '<div class="m-section"><div class="m-section-title">👤 Основная информация</div>' +
+            '<div class="m-grid">' +
+            '<div class="m-field"><div class="m-field-lbl">Имя</div><div class="m-field-val">' + (t.fullName || name) + '</div></div>' +
+            '<div class="m-field"><div class="m-field-lbl">Предмет</div><div class="m-field-val">' + (t.subject || 'Не указан') + '</div></div>' +
+            '<div class="m-field"><div class="m-field-lbl">Цена (смн/мес)</div><div class="m-field-val">' + (t.price > 0 ? t.price + ' смн' : 'Не указана') + '</div></div>' +
+            '<div class="m-field"><div class="m-field-lbl">Тип</div><div class="m-field-val">' + (t.teacherType === 'specialist' ? 'Специалист' : 'Репетитор') + '</div></div>' +
+            '</div></div>' +
+            (t.bio ? '<div class="m-section"><div class="m-section-title">📝 О себе</div><div style="background:var(--bg);padding:12px 16px;border-radius:9px;font-size:13px;line-height:1.6">' + t.bio + '</div></div>' : '') +
+            tagsHtml +
+            '<div class="m-section"><div class="m-section-title">💻 Платформы для занятий</div><div class="m-plat">' + platsHtml + '</div></div>' +
+            '<div class="m-section"><div class="m-section-title">📅 Расписание</div><div class="m-days" style="margin-bottom:10px">' + daysHtml + '</div>' +
+            (t.workHours ? '<div style="font-size:13px;color:var(--text2)">⏰ Часы работы: <strong>' + t.workHours + '</strong></div>' : '') + '</div>' +
+            '<div class="m-section"><div class="m-section-title">📋 Документы (' + (t.documents || []).length + ')</div>' + docsHtml + '</div>' +
+            '<div class="m-section"><div class="m-section-title">📚 Курсы (' + (t.courses || []).length + ')</div>' + coursesHtml + '</div>';
+
+    }).catch(function(e) {
+        document.getElementById('modal-body').innerHTML = '<div style="color:var(--red);padding:2rem;text-align:center">Ошибка: ' + e.message + '</div>';
+    });
+}
+
+function closeModal() {
+    document.getElementById('teacher-modal').classList.remove('open');
+    modalUserId = null;
+}
+
+function approveTeacher(userId, btn, fromModal) {
+    btn.disabled = true; btn.textContent = '...';
+    req('POST', '/users/admin/approve/' + userId).then(function() {
+        showToast('Учитель одобрен и опубликован!');
+        if (fromModal) closeModal();
+        loadPendingTeachers(); loadStats();
+    }).catch(function(e) {
+        showToast(e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = fromModal ? '✓ Одобрить' : '✓';
+    });
+}
+
+function rejectTeacher(userId, btn, fromModal) {
+    var reason = prompt('Причина отклонения (необязательно):');
+    if (reason === null) return;
+    btn.disabled = true; btn.textContent = '...';
+    req('POST', '/users/admin/reject/' + userId, { reason: reason || 'Документы не прошли проверку' }).then(function() {
+        showToast('Учитель отклонён');
+        if (fromModal) closeModal();
+        loadPendingTeachers(); loadStats(); loadRejectedCount();
+    }).catch(function(e) {
+        showToast(e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = fromModal ? '✕ Отклонить' : '✕';
+    });
+}
+
+function verifyDoc(docId, userId, btn) {
+    btn.disabled = true; btn.textContent = '...';
+    req('POST', '/users/admin/verify-doc/' + docId).then(function() {
+        showToast('Документ одобрен!');
+        openDetail(userId, document.getElementById('modal-teacher-name').textContent);
+    }).catch(function(e) {
+        showToast(e.message, 'error');
+        btn.disabled = false; btn.textContent = '✓ Одобрить';
+    });
+}
+
+function loadPendingCourses() {
+    var el = document.getElementById('courses-table');
+    req('GET', '/users/admin/courses').then(function(courses) {
+        if (!courses.length) {
+            el.innerHTML = '<table><tbody><tr class="empty-row"><td>✅ Нет курсов на модерации</td></tr></tbody></table>';
+            return;
+        }
+        var rows = courses.map(function(c) {
+            return '<tr><td><div style="font-weight:700">' + c.title + '</div><div style="font-size:11px;color:var(--text2)">' + c.category + '</div></td>' +
+                '<td><div class="user-name">' + c.first_name + ' ' + c.last_name + '</div><div class="user-email">' + c.email + '</div></td>' +
+                '<td style="font-weight:700;color:var(--g2)">' + c.price + ' смн</td>' +
+                '<td>' + new Date(c.created_at).toLocaleDateString('ru', {day:'numeric',month:'short'}) + '</td>' +
+                '<td><button class="btn-approve" onclick="approveCourse(\'' + c.id + '\',this)">✓ Одобрить</button></td></tr>';
+        }).join('');
+        el.innerHTML = '<table><thead><tr><th>Курс</th><th>Учитель</th><th>Цена</th><th>Дата</th><th>Действия</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }).catch(function(e) {
+        el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка</div>';
+    });
+}
+
+function approveCourse(id, btn) {
+    btn.disabled = true; btn.textContent = '...';
+    req('POST', '/users/admin/courses/' + id + '/approve').then(function() {
+        showToast('Курс одобрен!');
+        loadPendingCourses(); loadStats();
+    }).catch(function(e) {
+        showToast(e.message, 'error');
+        btn.disabled = false; btn.textContent = '✓ Одобрить';
+    });
+}
+
+function loadAllTeachers() {
+    var el = document.getElementById('all-teachers-table');
+    req('GET', '/teachers').then(function(all) {
+        if (!all.length) {
+            el.innerHTML = '<table><tbody><tr class="empty-row"><td>Учителей пока нет</td></tr></tbody></table>';
+            return;
+        }
+        var rows = all.map(function(t) {
+            return '<tr><td><div class="user-cell"><div class="user-av" style="background:' + (t.color || '#18A96A') + '">' + (t.initials || '?') + '</div><div class="user-name">' + t.firstName + ' ' + t.lastName + '</div></div></td>' +
+                '<td>' + (t.subject || '—') + '</td>' +
+                '<td>' + (t.rating > 0 ? '★ ' + parseFloat(t.rating).toFixed(1) : '—') + '</td>' +
+                '<td>' + (t.studentCount || 0) + '</td>' +
+                '<td>' + (t.price > 0 ? t.price + ' смн' : '—') + '</td>' +
+                '<td><span class="badge ' + (t.isModerated ? 'active' : 'pending') + '">' + (t.isModerated ? '✓ Одобрен' : '⏳ На проверке') + '</span></td></tr>';
+        }).join('');
+        el.innerHTML = '<table><thead><tr><th>Учитель</th><th>Предмет</th><th>Рейтинг</th><th>Учеников</th><th>Цена</th><th>Статус</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }).catch(function(e) {
+        el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка</div>';
+    });
+}
+
+function loadRejected() {
+    var el = document.getElementById('rejected-table');
+    req('GET', '/users/admin/rejected').then(function(teachers) {
+        document.getElementById('sb-rejected-cnt').textContent = teachers.length;
+        if (!teachers.length) {
+            el.innerHTML = '<table><tbody><tr class="empty-row"><td>Отклонённых учителей нет</td></tr></tbody></table>';
+            return;
+        }
+        var rows = teachers.map(function(t) {
+            return '<tr><td><div class="user-cell"><div class="user-av" style="background:#DC2626">' +
+                (t.first_name[0] + t.last_name[0]).toUpperCase() +
+                '</div><div><div class="user-name">' + t.first_name + ' ' + t.last_name +
+                '</div><div class="user-email">' + t.email + '</div></div></div></td>' +
+                '<td>' + (t.subject || '—') + '</td>' +
+                '<td>' + new Date(t.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',year:'numeric'}) + '</td>' +
+                '<td><button class="btn-detail" onclick="restoreTeacher(\'' + t.id + '\',this)">↩️ Вернуть на проверку</button></td></tr>';
+        }).join('');
+        el.innerHTML = '<table><thead><tr><th>Учитель</th><th>Предмет</th><th>Дата</th><th>Действия</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }).catch(function(e) {
+        el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--red)">Ошибка</div>';
+    });
+}
+
+function restoreTeacher(userId, btn) {
+    btn.disabled = true; btn.textContent = '...';
+    req('POST', '/users/admin/restore/' + userId).then(function() {
+        showToast('Учитель возвращён на проверку');
+        loadRejected(); loadPendingTeachers(); loadStats();
+    }).catch(function(e) {
+        showToast(e.message, 'error');
+        btn.disabled = false; btn.textContent = '↩️ Вернуть на проверку';
+    });
+}
+
+// Event listeners
+document.getElementById('login-btn').addEventListener('click', doLogin);
+document.getElementById('l-pass').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+document.getElementById('logout-btn').addEventListener('click', doLogout);
+document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+document.getElementById('modal-close-btn2').addEventListener('click', closeModal);
+document.getElementById('teacher-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('refresh-stats').addEventListener('click', loadStats);
+document.getElementById('refresh-teachers').addEventListener('click', loadPendingTeachers);
+document.getElementById('refresh-courses').addEventListener('click', loadPendingCourses);
+document.getElementById('refresh-all-teachers').addEventListener('click', loadAllTeachers);
+document.getElementById('refresh-rejected').addEventListener('click', loadRejected);
+
+document.querySelectorAll('.sb-item[data-panel]').forEach(function(btn) {
+    btn.addEventListener('click', function() { showPanel(this.getAttribute('data-panel')); });
+});
+
+// Auto login
+if (token) {
+    fetch(API + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(u) { if (u.role === 'admin') { currentUser = u; showAdmin(); } })
+        .catch(function() {});
+}
 </script>
 </body>
 </html>
