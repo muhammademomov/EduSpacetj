@@ -839,12 +839,15 @@ function catEmoji(cat) {
 }
 
 function buildTccard(t) {
+    var avatarHtml = t.avatarUrl
+        ? '<div class="tcc-av" style="background:' + (t.color||'#18A96A') + ';padding:0;overflow:hidden"><img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover"></div>'
+        : '<div class="tcc-av" style="background:' + (t.color||'#18A96A') + '">' + (t.initials||'?') + '</div>';
     return `
         <div class="tccard${t.isModerated?' verified':''}" onclick="openProfile('${t.id}')">
             <div class="tcc-cover">
                 <div class="tcc-cover-bg" style="background:linear-gradient(135deg,${t.color||'#18A96A'}22,${t.color||'#18A96A'}44);width:100%;height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:14px;font-size:26px;opacity:.3">${catEmoji(t.subject)}</div>
                 ${t.isModerated ? '<div class="tcc-badge top">✓ Проверен</div>' : ''}
-                ${t.avatarUrl ? `<div class="tcc-av" style="background:${t.color||'#18A96A'};padding:0;overflow:hidden"><img src="${t.avatarUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${t.initials}'"></div>` : `<div class="tcc-av" style="background:${t.color||'#18A96A'}">${t.initials}</div>`}
+                ` + avatarHtml + `
             </div>
             <div class="tcc-body">
                 <div class="tcc-name">${t.firstName||t.first_name} ${t.lastName||t.last_name}</div>
