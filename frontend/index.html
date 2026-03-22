@@ -829,8 +829,16 @@
       <div class="dp-hdr"><div class="dp-title">Мой профиль</div><button class="btn-sm solid" onclick="saveTeacherProfile()">Сохранить</button></div>
       <div class="d-card" style="padding:1.5rem">
         <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border2)">
-          <div class="sb-av" id="td-prof-av" style="width:68px;height:68px;border-radius:18px;font-size:22px;background:#7C3AED">?</div>
-          <div><div style="font-size:16px;font-weight:800" id="td-prof-name">Преподаватель</div><div style="font-size:13px;color:var(--g);font-weight:700;margin-top:2px" id="td-prof-status">⏳ На модерации</div></div>
+          <div style="position:relative;cursor:pointer" onclick="document.getElementById('td-photo-input').click()">
+            <div class="sb-av" id="td-prof-av" style="width:68px;height:68px;border-radius:18px;font-size:22px;background:#7C3AED;overflow:hidden">?</div>
+            <div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--g);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff">📷</div>
+          </div>
+          <input type="file" id="td-photo-input" accept="image/*" style="display:none" onchange="uploadTeacherPhoto(this)">
+          <div>
+            <div style="font-size:16px;font-weight:800" id="td-prof-name">Преподаватель</div>
+            <div style="font-size:13px;color:var(--g);font-weight:700;margin-top:2px" id="td-prof-status">⏳ На модерации</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">Нажмите на фото чтобы изменить</div>
+          </div>
         </div>
         <div class="field-row">
           <div class="field"><label>Имя</label><input type="text" id="tp-fname"></div>
