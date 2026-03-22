@@ -138,6 +138,7 @@ router.get('/me', auth, async (req, res) => {
         res.json({
             id: req.user.id, firstName: req.user.first_name, lastName: req.user.last_name,
             email: req.user.email, role: req.user.role, initials: req.user.initials, color: req.user.color,
+            avatarUrl: req.user.avatar_url || null,
             ...extra,
         });
     } catch (err) {
