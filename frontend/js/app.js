@@ -889,7 +889,7 @@ function buildTccard(t) {
     var tags = (t.tags||[]).slice(0,3).map(function(tag){ return '<span class="tc2-tag">' + tag + '</span>'; }).join('');
     var price = t.price > 0 ? '<span class="tc2-price-num">' + t.price + '</span><span class="tc2-price-unit"> смн/мес</span>' : '<span class="tc2-price-num">—</span>';
 
-    return '<div class="tc2card' + (t.isModerated?' verified':'') + '" onclick="openProfile('' + t.id + '')">' +
+    return '<div class="tc2card' + (t.isModerated?' verified':'') + '" onclick="openProfile(\'' + t.id + '\')">' +
         '<div class="tc2-photo-wrap">' +
             av +
             (t.isModerated ? '<div class="tc2-check">✓</div>' : '') +
@@ -912,8 +912,8 @@ function buildTccard(t) {
         '</div>' +
         '<div class="tc2-aside">' +
             '<div class="tc2-price">' + price + '</div>' +
-            '<button class="tc2-btn-view" onclick="event.stopPropagation();openProfile('' + t.id + '')">Смотреть профиль →</button>' +
-            '<button class="tc2-btn-enroll" onclick="event.stopPropagation();goPayForProfileById('' + t.id + '')">Записаться</button>' +
+            '<button class="tc2-btn-view" onclick="event.stopPropagation();openProfile(\'' + t.id + '\')">Смотреть профиль →</button>' +
+            '<button class="tc2-btn-enroll" onclick="event.stopPropagation();goPayForProfileById(\'' + t.id + '\')">Записаться</button>' +
         '</div>' +
     '</div>';
 }
