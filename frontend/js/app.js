@@ -870,18 +870,26 @@ function buildCcard(c) {
 
 
 function setAvatar(el, user) {
-    if (!el) return;
-    if (user && user.avatarUrl) {
+    if (!el || !user) return;
+    if (user.avatarUrl) {
         el.style.padding = '0';
         el.style.overflow = 'hidden';
-        el.style.fontSize = '0';
-        el.innerHTML = '<img src="' + user.avatarUrl + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='' + (user.initials||'?') + '';this.parentElement.style.fontSize='';">';
-    } else if (user) {
+        el.style.background = user.color || '#18A96A';
+        var img = document.createElement('img');
+        img.src = user.avatarUrl;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        img.onerror = function() {
+            el.innerHTML = user.initials || '?';
+            el.style.padding = '';
+            el.style.overflow = '';
+        };
+        el.innerHTML = '';
+        el.appendChild(img);
+    } else {
         el.innerHTML = user.initials || '?';
         el.style.background = user.color || '#18A96A';
         el.style.padding = '';
         el.style.overflow = '';
-        el.style.fontSize = '';
     }
 }
 
