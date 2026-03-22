@@ -3,7 +3,7 @@ const router = express.Router();
 const db      = require('../db');
 const { auth, teacherOnly } = require('../middleware/auth');
 const { randomUUID } = require('crypto');
-const { uploadPhoto, uploadDoc } = require('../cloudinary');
+const { uploadPhoto, uploadDoc, uploadVideo } = require('../cloudinary');
 
 const safeJson = (v, d=[]) => { if (!v) return d; try { return JSON.parse(v); } catch { return d; } };
 
@@ -120,16 +120,12 @@ router.post('/profile/photo', auth, teacherOnly, uploadPhoto.single('photo'), as
 });
 
 // ─── POST /api/teachers/profile/video ──────────────────────────
-router.post('/profile/video', auth, teacherOnly, async (req, res) => {
-    const { videoUrl } = req.body;
-    if (!videoUrl) return res.status(400).json({ error: 'URL видео обязателен' });
-    // Accept YouTube, Vimeo, or direct video URLs
-    const allowed = ['youtube.com', 'youtu.be', 'vimeo.com', 'drive.google.com'];
-    const isAllowed = allowed.some(function(d) { return videoUrl.includes(d); });
-    if (!isAllowed) return res.status(400).json({ error: 'Поддерживается YouTube, Vimeo или Google Drive' });
+router.post('/profile/video', auth, teacherOnly, uploadVideo.single('video'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Видео не загружено' });
     try {
+        const videoUrl = req.file.path || req.file.secure_url;
         await db.query('UPDATE teacher_profiles SET video_url = ? WHERE user_id = ?', [videoUrl, req.user.id]);
-        res.json({ message: 'Видео сохранено', videoUrl });
+        res.json({ message: 'Видео загружено', videoUrl });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
