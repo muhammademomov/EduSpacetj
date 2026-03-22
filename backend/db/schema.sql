@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
     review_count  INT          DEFAULT 0,
     student_count INT          DEFAULT 0,
     total_earnings DECIMAL(12,2) DEFAULT 0,
+    video_url     VARCHAR(500),
     moderated_at  DATETIME,
     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -108,6 +109,8 @@ CREATE TABLE IF NOT EXISTS enrollments (
     status            ENUM('active','completed','refunded') DEFAULT 'active',
     enrolled_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_student_course (student_id, course_id),
+    INDEX idx_student (student_id),
+    INDEX idx_teacher (teacher_id),
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id)  REFERENCES courses(id) ON DELETE CASCADE,
     FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id)
