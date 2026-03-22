@@ -3,7 +3,7 @@ const router = express.Router();
 const db      = require('../db');
 const { auth, teacherOnly } = require('../middleware/auth');
 const { randomUUID } = require('crypto');
-const { uploadPhoto, uploadDoc, uploadVideo } = require('../cloudinary');
+const { uploadPhoto, uploadDoc } = require('../cloudinary');
 
 const safeJson = (v, d=[]) => { if (!v) return d; try { return JSON.parse(v); } catch { return d; } };
 
@@ -120,13 +120,26 @@ router.post('/profile/photo', auth, teacherOnly, uploadPhoto.single('photo'), as
 });
 
 // ─── POST /api/teachers/profile/video ──────────────────────────
-router.post('/profile/video', auth, teacherOnly, uploadVideo.single('video'), async (req, res) => {
+// Use multer memoryStorage then upload to cloudinary directly
+const multer = require('multer');
+const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
+const { cloudinary } = require('../cloudinary');
+
+router.post('/profile/video', auth, teacherOnly, memUpload.single('video'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Видео не загружено' });
     try {
-        const videoUrl = req.file.path || req.file.secure_url;
+        // Upload buffer to cloudinary
+        const result = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                { folder: 'eduspace/videos', resource_type: 'video', format: 'mp4' },
+                (err, result) => err ? reject(err) : resolve(result)
+            );
+            stream.end(req.file.buffer);
+        });
+        const videoUrl = result.secure_url;
         await db.query('UPDATE teacher_profiles SET video_url = ? WHERE user_id = ?', [videoUrl, req.user.id]);
         res.json({ message: 'Видео загружено', videoUrl });
-    } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+    } catch (err) { console.error('Video upload error:', err); res.status(500).json({ error: 'Ошибка загрузки видео: ' + err.message }); }
 });
 
 // ─── POST /api/teachers/profile/documents ─────────────────────────
