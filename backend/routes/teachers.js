@@ -85,7 +85,7 @@ router.get('/:id', async (req, res) => {
         res.json({
             ...fmt(t),
             courses: courses.map(c => ({ ...c, rating: parseFloat(c.rating)||0 })),
-            documents: docs.map(d => ({ id:d.id, type:d.doc_type, name:d.doc_name, institution:d.institution, year:d.year, isVerified:!!d.is_verified })),
+            documents: docs.map(d => ({ id:d.id, type:d.doc_type, name:d.doc_name, institution:d.institution, year:d.year, fileUrl:d.file_url, isVerified:!!d.is_verified })),
             reviews: reviews.map(r => ({
                 id:r.id, stars:r.stars, text:r.text, tags:safeJson(r.tags,[]),
                 date:r.created_at, courseTitle:r.course_title,
