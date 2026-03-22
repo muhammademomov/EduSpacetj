@@ -286,7 +286,12 @@ function renderProfile(t) {
             var vid = embedUrl.split('vimeo.com/')[1];
             embedUrl = 'https://player.vimeo.com/video/' + vid;
         }
-        videoContainer.innerHTML = '<iframe src="' + embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>';
+        // Check if it's a direct video file (cloudinary) or embed (youtube/vimeo)
+        if (embedUrl.includes('cloudinary.com') || embedUrl.includes('.mp4') || embedUrl.includes('.webm')) {
+            videoContainer.innerHTML = '<video src="' + embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%" controls></video>';
+        } else {
+            videoContainer.innerHTML = '<iframe src="' + embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>';
+        }
     } else if (videoSec) {
         videoSec.style.display = 'none';
     }
@@ -819,8 +824,11 @@ async function loadTeacherDash() {
     document.getElementById('tp-fname').value = currentUser.firstName || '';
     document.getElementById('tp-lname').value = currentUser.lastName || '';
     document.getElementById('tp-email').value = currentUser.email || '';
-    if (document.getElementById('tp-video') && currentUser.videoUrl) {
-        document.getElementById('tp-video').value = currentUser.videoUrl || '';
+    // Show existing video in preview if available
+    if (currentUser.videoUrl && document.getElementById('tp-video-preview')) {
+        var player = document.getElementById('tp-video-player');
+        if (player) { player.src = currentUser.videoUrl; document.getElementById('tp-video-preview').style.display = 'block'; }
+        if (document.getElementById('tp-video-fname')) document.getElementById('tp-video-fname').textContent = 'Видео загружено ✓';
     }
 }
 
@@ -862,11 +870,7 @@ async function saveTeacherProfile() {
             bio: document.getElementById('tp-bio').value,
             price: parseFloat(document.getElementById('tp-price').value) || 0,
         });
-        // Save video URL if provided
-        var videoUrl = document.getElementById('tp-video') && document.getElementById('tp-video').value.trim();
-        if (videoUrl) {
-            try { await post('/teachers/profile/video', { videoUrl: videoUrl }); } catch(ve) { console.log('Video save error:', ve.message); }
-        }
+        // Video is uploaded separately via uploadTeacherVideo()
         const fresh = await get('/auth/me');
         currentUser = { ...currentUser, ...fresh };
         localStorage.setItem('user', JSON.stringify(currentUser));
@@ -983,6 +987,44 @@ function setAvatar(el, user) {
         el.style.background = user.color || '#18A96A';
         el.style.padding = '';
         el.style.overflow = '';
+    }
+}
+
+
+function previewVideo(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    document.getElementById('tp-video-fname').textContent = file.name;
+    document.getElementById('tp-video-btn').style.display = 'block';
+    var url = URL.createObjectURL(file);
+    var preview = document.getElementById('tp-video-preview');
+    var player = document.getElementById('tp-video-player');
+    if (preview && player) {
+        player.src = url;
+        preview.style.display = 'block';
+    }
+}
+
+async function uploadTeacherVideo() {
+    var input = document.getElementById('tp-video-input');
+    if (!input || !input.files || !input.files[0]) return alert('Выберите видео файл');
+    var file = input.files[0];
+    if (file.size > 100 * 1024 * 1024) return alert('Файл слишком большой. Максимум 100 МБ');
+    var btn = document.getElementById('tp-video-btn');
+    btn.textContent = 'Загрузка...';
+    btn.disabled = true;
+    try {
+        var fd = new FormData();
+        fd.append('video', file);
+        var result = await upload('/teachers/profile/video', fd);
+        currentUser.videoUrl = result.videoUrl;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        btn.textContent = '✅ Загружено!';
+        setTimeout(function() { btn.textContent = 'Загрузить'; btn.disabled = false; }, 2000);
+    } catch(e) {
+        alert('Ошибка загрузки: ' + e.message);
+        btn.textContent = 'Загрузить';
+        btn.disabled = false;
     }
 }
 
