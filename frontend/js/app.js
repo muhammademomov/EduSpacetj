@@ -267,6 +267,30 @@ function renderProfile(t) {
         }).join('')
         : '<div style="text-align:center;padding:2rem;color:var(--text3)">Документы не загружены</div>';
 
+    // Video section
+    var videoSec = document.getElementById('pp-video-section');
+    var videoContainer = document.getElementById('pp-video-container');
+    if (videoSec && videoContainer && t.videoUrl) {
+        videoSec.style.display = 'block';
+        var embedUrl = t.videoUrl;
+        // Convert YouTube URL to embed
+        if (embedUrl.includes('youtube.com/watch')) {
+            var vid = embedUrl.split('v=')[1];
+            if (vid) vid = vid.split('&')[0];
+            embedUrl = 'https://www.youtube.com/embed/' + vid;
+        } else if (embedUrl.includes('youtu.be/')) {
+            var vid = embedUrl.split('youtu.be/')[1];
+            if (vid) vid = vid.split('?')[0];
+            embedUrl = 'https://www.youtube.com/embed/' + vid;
+        } else if (embedUrl.includes('vimeo.com/')) {
+            var vid = embedUrl.split('vimeo.com/')[1];
+            embedUrl = 'https://player.vimeo.com/video/' + vid;
+        }
+        videoContainer.innerHTML = '<iframe src="' + embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>';
+    } else if (videoSec) {
+        videoSec.style.display = 'none';
+    }
+
     // Reset tabs
     document.querySelectorAll('.pp-tab').forEach(function(t,i){ t.classList.toggle('on', i===0); });
     ['pp-about','pp-courses','pp-reviews','pp-docs'].forEach(function(id,i){
@@ -795,6 +819,9 @@ async function loadTeacherDash() {
     document.getElementById('tp-fname').value = currentUser.firstName || '';
     document.getElementById('tp-lname').value = currentUser.lastName || '';
     document.getElementById('tp-email').value = currentUser.email || '';
+    if (document.getElementById('tp-video') && currentUser.videoUrl) {
+        document.getElementById('tp-video').value = currentUser.videoUrl || '';
+    }
 }
 
 function tdShow(panel) {
@@ -835,6 +862,11 @@ async function saveTeacherProfile() {
             bio: document.getElementById('tp-bio').value,
             price: parseFloat(document.getElementById('tp-price').value) || 0,
         });
+        // Save video URL if provided
+        var videoUrl = document.getElementById('tp-video') && document.getElementById('tp-video').value.trim();
+        if (videoUrl) {
+            try { await post('/teachers/profile/video', { videoUrl: videoUrl }); } catch(ve) { console.log('Video save error:', ve.message); }
+        }
         const fresh = await get('/auth/me');
         currentUser = { ...currentUser, ...fresh };
         localStorage.setItem('user', JSON.stringify(currentUser));
