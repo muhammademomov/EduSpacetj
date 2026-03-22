@@ -183,8 +183,15 @@ function renderProfile(t) {
     document.getElementById('pp-bc-name').textContent = t.fullName;
     document.getElementById('pp-cover').style.cssText = `height:180px;background:linear-gradient(135deg,${t.color}33,${t.color}66);position:relative;overflow:hidden`;
     document.getElementById('pp-cover').innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:flex-end;justify-content:flex-end;padding:20px;font-size:80px;opacity:.15">${catEmoji(t.subject)}</div>`;
-    document.getElementById('pp-av').style.background = t.color;
-    document.getElementById('pp-av').textContent = t.initials;
+    if (t.avatarUrl) {
+        document.getElementById('pp-av').style.background = t.color;
+        document.getElementById('pp-av').style.padding = '0';
+        document.getElementById('pp-av').style.overflow = 'hidden';
+        document.getElementById('pp-av').innerHTML = `<img src="${t.avatarUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${t.initials}'">`;
+    } else {
+        document.getElementById('pp-av').style.background = t.color;
+        document.getElementById('pp-av').textContent = t.initials;
+    }
     document.getElementById('pp-hname').textContent = t.fullName;
     document.getElementById('pp-hsubj').textContent = t.subject || '';
     document.getElementById('pp-hrat').textContent = t.rating > 0 ? t.rating.toFixed(1) : '—';
@@ -834,7 +841,7 @@ function buildTccard(t) {
             <div class="tcc-cover">
                 <div class="tcc-cover-bg" style="background:linear-gradient(135deg,${t.color||'#18A96A'}22,${t.color||'#18A96A'}44);width:100%;height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:14px;font-size:26px;opacity:.3">${catEmoji(t.subject)}</div>
                 ${t.isModerated ? '<div class="tcc-badge top">✓ Проверен</div>' : ''}
-                <div class="tcc-av" style="background:${t.color||'#18A96A'}">${t.initials}</div>
+                ${t.avatarUrl ? `<div class="tcc-av" style="background:${t.color||'#18A96A'};padding:0;overflow:hidden"><img src="${t.avatarUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${t.initials}'"></div>` : `<div class="tcc-av" style="background:${t.color||'#18A96A'}">${t.initials}</div>`}
             </div>
             <div class="tcc-body">
                 <div class="tcc-name">${t.firstName||t.first_name} ${t.lastName||t.last_name}</div>
