@@ -31,4 +31,17 @@ const docStorage = new CloudinaryStorage({
 const uploadPhoto = multer({ storage: photoStorage, limits: { fileSize: 5 * 1024 * 1024 } });
 const uploadDoc   = multer({ storage: docStorage,   limits: { fileSize: 10 * 1024 * 1024 } });
 
-module.exports = { cloudinary, uploadPhoto, uploadDoc };
+// Storage для видео
+const videoStorage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'eduspace/videos',
+        resource_type: 'video',
+        allowed_formats: ['mp4', 'mov', 'avi', 'webm'],
+        transformation: [{ quality: 'auto' }],
+    },
+});
+
+const uploadVideo = multer({ storage: videoStorage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB
+
+module.exports = { cloudinary, uploadPhoto, uploadDoc, uploadVideo };
