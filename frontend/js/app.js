@@ -94,8 +94,7 @@ function logout() {
 function showLoggedIn() {
     document.getElementById('nav-guest').style.display = 'none';
     document.getElementById('nav-user').style.display = 'flex';
-    document.getElementById('nav-av').textContent = currentUser.initials;
-    document.getElementById('nav-av').style.background = currentUser.color;
+    setAvatar(document.getElementById('nav-av'), currentUser);
     document.getElementById('nav-uname').textContent = currentUser.firstName + ' ' + (currentUser.lastName?.[0] || '') + '.';
     if (currentUser.role === 'student') {
         document.getElementById('nav-bal-disp').textContent = (currentUser.balance || 0) + ' смн';
@@ -468,12 +467,10 @@ async function finishSetup() {
 // ═══════════════════════════════════════════════════════
 async function loadStudentDash() {
     if (!currentUser) return;
-    document.getElementById('sd-av').textContent = currentUser.initials;
-    document.getElementById('sd-av').style.background = currentUser.color;
+    setAvatar(document.getElementById('sd-av'), currentUser);
     document.getElementById('sd-uname').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sd-greet').textContent = currentUser.firstName + '!';
-    document.getElementById('settings-av').textContent = currentUser.initials;
-    document.getElementById('settings-av').style.background = currentUser.color;
+    setAvatar(document.getElementById('settings-av'), currentUser);
     document.getElementById('settings-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sett-name').value = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sett-email').value = currentUser.email || '';
@@ -729,8 +726,7 @@ function setQuickTopup(amt) { topupAmt = amt; sdShow('payment-flow'); selAmt(nul
 // ═══════════════════════════════════════════════════════
 async function loadTeacherDash() {
     if (!currentUser) return;
-    document.getElementById('td-av').textContent = currentUser.initials;
-    document.getElementById('td-av').style.background = currentUser.color;
+    setAvatar(document.getElementById('td-av'), currentUser);
     document.getElementById('td-uname').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     const tdAv = document.getElementById('td-prof-av');
     if (currentUser.avatarUrl) {
@@ -870,6 +866,23 @@ function buildCcard(c) {
             <div class="ccard-meta"><span class="stars">★</span><span style="font-weight:700">${c.rating > 0 ? c.rating.toFixed(1) : '—'}</span></div></div>
             <div class="ccard-foot"><div class="ccard-price">${c.price} смн</div><button class="ccard-enroll" onclick="event.stopPropagation();startEnroll('${c.id}')">Записаться</button></div>
         </div>`;
+}
+
+
+function setAvatar(el, user) {
+    if (!el) return;
+    if (user && user.avatarUrl) {
+        el.style.padding = '0';
+        el.style.overflow = 'hidden';
+        el.style.fontSize = '0';
+        el.innerHTML = '<img src="' + user.avatarUrl + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='' + (user.initials||'?') + '';this.parentElement.style.fontSize='';">';
+    } else if (user) {
+        el.innerHTML = user.initials || '?';
+        el.style.background = user.color || '#18A96A';
+        el.style.padding = '';
+        el.style.overflow = '';
+        el.style.fontSize = '';
+    }
 }
 
 // ═══════════════════════════════════════════════════════
