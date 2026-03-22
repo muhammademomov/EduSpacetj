@@ -243,7 +243,7 @@ function renderProfile(t) {
                 '<div style="font-size:14px;font-weight:700;margin-bottom:4px">' + c.title + '</div>' +
                 '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:10px"><span>' + c.level + '</span><span style="background:var(--gl2);color:var(--g2);padding:2px 7px;border-radius:6px">' + c.category + '</span></div>' +
                 '<div style="font-size:16px;font-weight:800;color:var(--g2);margin-bottom:8px">' + (c.price > 0 ? c.price + ' смн' : 'Договорная') + '</div>' +
-                '<button class="pp-cc-btn" onclick="startEnroll('' + c.id + '')">Записаться</button>' +
+                '<button class="pp-cc-btn" onclick="startEnroll(\'' + c.id + '\')">Записаться</button>' +
                 '</div>';
         }).join('')
         : '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3)">Курсов пока нет</div>';
