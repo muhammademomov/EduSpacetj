@@ -1109,9 +1109,24 @@ async function loadTeacherStudents() {
         const students = await get('/teachers/my/students');
         const el = document.getElementById('td-students-list');
         if (!students.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Учеников пока нет</div></div>'; return; }
-        el.innerHTML = '<div class="d-card" style="padding:1.2rem">' + students.map(s =>
-            `<div class="d-st-row"><div class="d-st-av" style="background:${s.color||'#18A96A'}">${s.initials||'?'}</div><div style="flex:1"><div style="font-size:13px;font-weight:700">${s.first_name} ${s.last_name}</div><div style="font-size:11px;color:var(--text2)">${s.course_title} · ${new Date(s.enrolled_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</div></div><div style="font-size:13px;font-weight:700;color:var(--g2)">${s.teacher_amount} смн</div></div>`
-        ).join('') + '</div>';
+        el.innerHTML = '<div class="d-card" style="padding:1.2rem">' + students.map(s => {
+            var pct = s.progress || 0;
+            var av  = s.avatar_url
+                ? '<img src="' + s.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
+                : (s.initials || '?');
+            return '<div class="d-st-row" onclick="openStudentPage(\'' + s.id + '\', \'' + s.course_id + '\')" style="cursor:pointer;transition:background .15s;border-radius:9px;padding:10px 8px" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'+
+                '<div class="d-st-av" style="background:' + (s.color||'#18A96A') + ';overflow:hidden">' + av + '</div>'+
+                '<div style="flex:1">'+
+                    '<div style="font-size:13px;font-weight:700">' + s.first_name + ' ' + s.last_name + '</div>'+
+                    '<div style="font-size:11px;color:var(--text2)">' + (s.emoji||'📖') + ' ' + s.course_title + ' · ' + new Date(s.enrolled_at).toLocaleDateString('ru',{day:'numeric',month:'short'}) + '</div>'+
+                    '<div style="height:4px;background:var(--border2);border-radius:2px;margin-top:5px;width:100px"><div style="height:100%;width:' + pct + '%;background:var(--g);border-radius:2px;transition:width .4s"></div></div>'+
+                '</div>'+
+                '<div style="text-align:right">'+
+                    '<div style="font-size:13px;font-weight:700;color:var(--g2)">' + parseFloat(s.teacher_amount||0).toLocaleString('ru') + ' смн</div>'+
+                    '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + pct + '% курса</div>'+
+                '</div>'+
+            '</div>';
+        }).join('') + '</div>';
     } catch(e) { console.error(e); }
 }
 
@@ -1671,6 +1686,254 @@ function showToast(msg, type) {
     }, 3200);
 }
 
+
+
+// ═══════════════════════════════════════════════════════
+// СТРАНИЦА УЧЕНИКА ДЛЯ УЧИТЕЛЯ
+// ═══════════════════════════════════════════════════════
+let currentStudentId   = null;
+let currentStudentData = null;
+let currentTsHwId      = null;
+let slotCount          = 1;
+
+async function openStudentPage(studentId, courseId) {
+    currentStudentId = studentId;
+    currentCourseId  = courseId;
+    go('teacher-student');
+    await loadStudentPageData();
+}
+
+function openChatWithStudentFromPage() {
+    if (!currentStudentData) return;
+    const s = currentStudentData.student;
+    openChatWithStudent(s.id, s.firstName + ' ' + s.lastName, s.initials, s.color || '#18A96A');
+}
+
+async function loadStudentPageData() {
+    try {
+        const data = await get('/teachers/student/' + currentStudentId + '/course/' + currentCourseId);
+        currentStudentData = data;
+        renderStudentPage(data);
+    } catch(e) {
+        showToast('Ошибка загрузки: ' + (e.message || ''), 'error');
+    }
+}
+
+function renderStudentPage(data) {
+    const { student, course, enrollment, lessons, progress, homework, schedule } = data;
+
+    // Breadcrumb & hero
+    document.getElementById('ts-bc-name').textContent     = student.firstName + ' ' + student.lastName;
+    document.getElementById('ts-student-name').textContent = student.firstName + ' ' + student.lastName;
+    document.getElementById('ts-course-cat').textContent  = course.category;
+    document.getElementById('ts-course-title').textContent = course.title;
+    document.getElementById('ts-course-emoji').textContent = course.emoji;
+    document.getElementById('ts-enrolled-at').textContent  =
+        'Записан ' + new Date(enrollment.enrolledAt).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'});
+
+    // Avatar
+    const avEl = document.getElementById('ts-av');
+    if (student.avatarUrl) {
+        avEl.innerHTML = '<img src="' + student.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:16px">';
+        avEl.style.background = student.color || '#18A96A';
+    } else {
+        avEl.textContent   = student.initials || '?';
+        avEl.style.background = student.color || '#18A96A';
+        avEl.style.color   = '#fff';
+        avEl.style.display = 'flex';
+        avEl.style.alignItems = 'center';
+        avEl.style.justifyContent = 'center';
+        avEl.style.fontWeight = '800';
+    }
+
+    // Progress ring
+    const pct = progress.percent || 0;
+    const offset = 201 - (201 * pct / 100);
+    const ringEl = document.getElementById('ts-ring-fill');
+    if (ringEl) setTimeout(() => { ringEl.style.strokeDashoffset = offset; }, 100);
+    document.getElementById('ts-pct').textContent = pct + '%';
+    document.getElementById('ts-pb-fill').style.width = pct + '%';
+    document.getElementById('ts-pb-text').textContent = progress.done + ' из ' + progress.total + ' уроков';
+
+    // Render lessons (read-only view)
+    const lessonsEl = document.getElementById('ts-lessons-list');
+    if (lessons.length) {
+        lessonsEl.innerHTML = lessons.map(function(l) {
+            return '<div class="cp-lesson' + (l.isDone ? ' done' : '') + '">' +
+                '<div class="cp-lesson-num">' + (l.isDone ? '✓' : l.order) + '</div>' +
+                '<div class="cp-lesson-info">' +
+                    '<div class="cp-lesson-title">' + l.title + '</div>' +
+                    '<div class="cp-lesson-meta">' + (l.isDone && l.doneAt
+                        ? '✅ Пройдено ' + new Date(l.doneAt).toLocaleDateString('ru',{day:'numeric',month:'short'})
+                        : '⏳ Не пройдено') + '</div>' +
+                '</div>' +
+                '<div style="font-size:20px">' + (l.isDone ? '✅' : '⬜') + '</div>' +
+            '</div>';
+        }).join('');
+    } else {
+        lessonsEl.innerHTML = '<div class="cp-empty"><div class="cp-empty-ico">📚</div><div class="cp-empty-title">Уроков нет</div></div>';
+    }
+
+    // Populate lesson select in HW form
+    const sel = document.getElementById('ts-hw-lesson');
+    sel.innerHTML = '<option value="">— Общее задание —</option>' +
+        lessons.map(function(l) { return '<option value="' + l.id + '">Урок ' + l.order + ': ' + l.title + '</option>'; }).join('');
+
+    // Render existing schedule
+    renderTsSchedule(schedule);
+
+    // Render homework
+    renderTsHomework(homework);
+
+    // Reset to first tab
+    tsTab('progress', document.querySelector('.cp-tab.on') || document.querySelector('.cp-tab'));
+}
+
+function tsTab(tab, btn) {
+    document.querySelectorAll('#page-teacher-student .cp-tab').forEach(function(t){ t.classList.remove('on'); });
+    if (btn) btn.classList.add('on');
+    document.querySelectorAll('#page-teacher-student .cp-section').forEach(function(s){ s.classList.remove('on'); });
+    var sec = document.getElementById('tss-' + tab);
+    if (sec) sec.classList.add('on');
+}
+
+// ── Schedule ──
+function addSchedSlot() {
+    const container = document.getElementById('ts-sched-slots');
+    const div = document.createElement('div');
+    div.className = 'ts-sched-slot';
+    div.style.cssText = 'border-top:1px solid var(--border2);padding-top:14px;margin-top:14px;position:relative';
+    div.innerHTML =
+        '<button onclick="this.parentElement.remove()" style="position:absolute;right:0;top:14px;background:none;border:none;color:#EF4444;font-size:18px;cursor:pointer">✕</button>' +
+        '<div class="field-row">' +
+            '<div class="field"><label>День</label>' +
+                '<select class="ts-day" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">' +
+                '<option value="Пн">Понедельник</option><option value="Вт">Вторник</option>' +
+                '<option value="Ср">Среда</option><option value="Чт">Четверг</option>' +
+                '<option value="Пт">Пятница</option><option value="Сб">Суббота</option><option value="Вс">Воскресенье</option>' +
+                '</select></div>' +
+            '<div class="field"><label>Начало</label><input type="time" class="ts-from" value="09:00" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit"></div>' +
+            '<div class="field"><label>Конец</label><input type="time" class="ts-to" value="10:00" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit"></div>' +
+        '</div>' +
+        '<div class="field"><label>Ссылка</label><input type="url" class="ts-link" placeholder="https://zoom.us/j/..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit"></div>';
+    container.appendChild(div);
+}
+
+async function saveSchedule() {
+    if (!currentStudentData) return;
+    const slots    = document.querySelectorAll('.ts-sched-slot');
+    const days     = Array.from(slots).map(function(s) {
+        return {
+            dayOfWeek: s.querySelector('.ts-day')?.value  || '',
+            timeFrom:  s.querySelector('.ts-from')?.value || '',
+            timeTo:    s.querySelector('.ts-to')?.value   || '',
+            platform:  s.querySelector('.ts-plat')?.value || '',
+            link:      s.querySelector('.ts-link')?.value || '',
+        };
+    });
+    try {
+        await post('/courses/' + currentCourseId + '/schedule', {
+            enrollmentId: currentStudentData.enrollment.id,
+            studentId:    currentStudentId,
+            days,
+        });
+        showToast('📅 Расписание сохранено!');
+        await loadStudentPageData();
+    } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
+}
+
+function renderTsSchedule(schedule) {
+    const el = document.getElementById('ts-sched-current');
+    if (!schedule || !schedule.length) { el.innerHTML = ''; return; }
+    const DAY_NAMES  = {'Пн':'Понедельник','Вт':'Вторник','Ср':'Среда','Чт':'Четверг','Пт':'Пятница','Сб':'Суббота','Вс':'Воскресенье'};
+    const PLAT_ICONS = {zoom:'🎥',meet:'📹',teams:'💼',tg:'✈️',sk:'💬'};
+    el.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">📋 Текущее расписание:</div>' +
+        '<div class="cp-sched-grid">' +
+        schedule.map(function(s) {
+            var dayFull = DAY_NAMES[s.dayOfWeek] || s.dayOfWeek || '—';
+            var platIco = PLAT_ICONS[s.platform]  || '🔗';
+            var linkBtn = s.link
+                ? '<a href="' + s.link + '" target="_blank" class="cp-sched-link">' + platIco + ' Войти</a>'
+                : '';
+            return '<div class="cp-sched-card">' +
+                '<div class="cp-sched-day">' + dayFull + '</div>' +
+                '<div class="cp-sched-time">' + (s.timeFrom||'—') + (s.timeTo ? ' – ' + s.timeTo : '') + '</div>' +
+                '<div class="cp-sched-plat">' + platIco + ' ' + (s.platform||'') + '</div>' +
+                linkBtn + '</div>';
+        }).join('') + '</div>';
+}
+
+// ── Homework ──
+async function addHomework() {
+    const title   = document.getElementById('ts-hw-title').value.trim();
+    const desc    = document.getElementById('ts-hw-desc').value.trim();
+    const due     = document.getElementById('ts-hw-due').value;
+    const lessonId = document.getElementById('ts-hw-lesson').value;
+    if (!title) { showToast('Введите название задания', 'info'); return; }
+    try {
+        await post('/teachers/homework', {
+            courseId:  currentCourseId,
+            studentId: currentStudentId,
+            lessonId:  lessonId || null,
+            title, description: desc, dueDate: due || null,
+        });
+        document.getElementById('ts-hw-title').value = '';
+        document.getElementById('ts-hw-desc').value  = '';
+        document.getElementById('ts-hw-due').value   = '';
+        showToast('✅ Задание отправлено ученику!');
+        await loadStudentPageData();
+    } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
+}
+
+function renderTsHomework(homework) {
+    const el    = document.getElementById('ts-hw-list');
+    if (!homework || !homework.length) {
+        el.innerHTML = '<div class="cp-empty"><div class="cp-empty-ico">📝</div><div class="cp-empty-title">Заданий пока нет</div></div>';
+        return;
+    }
+    const STATUS_LABELS = { pending:'📋 Ожидает', submitted:'✅ Сдано', reviewed:'💬 Проверено' };
+    el.innerHTML = homework.map(function(h) {
+        var statusLabel = STATUS_LABELS[h.status] || h.status;
+        var statusClass = h.status || 'pending';
+        var reviewBtn   = h.status === 'submitted'
+            ? '<button class="btn-sm solid" onclick="openTsComment(\'' + h.id + '\', \'' + (h.studentAnswer||'').replace(/'/g,"\\'") + '\')">💬 Проверить</button>'
+            : '';
+        return '<div class="cp-hw-card ' + statusClass + '" style="margin-bottom:10px">' +
+            '<div class="cp-hw-hdr">' +
+                '<div class="cp-hw-ico">📝</div>' +
+                '<div style="flex:1"><div class="cp-hw-title">' + h.title + '</div>' +
+                '<div class="cp-hw-meta">' + (h.lessonTitle ? h.lessonTitle + ' · ' : '') +
+                (h.dueDate ? '📅 До ' + new Date(h.dueDate).toLocaleDateString('ru',{day:'numeric',month:'short'}) : '') + '</div></div>' +
+                '<span class="cp-hw-status ' + statusClass + '">' + statusLabel + '</span>' +
+            '</div>' +
+            (h.studentAnswer ? '<div class="cp-hw-answer">💬 Ответ ученика: ' + h.studentAnswer + '</div>' : '') +
+            (h.teacherComment ? '<div class="cp-hw-comment">👨‍🏫 Ваш комментарий: ' + h.teacherComment + '</div>' : '') +
+            reviewBtn +
+        '</div>';
+    }).join('');
+}
+
+function openTsComment(hwId, studentAnswer) {
+    currentTsHwId = hwId;
+    document.getElementById('ts-student-answer').textContent = studentAnswer || '(ответ не указан)';
+    document.getElementById('ts-comment-text').value = '';
+    document.getElementById('ts-comment-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeTsComment() {
+    document.getElementById('ts-comment-modal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+async function saveHwComment() {
+    var comment = document.getElementById('ts-comment-text').value.trim();
+    if (!comment) { showToast('Напишите комментарий', 'info'); return; }
+    try {
+        await put('/teachers/homework/' + currentTsHwId + '/comment', { comment });
+        closeTsComment();
+        showToast('✅ Комментарий отправлен!');
+        await loadStudentPageData();
+    } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
+}
 
 // ═══════════════════════════════════════════════════════
 // СТРАНИЦА КУРСА
