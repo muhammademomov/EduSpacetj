@@ -10,55 +10,72 @@ const { randomUUID } = require('crypto');
 const db_module = require('../db');
 (async () => {
     try {
+        // Без FOREIGN KEY — совместимо с любым charset
         await db_module.query(`CREATE TABLE IF NOT EXISTS lesson_progress (
-            id VARCHAR(36) PRIMARY KEY, student_id VARCHAR(36) NOT NULL,
-            lesson_id VARCHAR(36) NOT NULL, course_id VARCHAR(36) NOT NULL,
-            is_done TINYINT(1) DEFAULT 0, done_at DATETIME,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            id         VARCHAR(36)  NOT NULL PRIMARY KEY,
+            student_id VARCHAR(36)  NOT NULL,
+            lesson_id  VARCHAR(36)  NOT NULL,
+            course_id  VARCHAR(36)  NOT NULL,
+            is_done    TINYINT(1)   DEFAULT 0,
+            done_at    DATETIME     DEFAULT NULL,
+            created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY uq_progress (student_id, lesson_id),
-            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (lesson_id)  REFERENCES course_lessons(id) ON DELETE CASCADE,
-            FOREIGN KEY (course_id)  REFERENCES courses(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+            INDEX idx_course (course_id),
+            INDEX idx_student (student_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
         await db_module.query(`CREATE TABLE IF NOT EXISTS homework (
-            id VARCHAR(36) PRIMARY KEY, course_id VARCHAR(36) NOT NULL,
-            lesson_id VARCHAR(36), teacher_id VARCHAR(36) NOT NULL, student_id VARCHAR(36),
-            title VARCHAR(300) NOT NULL, description TEXT, due_date DATE, file_url VARCHAR(500),
-            status ENUM('pending','submitted','reviewed') DEFAULT 'pending',
-            student_answer TEXT, teacher_comment TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_course (course_id), INDEX idx_student (student_id),
-            FOREIGN KEY (course_id)  REFERENCES courses(id) ON DELETE CASCADE,
-            FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+            id              VARCHAR(36)  NOT NULL PRIMARY KEY,
+            course_id       VARCHAR(36)  NOT NULL,
+            lesson_id       VARCHAR(36)  DEFAULT NULL,
+            teacher_id      VARCHAR(36)  NOT NULL,
+            student_id      VARCHAR(36)  DEFAULT NULL,
+            title           VARCHAR(300) NOT NULL,
+            description     TEXT,
+            due_date        DATE         DEFAULT NULL,
+            file_url        VARCHAR(500) DEFAULT NULL,
+            status          VARCHAR(20)  DEFAULT 'pending',
+            student_answer  TEXT,
+            teacher_comment TEXT,
+            created_at      DATETIME     DEFAULT CURRENT_TIMESTAMP,
+            updated_at      DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_course  (course_id),
+            INDEX idx_student (student_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
         await db_module.query(`CREATE TABLE IF NOT EXISTS schedule (
-            id VARCHAR(36) PRIMARY KEY, enrollment_id VARCHAR(36) NOT NULL,
-            course_id VARCHAR(36) NOT NULL, student_id VARCHAR(36) NOT NULL,
-            teacher_id VARCHAR(36) NOT NULL, day_of_week VARCHAR(10),
-            time_from VARCHAR(10), time_to VARCHAR(10), platform VARCHAR(50),
-            link VARCHAR(500), notes TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_student (student_id), INDEX idx_course (course_id),
-            FOREIGN KEY (enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE,
-            FOREIGN KEY (course_id)     REFERENCES courses(id) ON DELETE CASCADE,
-            FOREIGN KEY (student_id)    REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (teacher_id)    REFERENCES teacher_profiles(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+            id            VARCHAR(36)  NOT NULL PRIMARY KEY,
+            enrollment_id VARCHAR(36)  NOT NULL,
+            course_id     VARCHAR(36)  NOT NULL,
+            student_id    VARCHAR(36)  NOT NULL,
+            teacher_id    VARCHAR(36)  NOT NULL,
+            day_of_week   VARCHAR(10)  DEFAULT NULL,
+            time_from     VARCHAR(10)  DEFAULT NULL,
+            time_to       VARCHAR(10)  DEFAULT NULL,
+            platform      VARCHAR(50)  DEFAULT NULL,
+            link          VARCHAR(500) DEFAULT NULL,
+            notes         TEXT,
+            created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+            updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_student     (student_id),
+            INDEX idx_course      (course_id),
+            INDEX idx_enrollment  (enrollment_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
         await db_module.query(`CREATE TABLE IF NOT EXISTS course_materials (
-            id VARCHAR(36) PRIMARY KEY, course_id VARCHAR(36) NOT NULL,
-            lesson_id VARCHAR(36), teacher_id VARCHAR(36) NOT NULL,
-            title VARCHAR(300) NOT NULL, description TEXT,
-            file_url VARCHAR(500), file_type VARCHAR(50), file_size INT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_course (course_id),
-            FOREIGN KEY (course_id)  REFERENCES courses(id) ON DELETE CASCADE,
-            FOREIGN KEY (teacher_id) REFERENCES teacher_profiles(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+            id          VARCHAR(36)  NOT NULL PRIMARY KEY,
+            course_id   VARCHAR(36)  NOT NULL,
+            lesson_id   VARCHAR(36)  DEFAULT NULL,
+            teacher_id  VARCHAR(36)  NOT NULL,
+            title       VARCHAR(300) NOT NULL,
+            description TEXT,
+            file_url    VARCHAR(500) DEFAULT NULL,
+            file_type   VARCHAR(50)  DEFAULT NULL,
+            file_size   INT          DEFAULT NULL,
+            created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_course  (course_id),
+            INDEX idx_teacher (teacher_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
         console.log('✅ Таблицы lesson_progress, homework, schedule, course_materials готовы');
     } catch(e) {
