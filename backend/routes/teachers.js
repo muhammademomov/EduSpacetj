@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
             SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.created_at,
                    tp.id AS profile_id, tp.subject, tp.bio, tp.tags, tp.price,
                    tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated,
-                   tp.rating, tp.review_count, tp.student_count, tp.video_url
+                   tp.rating, tp.review_count, tp.student_count, tp.video_url, tp.conditions
             FROM users u
             JOIN teacher_profiles tp ON tp.user_id = u.id
             WHERE u.role = 'teacher' AND u.is_active = 1 AND tp.is_moderated = 1`;
@@ -39,7 +39,7 @@ router.get('/:id', async (req, res) => {
             `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.created_at,
                     tp.id AS profile_id, tp.subject, tp.bio, tp.tags, tp.price,
                     tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated,
-                    tp.rating, tp.review_count, tp.student_count, tp.teacher_type, tp.video_url
+                    tp.rating, tp.review_count, tp.student_count, tp.teacher_type, tp.video_url, tp.conditions
              FROM users u JOIN teacher_profiles tp ON tp.user_id = u.id
              WHERE u.id = ? AND u.is_active = 1`, [req.params.id]
         );
@@ -79,7 +79,7 @@ router.get('/:id', async (req, res) => {
 
 // ─── PUT /api/teachers/profile/update ─────────────────────────────
 router.put('/profile/update', auth, teacherOnly, async (req, res) => {
-    const { subject, bio, tags, price, platforms, workDays, workHours, teacherType, firstName, lastName } = req.body;
+    const { subject, bio, tags, price, platforms, workDays, workHours, teacherType, firstName, lastName, conditions } = req.body;
     try {
         await db.query(
             `UPDATE teacher_profiles SET
@@ -90,7 +90,8 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
                 platforms  = COALESCE(?, platforms),
                 work_days  = COALESCE(?, work_days),
                 work_hours = COALESCE(?, work_hours),
-                teacher_type = COALESCE(?, teacher_type)
+                teacher_type = COALESCE(?, teacher_type),
+                conditions = COALESCE(?, conditions)
              WHERE user_id = ?`,
             [subject || null, bio || null,
              tags ? JSON.stringify(tags) : null,
@@ -99,6 +100,7 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
              workDays ? JSON.stringify(workDays) : null,
              workHours || null,
              ['pro','specialist'].includes(teacherType) ? teacherType : null,
+             conditions ? JSON.stringify(conditions) : null,
              req.user.id]
         );
         if (firstName || lastName) {
@@ -215,6 +217,7 @@ function fmt(t) {
         subject: t.subject, bio: t.bio,
         tags: safeJson(t.tags, []), platforms: safeJson(t.platforms, []), workDays: safeJson(t.work_days, []),
         workHours: t.work_hours, price: parseFloat(t.price)||0, videoUrl: t.video_url||null,
+        conditions: safeJson(t.conditions, {trial:false,guarantee:false,homework:false,certificate:false}),
         isModerated: !!t.is_moderated, rating: parseFloat(t.rating)||0,
         reviewCount: t.review_count, studentCount: t.student_count, createdAt: t.created_at,
     };
