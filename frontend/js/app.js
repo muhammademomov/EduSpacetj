@@ -1719,6 +1719,124 @@ async function loadStudentPageData() {
     }
 }
 
+
+// ── Materials ──
+function previewMatFile(input) {
+    if (!input.files || !input.files[0]) return;
+    var name = input.files[0].name;
+    var size = input.files[0].size;
+    var sizeStr = size > 1024*1024 ? (size/1024/1024).toFixed(1)+' МБ' : (size/1024).toFixed(0)+' КБ';
+    document.getElementById('ts-mat-fname').textContent = name + ' (' + sizeStr + ')';
+}
+
+async function uploadMaterial() {
+    var title    = document.getElementById('ts-mat-title').value.trim();
+    var desc     = document.getElementById('ts-mat-desc').value.trim();
+    var lessonId = document.getElementById('ts-mat-lesson').value;
+    var fileInput = document.getElementById('ts-mat-file');
+
+    if (!title)              { showToast('Введите название материала', 'info'); return; }
+    if (!fileInput.files[0]) { showToast('Выберите файл', 'info'); return; }
+
+    var file = fileInput.files[0];
+    if (file.size > 50 * 1024 * 1024) { showToast('Файл слишком большой. Максимум 50 МБ', 'error'); return; }
+
+    var btn = document.getElementById('ts-mat-btn');
+    btn.textContent = '⏳ Загрузка...';
+    btn.disabled    = true;
+
+    try {
+        var fd = new FormData();
+        fd.append('file',      file);
+        fd.append('courseId',  currentCourseId);
+        fd.append('title',     title);
+        fd.append('description', desc);
+        if (lessonId) fd.append('lessonId', lessonId);
+
+        var token = localStorage.getItem('token');
+        var res   = await fetch(API + '/teachers/materials/upload', {
+            method: 'POST',
+            headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+            body: fd,
+        });
+        var json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Ошибка загрузки');
+
+        // Reset form
+        document.getElementById('ts-mat-title').value = '';
+        document.getElementById('ts-mat-desc').value  = '';
+        document.getElementById('ts-mat-file').value  = '';
+        document.getElementById('ts-mat-fname').textContent = 'Выберите файл для загрузки';
+
+        showToast('✅ Материал загружен и отправлен ученикам!');
+        await loadStudentPageData();
+    } catch(e) {
+        showToast('Ошибка: ' + (e.message || ''), 'error');
+    } finally {
+        btn.textContent = '⬆️ Загрузить материал';
+        btn.disabled    = false;
+    }
+}
+
+function renderTsMaterials(materials) {
+    var el = document.getElementById('ts-mat-list');
+    if (!el) return;
+
+    if (!materials || !materials.length) {
+        el.innerHTML = '<div class="cp-empty"><div class="cp-empty-ico">📎</div>' +
+            '<div class="cp-empty-title">Материалов пока нет</div>' +
+            '<div class="cp-empty-sub">Загрузите файлы выше — ученик сразу получит уведомление</div></div>';
+        return;
+    }
+
+    var TYPE_ICONS = {
+        pdf:'📄', doc:'📝', docx:'📝', ppt:'📊', pptx:'📊',
+        xls:'📈', xlsx:'📈', jpg:'🖼️', jpeg:'🖼️', png:'🖼️',
+        mp4:'🎬', mp3:'🎵', zip:'🗜️', rar:'🗜️', txt:'📋'
+    };
+
+    el.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">' +
+        'Загруженные материалы (' + materials.length + '):</div>' +
+        materials.map(function(m) {
+            var ext  = m.fileUrl ? m.fileUrl.split('.').pop().toLowerCase().split('?')[0] : '';
+            var ico  = TYPE_ICONS[ext] || '📎';
+            var size = m.fileSize ? (m.fileSize > 1024*1024
+                ? (m.fileSize/1024/1024).toFixed(1)+' МБ'
+                : (m.fileSize/1024).toFixed(0)+' КБ') : '';
+            var date = m.createdAt
+                ? new Date(m.createdAt).toLocaleDateString('ru',{day:'numeric',month:'short'})
+                : '';
+            return '<div class="cp-mat-card" style="display:flex;align-items:center;gap:14px">' +
+                '<div class="cp-mat-ico">' + ico + '</div>' +
+                '<div class="cp-mat-info" style="flex:1">' +
+                    '<div class="cp-mat-title">' + m.title + '</div>' +
+                    '<div class="cp-mat-meta">' +
+                        (m.lessonTitle ? m.lessonTitle + ' · ' : '') +
+                        (size ? size + ' · ' : '') + date +
+                    '</div>' +
+                '</div>' +
+                (m.fileUrl
+                    ? '<a href="' + m.fileUrl + '" target="_blank" class="btn-sm ghost" style="white-space:nowrap">⬇️ Открыть</a>'
+                    : '') +
+                '<button onclick="deleteMaterial(\'' + m.id + '\')" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;transition:color .2s" onmouseover="this.style.color=\'#EF4444\'" onmouseout="this.style.color=\'var(--text3)\'">🗑</button>' +
+            '</div>';
+        }).join('');
+}
+
+async function deleteMaterial(matId) {
+    if (!confirm('Удалить этот материал?')) return;
+    try {
+        var token = localStorage.getItem('token');
+        var res   = await fetch(API + '/teachers/materials/' + matId, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Ошибка удаления');
+        showToast('Материал удалён');
+        await loadStudentPageData();
+    } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+}
+
 function renderStudentPage(data) {
     const { student, course, enrollment, lessons, progress, homework, schedule } = data;
 
@@ -1784,6 +1902,18 @@ function renderStudentPage(data) {
 
     // Render homework
     renderTsHomework(homework);
+
+    // Populate lesson selects for homework AND materials
+    const selMat = document.getElementById('ts-mat-lesson');
+    if (selMat) {
+        selMat.innerHTML = '<option value="">— Общий материал —</option>' +
+            lessons.map(function(l) {
+                return '<option value="' + l.id + '">Урок ' + l.order + ': ' + l.title + '</option>';
+            }).join('');
+    }
+
+    // Render materials
+    renderTsMaterials(data.materials || []);
 
     // Reset to first tab
     tsTab('progress', document.querySelector('.cp-tab.on') || document.querySelector('.cp-tab'));
