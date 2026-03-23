@@ -298,31 +298,60 @@ router.post('/chat/:teacherId', auth, async (req, res) => {
 router.get('/chats', auth, async (req, res) => {
     try {
         const myId = req.user.id;
-        // Get latest message per conversation partner
-        const [chats] = await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url,
-                    latest.text        AS last_msg,
-                    latest.created_at  AS last_time,
-                    (SELECT COUNT(*)
-                       FROM chat_messages
-                      WHERE receiver_id = ? AND sender_id = u.id AND is_read = 0
-                    ) AS unread
-             FROM users u
-             JOIN (
-                 SELECT
-                     CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id,
-                     text, created_at
-                 FROM chat_messages
-                 WHERE sender_id = ? OR receiver_id = ?
-                 ORDER BY created_at DESC
-             ) AS latest ON latest.other_id = u.id
-             WHERE u.id != ?
-             GROUP BY u.id
-             ORDER BY latest.created_at DESC`,
-            [myId, myId, myId, myId, myId]
+
+        // Step 1: get unique conversation partners
+        const [partners] = await db.query(
+            `SELECT DISTINCT
+                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id
+             FROM chat_messages
+             WHERE sender_id = ? OR receiver_id = ?`,
+            [myId, myId, myId]
         );
-        res.json(chats);
-    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+
+        if (!partners.length) return res.json([]);
+
+        // Step 2: for each partner get user info + last message + unread count
+        const results = [];
+        for (const p of partners) {
+            const otherId = p.other_id;
+
+            const [[user]] = await db.query(
+                `SELECT id, first_name, last_name, initials, color, avatar_url FROM users WHERE id = ?`,
+                [otherId]
+            );
+            if (!user) continue;
+
+            const [[lastMsgRow]] = await db.query(
+                `SELECT text, created_at FROM chat_messages
+                 WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+                 ORDER BY created_at DESC LIMIT 1`,
+                [myId, otherId, otherId, myId]
+            );
+
+            const [[unreadRow]] = await db.query(
+                `SELECT COUNT(*) AS cnt FROM chat_messages
+                 WHERE receiver_id = ? AND sender_id = ? AND is_read = 0`,
+                [myId, otherId]
+            );
+
+            results.push({
+                id:         user.id,
+                first_name: user.first_name,
+                last_name:  user.last_name,
+                initials:   user.initials,
+                color:      user.color,
+                avatar_url: user.avatar_url,
+                last_msg:   lastMsgRow ? lastMsgRow.text : '',
+                last_time:  lastMsgRow ? lastMsgRow.created_at : null,
+                unread:     unreadRow.cnt || 0,
+            });
+        }
+
+        // Sort by last message time descending
+        results.sort((a, b) => new Date(b.last_time) - new Date(a.last_time));
+
+        res.json(results);
+    } catch(err) { console.error('GET /chats error:', err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
 module.exports = router;
