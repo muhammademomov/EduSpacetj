@@ -276,18 +276,20 @@ function renderProfile(t) {
         ? t.documents.map(function(d) {
             var ico = d.type==='diploma'?'🎓':d.type==='certificate'?'📜':'📋';
             var typeName = d.type==='diploma'?'Диплом':d.type==='certificate'?'Сертификат':'Трудовая';
-            var clickable = d.fileUrl ? 'href="' + d.fileUrl + '" target="_blank"' : '';
-            var cursor = d.fileUrl ? 'cursor:pointer' : '';
-            var hint = d.fileUrl ? '<div style="font-size:11px;color:#2563EB;margin-top:2px">Нажмите чтобы открыть →</div>' : '';
-            var badge = '<span class="doc-ok-badge">' + (d.isVerified?'✓ Проверен':'⏳ На проверке') + '</span>';
-            return '<a ' + clickable + ' style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:8px;border:1.5px solid ' + (d.fileUrl?'rgba(37,99,235,.25)':'var(--border)') + ';text-decoration:none;color:inherit;transition:all .2s;' + cursor + '" onmouseover="this.style.borderColor='#2563EB';this.style.background='#EFF6FF'" onmouseout="this.style.borderColor='' + (d.fileUrl?'rgba(37,99,235,.25)':'var(--border)') + '';this.style.background='var(--bg)'">' +
+            var tag = d.fileUrl ? 'a' : 'div';
+            var href = d.fileUrl ? ' href="' + d.fileUrl + '" target="_blank"' : '';
+            var border = d.fileUrl ? 'rgba(37,99,235,.25)' : 'var(--border)';
+            var hint = d.fileUrl ? '<div style="font-size:11px;color:#2563EB;margin-top:2px">Нажмите чтобы открыть</div>' : '';
+            var badge = '<span class="doc-ok-badge">' + (d.isVerified ? '✓ Проверен' : '⏳ На проверке') + '</span>';
+            return '<' + tag + href + ' style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:8px;border:1.5px solid ' + border + ';text-decoration:none;color:inherit;' + (d.fileUrl ? 'cursor:pointer' : '') + '">' +
                 '<div style="font-size:28px">' + ico + '</div>' +
-                '<div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">' + typeName + '</div>' +
+                '<div style="flex:1">' +
+                '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">' + typeName + '</div>' +
                 '<div style="font-size:14px;font-weight:700;margin:2px 0">' + d.name + '</div>' +
-                '<div style="font-size:12px;color:var(--text2)">' + (d.institution||'') + (d.year?' · '+d.year:'') + '</div>' +
+                '<div style="font-size:12px;color:var(--text2)">' + (d.institution || '') + (d.year ? ' · ' + d.year : '') + '</div>' +
                 hint + '</div>' +
                 badge +
-                '</a>';
+                '</' + tag + '>';
         }).join('')
         : '<div style="text-align:center;padding:2rem;color:var(--text3)">Документы не загружены</div>';
 
