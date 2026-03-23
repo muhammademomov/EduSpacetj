@@ -989,7 +989,6 @@ function startTeacherChatPoll() {
 async function loadTeacherDash() {
     if (!currentUser) return;
     setAvatar(document.getElementById('td-av'), currentUser);
-    loadTeacherDocs();
     document.getElementById('td-uname').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     const tdAv = document.getElementById('td-prof-av');
     if (currentUser.avatarUrl) {
@@ -1075,6 +1074,7 @@ function tdShow(panel) {
     if (panel === 't-courses')  loadTeacherCourses();
     if (panel === 't-students') loadTeacherStudents();
     if (panel === 't-chats')    loadTeacherChats();
+    if (panel === 't-profile')  loadTeacherDocs();
     setMobNav(panel, 'td');
 }
 
