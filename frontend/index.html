@@ -766,6 +766,122 @@
 </div>
 </div>
 
+<!-- ═══ COURSE PAGE ═══ -->
+<div class="page" id="page-course">
+  <!-- Top bar -->
+  <div class="pp-bar">
+    <button class="pp-back" onclick="go('student-dash');loadStudentDash();sdShow('my-courses')">← Мои курсы</button>
+    <div class="pp-bc"><span id="cp-bc-title">Курс</span></div>
+    <div class="pp-bar-right">
+      <button class="btn-sm ghost" id="cp-chat-btn" onclick="openChatFromCourse()">💬 Написать учителю</button>
+    </div>
+  </div>
+
+  <!-- Course hero -->
+  <div class="cp-hero">
+    <div class="cp-hero-inner">
+      <div class="cp-emoji" id="cp-emoji">📖</div>
+      <div class="cp-hero-info">
+        <div class="cp-cat" id="cp-cat">Категория</div>
+        <h1 class="cp-title" id="cp-title">Название курса</h1>
+        <div class="cp-teacher-row">
+          <div class="cp-teacher-av" id="cp-teacher-av">?</div>
+          <span id="cp-teacher-name">Преподаватель</span>
+          <span class="cp-level" id="cp-level">Начинающий</span>
+        </div>
+      </div>
+      <!-- Progress ring -->
+      <div class="cp-progress-wrap">
+        <svg class="cp-ring" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="32" class="cp-ring-bg"/>
+          <circle cx="40" cy="40" r="32" class="cp-ring-fill" id="cp-ring-fill"/>
+        </svg>
+        <div class="cp-progress-inner">
+          <div class="cp-pct" id="cp-pct">0%</div>
+          <div class="cp-pct-lbl">готово</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab nav -->
+  <div class="cp-tabs-wrap">
+    <div class="cp-tabs">
+      <button class="cp-tab on" onclick="cpTab('lessons', this)">📚 Уроки</button>
+      <button class="cp-tab" onclick="cpTab('schedule', this)">📅 Расписание</button>
+      <button class="cp-tab" onclick="cpTab('homework', this)">📝 Домашние задания</button>
+      <button class="cp-tab" onclick="cpTab('materials', this)">📎 Материалы</button>
+    </div>
+  </div>
+
+  <!-- Tab content -->
+  <div class="cp-body">
+
+    <!-- УРОКИ -->
+    <div class="cp-section on" id="cps-lessons">
+      <div class="cp-progress-bar-wrap">
+        <div class="cp-pb-info">
+          <span>Прогресс курса</span>
+          <span id="cp-pb-text">0 из 0 уроков</span>
+        </div>
+        <div class="cp-pb-track"><div class="cp-pb-fill" id="cp-pb-fill" style="width:0%"></div></div>
+      </div>
+      <div id="cp-lessons-list"></div>
+    </div>
+
+    <!-- РАСПИСАНИЕ -->
+    <div class="cp-section" id="cps-schedule">
+      <div class="cp-empty" id="cp-sched-empty" style="display:none">
+        <div class="cp-empty-ico">📅</div>
+        <div class="cp-empty-title">Расписание не составлено</div>
+        <div class="cp-empty-sub">Преподаватель добавит расписание занятий</div>
+      </div>
+      <div id="cp-schedule-grid"></div>
+      <!-- Info block -->
+      <div class="cp-info-card" id="cp-teach-info" style="margin-top:16px;display:none">
+        <div class="cp-info-title">ℹ️ Данные из профиля преподавателя</div>
+        <div id="cp-teach-days"></div>
+        <div id="cp-teach-platforms"></div>
+      </div>
+    </div>
+
+    <!-- ДОМАШНИЕ ЗАДАНИЯ -->
+    <div class="cp-section" id="cps-homework">
+      <div class="cp-empty" id="cp-hw-empty" style="display:none">
+        <div class="cp-empty-ico">📝</div>
+        <div class="cp-empty-title">Домашних заданий пока нет</div>
+        <div class="cp-empty-sub">Преподаватель добавит задания по ходу курса</div>
+      </div>
+      <div id="cp-hw-list"></div>
+    </div>
+
+    <!-- МАТЕРИАЛЫ -->
+    <div class="cp-section" id="cps-materials">
+      <div class="cp-empty" id="cp-mat-empty" style="display:none">
+        <div class="cp-empty-ico">📎</div>
+        <div class="cp-empty-title">Материалов пока нет</div>
+        <div class="cp-empty-sub">Преподаватель добавит файлы и ссылки</div>
+      </div>
+      <div id="cp-mat-list"></div>
+    </div>
+
+  </div><!-- /cp-body -->
+
+  <!-- Homework submit modal -->
+  <div class="hw-modal" id="hw-modal">
+    <div class="hw-modal-box">
+      <div class="hw-modal-hdr">
+        <div class="hw-modal-title" id="hw-modal-title">Сдать задание</div>
+        <button onclick="closeHwModal()" class="chat-close-btn">✕</button>
+      </div>
+      <div class="hw-modal-desc" id="hw-modal-desc"></div>
+      <textarea class="hw-modal-ta" id="hw-modal-answer" placeholder="Напишите ответ, вставьте ссылку или объясните решение..." rows="5"></textarea>
+      <button class="btn-full green" onclick="submitHomework()">✅ Отправить</button>
+    </div>
+  </div>
+
+</div><!-- /page-course -->
+
 <!-- ═══ TEACHER DASH ═══ -->
 <div class="page" id="page-teacher-dash">
 <!-- Mobile header -->
