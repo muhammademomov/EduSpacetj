@@ -825,10 +825,18 @@ async function loadTeacherDash() {
     document.getElementById('tp-lname').value = currentUser.lastName || '';
     document.getElementById('tp-email').value = currentUser.email || '';
     // Show existing video in preview if available
-    if (currentUser.videoUrl && document.getElementById('tp-video-preview')) {
-        var player = document.getElementById('tp-video-player');
-        if (player) { player.src = currentUser.videoUrl; document.getElementById('tp-video-preview').style.display = 'block'; }
-        if (document.getElementById('tp-video-fname')) document.getElementById('tp-video-fname').textContent = 'Видео загружено ✓';
+    var preview = document.getElementById('tp-video-preview');
+    var player = document.getElementById('tp-video-player');
+    var fname = document.getElementById('tp-video-fname');
+    var videoInput = document.getElementById('tp-video-input');
+    if (preview) preview.style.display = 'none';
+    if (player) player.src = '';
+    if (fname) fname.textContent = 'Выбрать видео (MP4, до 100 МБ)';
+    if (videoInput) videoInput.value = '';
+    if (currentUser.videoUrl && preview && player) {
+        player.src = currentUser.videoUrl;
+        preview.style.display = 'block';
+        if (fname) fname.textContent = 'Видео загружено ✓';
     }
 }
 
@@ -865,17 +873,14 @@ async function saveTeacherProfile() {
     try {
         // Upload video first if selected
         var videoInput = document.getElementById('tp-video-input');
+        var saveBtn = document.querySelector('button.btn-save[onclick="saveTeacherProfile()"]');
         if (videoInput && videoInput.files && videoInput.files[0]) {
-            var saveBtn = document.querySelector('button.btn-save[onclick="saveTeacherProfile()"]');
             if (saveBtn) { saveBtn.textContent = '⏳ Загрузка видео...'; saveBtn.disabled = true; }
-            try {
-                var fd = new FormData();
-                fd.append('video', videoInput.files[0]);
-                var vResult = await upload('/teachers/profile/video', fd);
-                currentUser.videoUrl = vResult.videoUrl;
-            } catch(ve) {
-                console.log('Video upload error:', ve.message);
-            }
+            var fd = new FormData();
+            fd.append('video', videoInput.files[0]);
+            var vResult = await upload('/teachers/profile/video', fd);
+            currentUser.videoUrl = vResult.videoUrl;
+            if (saveBtn) { saveBtn.textContent = '⏳ Сохранение...'; }
         }
 
         await put('/teachers/profile/update', {
