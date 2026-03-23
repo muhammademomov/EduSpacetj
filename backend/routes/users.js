@@ -256,26 +256,70 @@ router.post('/chat/:teacherId', auth, async (req, res) => {
     if (!text || !text.trim()) return res.status(400).json({ error: 'Пустое сообщение' });
     try {
         const { randomUUID } = require('crypto');
+        const receiverId = req.params.teacherId;
+        const senderId   = req.user.id;
+        const msgText    = text.trim();
+
+        // Insert message
         await db.query(
             'INSERT INTO chat_messages (id, sender_id, receiver_id, text) VALUES (?,?,?,?)',
-            [randomUUID(), req.user.id, req.params.teacherId, text.trim()]
+            [randomUUID(), senderId, receiverId, msgText]
         );
+
+        // Check if there's already an unread notification for this conversation
+        // Only notify if this is the FIRST unread message (avoid notification spam)
+        const [unread] = await db.query(
+            'SELECT COUNT(*) as cnt FROM chat_messages WHERE sender_id=? AND receiver_id=? AND is_read=0',
+            [senderId, receiverId]
+        );
+
+        if (unread[0].cnt <= 1) {
+            // Get sender name for notification
+            const [sender] = await db.query(
+                'SELECT first_name, last_name FROM users WHERE id=?', [senderId]
+            );
+            if (sender.length) {
+                const name = sender[0].first_name + ' ' + sender[0].last_name;
+                const preview = msgText.length > 50 ? msgText.substring(0, 50) + '...' : msgText;
+                await db.query(
+                    'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                    [randomUUID(), receiverId, 'new_message',
+                     '💬 Новое сообщение от ' + name,
+                     preview]
+                );
+            }
+        }
+
         res.json({ message: 'Отправлено' });
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
-// GET /api/users/chat — все чаты пользователя (для учителя)
+// GET /api/users/chats — все чаты пользователя
 router.get('/chats', auth, async (req, res) => {
     try {
+        const myId = req.user.id;
+        // Get latest message per conversation partner
         const [chats] = await db.query(
             `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url,
-                    m.text as last_msg, m.created_at as last_time,
-                    (SELECT COUNT(*) FROM chat_messages WHERE receiver_id=? AND sender_id=u.id AND is_read=0) as unread
+                    latest.text        AS last_msg,
+                    latest.created_at  AS last_time,
+                    (SELECT COUNT(*)
+                       FROM chat_messages
+                      WHERE receiver_id = ? AND sender_id = u.id AND is_read = 0
+                    ) AS unread
              FROM users u
-             JOIN chat_messages m ON (m.sender_id=u.id AND m.receiver_id=?) OR (m.sender_id=? AND m.receiver_id=u.id)
+             JOIN (
+                 SELECT
+                     CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END AS other_id,
+                     text, created_at
+                 FROM chat_messages
+                 WHERE sender_id = ? OR receiver_id = ?
+                 ORDER BY created_at DESC
+             ) AS latest ON latest.other_id = u.id
              WHERE u.id != ?
-             GROUP BY u.id ORDER BY m.created_at DESC`,
-            [req.user.id, req.user.id, req.user.id, req.user.id]
+             GROUP BY u.id
+             ORDER BY latest.created_at DESC`,
+            [myId, myId, myId, myId, myId]
         );
         res.json(chats);
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
