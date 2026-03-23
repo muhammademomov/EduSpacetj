@@ -878,6 +878,49 @@
         <button class="btn-save" onclick="saveTeacherProfile()">Сохранить изменения</button>
       </div>
     </div>
+
+    <!-- DOCUMENTS SECTION -->
+    <div class="d-card" style="padding:1.5rem;margin-top:1rem">
+      <div style="font-size:15px;font-weight:800;margin-bottom:1rem">📋 Мои документы</div>
+      <div id="td-docs-list" style="margin-bottom:1rem"></div>
+      <div style="border-top:1px solid var(--border2);padding-top:1rem">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text2)">➕ Добавить документ</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Тип документа</label>
+            <select id="new-doc-type" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+              <option value="diploma">🎓 Диплом</option>
+              <option value="certificate">📜 Сертификат</option>
+              <option value="work_book">📋 Трудовая книжка</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Название</label>
+            <input type="text" id="new-doc-name" placeholder="Например: Диплом ТГПУ">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Учебное заведение</label>
+            <input type="text" id="new-doc-inst" placeholder="ТГПУ, ТНУ...">
+          </div>
+          <div class="field">
+            <label>Год</label>
+            <input type="text" id="new-doc-year" placeholder="2020">
+          </div>
+        </div>
+        <div class="field">
+          <label>Файл документа (JPG, PNG, PDF)</label>
+          <label style="display:flex;align-items:center;gap:8px;height:44px;background:var(--bg);border:1.5px dashed var(--border);border-radius:9px;padding:0 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">
+            📁 <span id="new-doc-fname">Выбрать файл</span>
+            <input type="file" id="new-doc-file" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="document.getElementById('new-doc-fname').textContent=this.files[0]?this.files[0].name:'Выбрать файл'">
+          </label>
+        </div>
+        <button onclick="addTeacherDoc()" style="height:42px;padding:0 20px;background:var(--g);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">+ Добавить документ</button>
+      </div>
+    <div style="display:none">
+      </div>
+    </div>
   </div>
 </div>
 </div>
