@@ -52,7 +52,7 @@ router.get('/:id', async (req, res) => {
             [t.profile_id]
         );
         const [docs] = await db.query(
-            `SELECT id, doc_type, doc_name, institution, year, is_verified
+            `SELECT id, doc_type, doc_name, institution, year, file_url, is_verified
              FROM teacher_documents WHERE teacher_id = ?`, [t.profile_id]
         );
         const [reviews] = await db.query(
