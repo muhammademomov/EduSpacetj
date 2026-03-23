@@ -197,16 +197,159 @@ router.get('/my/students', auth, teacherOnly, async (req, res) => {
         const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id = ?', [req.user.id]);
         if (!tp.length) return res.status(404).json({ error: 'Нет профиля' });
         const [rows] = await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.initials, u.color,
-                    c.title AS course_title, e.enrolled_at, e.price_paid, e.teacher_amount, e.status
+            `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url,
+                    c.id AS course_id, c.title AS course_title, c.emoji, c.category,
+                    e.id AS enrollment_id, e.enrolled_at, e.price_paid, e.teacher_amount, e.status
              FROM enrollments e
              JOIN users u ON u.id = e.student_id
              JOIN courses c ON c.id = e.course_id
              WHERE e.teacher_id = ? ORDER BY e.enrolled_at DESC`, [tp[0].id]
         );
-        res.json(rows);
+
+        // Add progress for each student
+        const result = [];
+        for (const s of rows) {
+            const [total]    = await db.query('SELECT COUNT(*) as cnt FROM course_lessons WHERE course_id=?', [s.course_id]);
+            let done_cnt = 0;
+            try {
+                const [done] = await db.query(
+                    'SELECT COUNT(*) as cnt FROM lesson_progress WHERE student_id=? AND course_id=? AND is_done=1',
+                    [s.id, s.course_id]
+                );
+                done_cnt = done[0].cnt || 0;
+            } catch(e) {} // table may not exist yet
+            const pct = total[0].cnt > 0 ? Math.round((done_cnt / total[0].cnt) * 100) : 0;
+            result.push({ ...s, progress: pct, totalLessons: total[0].cnt, doneLessons: done_cnt });
+        }
+        res.json(result);
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
+
+
+// ─── GET /api/teachers/student/:studentId/course/:courseId ────────
+// Страница ученика для учителя — полные данные
+router.get('/student/:studentId/course/:courseId', auth, teacherOnly, async (req, res) => {
+    try {
+        const { studentId, courseId } = req.params;
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(403).json({ error: 'Нет профиля' });
+
+        // Check enrollment belongs to this teacher
+        const [enroll] = await db.query(
+            'SELECT * FROM enrollments WHERE student_id=? AND course_id=? AND teacher_id=?',
+            [studentId, courseId, tp[0].id]
+        );
+        if (!enroll.length) return res.status(404).json({ error: 'Запись не найдена' });
+        const enrollment = enroll[0];
+
+        // Student info
+        const [[student]] = await db.query(
+            'SELECT id, first_name, last_name, initials, color, avatar_url, email, phone FROM users WHERE id=?',
+            [studentId]
+        );
+
+        // Course + lessons
+        const [[course]] = await db.query('SELECT * FROM courses WHERE id=?', [courseId]);
+        const [lessons]  = await db.query(
+            'SELECT id, title, order_num FROM course_lessons WHERE course_id=? ORDER BY order_num',
+            [courseId]
+        );
+
+        // Student progress
+        let progress = [];
+        try {
+            const [p] = await db.query(
+                'SELECT lesson_id, is_done, done_at FROM lesson_progress WHERE student_id=? AND course_id=?',
+                [studentId, courseId]
+            );
+            progress = p;
+        } catch(e) {}
+        const progressMap = {};
+        progress.forEach(p => { progressMap[p.lesson_id] = { isDone: !!p.is_done, doneAt: p.done_at }; });
+        const doneLessons = lessons.filter(l => progressMap[l.id]?.isDone).length;
+
+        // Homework
+        let homework = [];
+        try {
+            const [hw] = await db.query(
+                `SELECT h.*, cl.title as lesson_title FROM homework h
+                  LEFT JOIN course_lessons cl ON cl.id = h.lesson_id
+                  WHERE h.course_id=? AND (h.student_id=? OR h.student_id IS NULL)
+                  ORDER BY h.created_at DESC`,
+                [courseId, studentId]
+            );
+            homework = hw;
+        } catch(e) {}
+
+        // Schedule
+        let schedule = [];
+        try {
+            const [s] = await db.query('SELECT * FROM schedule WHERE enrollment_id=?', [enrollment.id]);
+            schedule = s;
+        } catch(e) {}
+
+        res.json({
+            student: { id: student.id, firstName: student.first_name, lastName: student.last_name,
+                       initials: student.initials, color: student.color, avatarUrl: student.avatar_url,
+                       email: student.email, phone: student.phone },
+            course:  { id: course.id, title: course.title, emoji: course.emoji,
+                       category: course.category, level: course.level },
+            enrollment: { id: enrollment.id, enrolledAt: enrollment.enrolled_at,
+                          pricePaid: parseFloat(enrollment.price_paid),
+                          teacherAmount: parseFloat(enrollment.teacher_amount) },
+            lessons:  lessons.map(l => ({ id: l.id, title: l.title, order: l.order_num,
+                          isDone: !!(progressMap[l.id]?.isDone), doneAt: progressMap[l.id]?.doneAt })),
+            progress: { total: lessons.length, done: doneLessons,
+                        percent: lessons.length > 0 ? Math.round(doneLessons/lessons.length*100) : 0 },
+            homework: homework.map(h => ({ id: h.id, title: h.title, description: h.description,
+                          lessonTitle: h.lesson_title, dueDate: h.due_date, status: h.status,
+                          studentAnswer: h.student_answer, teacherComment: h.teacher_comment,
+                          createdAt: h.created_at })),
+            schedule: schedule.map(s => ({ id: s.id, dayOfWeek: s.day_of_week,
+                          timeFrom: s.time_from, timeTo: s.time_to,
+                          platform: s.platform, link: s.link, notes: s.notes })),
+        });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /api/teachers/homework ─────────────────────────────────
+// Учитель добавляет домашнее задание
+router.post('/homework', auth, teacherOnly, async (req, res) => {
+    const { courseId, studentId, lessonId, title, description, dueDate } = req.body;
+    if (!courseId || !title) return res.status(400).json({ error: 'courseId и title обязательны' });
+    try {
+        const { randomUUID } = require('crypto');
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        await db.query(
+            `INSERT INTO homework (id, course_id, lesson_id, teacher_id, student_id, title, description, due_date)
+             VALUES (?,?,?,?,?,?,?,?)`,
+            [randomUUID(), courseId, lessonId||null, tp[0].id, studentId||null,
+             title, description||null, dueDate||null]
+        );
+        // Notify student
+        if (studentId) {
+            await db.query(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), studentId, 'homework', '📝 Новое домашнее задание', title]
+            );
+        }
+        res.json({ message: 'Задание добавлено' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── PUT /api/teachers/homework/:hwId/comment ─────────────────────
+// Учитель проверяет ДЗ и оставляет комментарий
+router.put('/homework/:hwId/comment', auth, teacherOnly, async (req, res) => {
+    const { comment } = req.body;
+    try {
+        await db.query(
+            'UPDATE homework SET teacher_comment=?, status=?, updated_at=NOW() WHERE id=?',
+            [comment, 'reviewed', req.params.hwId]
+        );
+        res.json({ message: 'Комментарий добавлен' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 
 function fmt(t) {
     return {
