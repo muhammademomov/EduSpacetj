@@ -69,9 +69,16 @@ async function init() {
 function go(p) {
     document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
     document.getElementById('page-' + p)?.classList.add('active');
-    ['home','catalog','about'].forEach(x => document.getElementById('nl-'+x)?.classList.remove('active'));
-    if (['home','catalog','about'].includes(p)) document.getElementById('nl-'+p)?.classList.add('active');
+    ['home','catalog','about'].forEach(x => {
+        document.getElementById('nl-'+x)?.classList.remove('active');
+        document.getElementById('mnl-'+x)?.classList.remove('active');
+    });
+    if (['home','catalog','about'].includes(p)) {
+        document.getElementById('nl-'+p)?.classList.add('active');
+        document.getElementById('mnl-'+p)?.classList.add('active');
+    }
     window.scrollTo(0, 0);
+    closeMobileMenu();
     if (p === 'catalog') loadCatalog();
     if (p === 'home') loadHomeStats();
 }
@@ -88,6 +95,11 @@ function logout() {
     currentUser = null;
     document.getElementById('nav-guest').style.display = '';
     document.getElementById('nav-user').style.display = 'none';
+    const gEl = document.getElementById('mob-menu-guest');
+    const uEl = document.getElementById('mob-menu-user');
+    if (gEl) gEl.style.display = '';
+    if (uEl) uEl.style.display = 'none';
+    closeMobileMenu();
     go('home');
 }
 
@@ -101,6 +113,11 @@ function showLoggedIn() {
     } else {
         document.getElementById('nav-bal-disp').textContent = currentUser.subject || 'Преподаватель';
     }
+    // Sync mobile menu
+    const gEl = document.getElementById('mob-menu-guest');
+    const uEl = document.getElementById('mob-menu-user');
+    if (gEl) gEl.style.display = 'none';
+    if (uEl) uEl.style.display = 'block';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -111,6 +128,10 @@ async function loadHomeStats() {
         const [teachers, courses] = await Promise.all([get('/teachers'), get('/courses')]);
         document.getElementById('hs-teachers').innerHTML = teachers.length + '<span>+</span>';
         document.getElementById('hs-courses').innerHTML = courses.length + '<span>+</span>';
+        // Count total students from teacher profiles
+        const totalStudents = teachers.reduce(function(sum, t){ return sum + (parseInt(t.studentCount || t.student_count) || 0); }, 0);
+        const studentsEl = document.getElementById('hs-students');
+        if (studentsEl) studentsEl.innerHTML = totalStudents + '<span>+</span>';
         const preview = document.getElementById('home-teachers-preview');
         if (!teachers.length) {
             preview.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text3)">Преподаватели появятся здесь после регистрации</div>';
@@ -145,13 +166,24 @@ async function loadCatalog(searchQ = '') {
     } catch(e) { console.error('loadCatalog error:', e); }
 }
 
-function catSearch(q) { loadCatalog(q); }
+function catSearch(q) {
+    loadCatalog(q);
+}
+function catSearchKey(e) {
+    if (e.key === 'Enter') catSearch(e.target.value.trim());
+}
 
 async function sortTeachers(v) {
     try {
-        const teachers = await get('/teachers?sort=' + v);
+        const searchEl = document.getElementById('cat-search-inp');
+        const search = searchEl ? searchEl.value.trim() : '';
+        const qs = '?sort=' + v + (search ? '&search=' + encodeURIComponent(search) : '');
+        const teachers = await get('/teachers' + qs);
+        catalogTeachers = teachers;
+        document.getElementById('cat-count').textContent = teachers.length;
+        document.getElementById('tab-t-cnt').textContent = teachers.length;
         document.getElementById('tc-grid').innerHTML = teachers.map(buildTccard).join('');
-    } catch(e) {}
+    } catch(e) { console.error('sortTeachers:', e); }
 }
 
 function catTab(tab, btn) {
@@ -160,11 +192,63 @@ function catTab(tab, btn) {
     document.getElementById('cat-c-sec').style.display = tab === 'c' ? '' : 'none';
 }
 function togChip(btn) {
-    const isAll = btn.textContent.trim() === 'Все';
-    if (isAll) { btn.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('on')); btn.classList.add('on'); }
-    else { btn.parentElement.querySelector('.chip:first-child')?.classList.remove('on'); btn.classList.toggle('on'); if (!btn.parentElement.querySelector('.chip.on')) btn.parentElement.querySelector('.chip:first-child').classList.add('on'); }
+    const isAll = btn.dataset.val === 'all' || btn.textContent.trim() === 'Все';
+    const group = btn.parentElement;
+    if (isAll) {
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+        btn.classList.add('on');
+    } else {
+        group.querySelector('[data-val="all"]')?.classList.remove('on');
+        group.querySelector('.chip:first-child')?.classList.remove('on');
+        btn.classList.toggle('on');
+        if (!group.querySelector('.chip.on')) {
+            (group.querySelector('[data-val="all"]') || group.querySelector('.chip:first-child')).classList.add('on');
+        }
+    }
 }
-function resetFlt() { document.querySelectorAll('.chip').forEach(c => c.classList.remove('on')); document.querySelectorAll('.flt-grp .chip:first-child').forEach(c => c.classList.add('on')); loadCatalog(); }
+function resetFlt() {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    document.querySelectorAll('.flt-grp .chip:first-child').forEach(c => c.classList.add('on'));
+    document.getElementById('cat-search-inp') && (document.getElementById('cat-search-inp').value = '');
+    loadCatalog();
+}
+
+function applyFilters() {
+    const subjectChips = [...document.querySelectorAll('#flt-subject .chip.on')].map(c => c.dataset.val).filter(v => v && v !== 'all');
+    const priceChips   = [...document.querySelectorAll('#flt-price .chip.on')].map(c => c.dataset.val).filter(v => v && v !== 'all');
+    const sortEl = document.querySelector('.sort-sel');
+    const sort   = sortEl ? sortEl.value : '';
+    const searchEl = document.getElementById('cat-search-inp');
+    const search   = searchEl ? searchEl.value.trim() : '';
+
+    let params = [];
+    if (search)          params.push('search=' + encodeURIComponent(search));
+    if (sort)            params.push('sort=' + sort);
+    if (subjectChips.length) params.push('subject=' + encodeURIComponent(subjectChips.join(',')));
+    if (priceChips.length)   params.push('price=' + encodeURIComponent(priceChips.join(',')));
+
+    const qs = params.length ? '?' + params.join('&') : '';
+    loadCatalogWithParams(qs);
+}
+
+async function loadCatalogWithParams(qs) {
+    try {
+        const [teachers, courses] = await Promise.all([get('/teachers' + qs), get('/courses' + qs)]);
+        catalogTeachers = teachers;
+        catalogCourses  = courses;
+        document.getElementById('cat-count').textContent = teachers.length;
+        document.getElementById('tab-t-cnt').textContent = teachers.length;
+        document.getElementById('tab-c-cnt').textContent = courses.length;
+        const grid  = document.getElementById('tc-grid');
+        const empty = document.getElementById('cat-empty');
+        if (!teachers.length) { grid.innerHTML = ''; empty.style.display = 'block'; }
+        else { empty.style.display = 'none'; grid.innerHTML = teachers.map(buildTccard).join(''); }
+        const cgrid  = document.getElementById('cat-cg');
+        const cempty = document.getElementById('cat-c-empty');
+        if (!courses.length) { cgrid.innerHTML = ''; cempty.style.display = 'block'; }
+        else { cempty.style.display = 'none'; cgrid.innerHTML = courses.map(buildCcard).join(''); }
+    } catch(e) { console.error('loadCatalogWithParams error:', e); }
+}
 
 // ═══════════════════════════════════════════════════════
 // PROFILE
@@ -326,6 +410,16 @@ function renderProfile(t) {
     ['pp-about','pp-courses','pp-reviews','pp-docs'].forEach(function(id,i){
         document.getElementById(id).style.display = i===0 ? '' : 'none';
     });
+
+    // Role-based button visibility
+    var enrollBtn  = document.getElementById('pp-enroll-btn');
+    var topEnroll  = document.querySelector('#page-profile .btn-sm.solid');
+    var chatBtn    = document.getElementById('pp-chat-btn');
+    var isTeacher  = currentUser && currentUser.role === 'teacher';
+    var isOwnProfile = currentUser && currentUser.id === t.userId;
+    if (enrollBtn)  enrollBtn.style.display  = (isTeacher || isOwnProfile) ? 'none' : '';
+    if (topEnroll)  topEnroll.style.display  = (isTeacher || isOwnProfile) ? 'none' : '';
+    if (chatBtn)    chatBtn.style.display     = isOwnProfile ? 'none' : '';
 }
 
 function renderRevList(reviews, months) {
@@ -373,7 +467,7 @@ async function toggleFavTeacher() {
 
 function startEnroll(courseId) {
     if (!currentUser) { go('login'); return; }
-    if (currentUser.role === 'teacher') { alert('Преподаватели не могут записываться на курсы'); return; }
+    if (currentUser.role === 'teacher') { showToast('Преподаватели не могут записываться на курсы', 'info'); return; }
     pendingCourseId = courseId;
     go('student-dash'); loadStudentDash(); sdShow('payment-flow');
 }
@@ -385,10 +479,10 @@ function goPayForProfileById(id) {
 
 function goPayForProfile() {
     if (!currentUser) { go('login'); return; }
-    if (currentUser.role === 'teacher') { alert('Преподаватели не могут записываться на курсы'); return; }
+    if (currentUser.role === 'teacher') { showToast('Преподаватели не могут записываться на курсы', 'info'); return; }
     get('/teachers/' + currentProfileId).then(t => {
         if (t.courses?.length) { pendingCourseId = t.courses[0].id; go('student-dash'); loadStudentDash(); sdShow('payment-flow'); }
-        else alert('У этого преподавателя пока нет курсов');
+        else showToast('У этого преподавателя пока нет курсов', 'info');
     }).catch(()=>{});
 }
 
@@ -432,7 +526,12 @@ function smsIn(el, idx) {
 
 async function verifySMS() {
     const code = [0,1,2,3].map(i => document.getElementById('s'+i).value).join('');
-    if (code.length < 4) { document.getElementById('sms-err').style.display = 'block'; return; }
+    if (code.length < 4) {
+        document.getElementById('sms-err').style.display = 'block';
+        document.getElementById('sms-err').textContent = 'Введите 4-значный код';
+        return;
+    }
+    // Demo: accept any 4-digit code (real SMS integration requires backend)
     document.getElementById('sms-err').style.display = 'none';
     clearInterval(regTimer);
     try {
@@ -497,6 +596,14 @@ async function doLogin() {
         document.getElementById('l-em').value = '';
         document.getElementById('l-pw').value = '';
         showLoggedIn();
+        // Refresh balance for students immediately
+        if (result.user.role === 'student') {
+            get('/payments/balance').then(function(b) {
+                currentUser.balance = b.balance;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                showLoggedIn();
+            }).catch(function(){});
+        }
         goDash();
     } catch(e) {
         document.getElementById('l-err').style.display = 'block';
@@ -571,14 +678,17 @@ async function loadStudentDash() {
     document.getElementById('sett-name').value = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sett-email').value = currentUser.email || '';
     try {
-        const [balData, enrollments] = await Promise.all([get('/payments/balance'), get('/payments/enrollments')]);
+        const [balData, enrollments, favs] = await Promise.all([get('/payments/balance'), get('/payments/enrollments'), get('/users/favorites').catch(()=>[])]);
+        const favsEl = document.getElementById('dm-favs');
+        if (favsEl) favsEl.textContent = Array.isArray(favs) ? favs.length : 0;
         currentUser.balance = balData.balance;
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
         const bal = balData.balance;
-        document.getElementById('dh-balance').textContent = bal;
-        document.getElementById('dm-balance').textContent = bal;
-        document.getElementById('sb-bal-badge').textContent = bal;
+        const balNum = parseFloat(bal) || 0;
+        document.getElementById('dh-balance').textContent = balNum.toLocaleString('ru');
+        document.getElementById('dm-balance').textContent = balNum.toLocaleString('ru');
+        document.getElementById('sb-bal-badge').textContent = balNum.toLocaleString('ru');
         document.getElementById('dh-courses').textContent = enrollments.length;
         document.getElementById('dm-courses').textContent = enrollments.length;
         document.getElementById('sb-courses-cnt').textContent = enrollments.length;
@@ -599,11 +709,15 @@ async function loadStudentDash() {
 function sdShow(panel) {
     document.querySelectorAll('[id^="sdp-"]').forEach(p => p.classList.remove('on'));
     document.getElementById('sdp-' + panel)?.classList.add('on');
+    // Update sidebar active state
+    document.querySelectorAll('#page-student-dash .sidebar .sb-item').forEach(el => el.classList.remove('on'));
     if (panel === 'my-courses') loadMyCourses();
     if (panel === 'favorites') loadFavorites();
     if (panel === 'balance') loadBalance();
     if (panel === 'payment-flow') initPayFlow();
     if (panel === 'notifications') loadNotifications();
+    if (panel === 'settings') loadSettingsPage();
+    setMobNav(panel, 'sd');
 }
 
 async function loadMyCourses() {
@@ -660,6 +774,22 @@ async function loadNotifications() {
     } catch(e) { console.error(e); }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS PAGE LOADER
+// ═══════════════════════════════════════════════════════
+function loadSettingsPage() {
+    if (!currentUser) return;
+    const nameEl  = document.getElementById('sett-name');
+    const emailEl = document.getElementById('sett-email');
+    const avEl    = document.getElementById('settings-av');
+    const nameDisp = document.getElementById('settings-name');
+    if (nameEl)   nameEl.value  = (currentUser.firstName || '') + ' ' + (currentUser.lastName || '');
+    if (emailEl)  emailEl.value = currentUser.email || '';
+    if (avEl)     setAvatar(avEl, currentUser);
+    if (nameDisp) nameDisp.textContent = (currentUser.firstName || '') + ' ' + (currentUser.lastName || '');
+}
+
 // ═══════════════════════════════════════════════════════
 // SETTINGS
 // ═══════════════════════════════════════════════════════
@@ -671,7 +801,7 @@ async function saveSettings() {
         currentUser = { ...currentUser, ...fresh };
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
-        alert('✅ Сохранено!');
+        showToast('Профиль сохранён');
     } catch(e) { alert('Ошибка: ' + e.message); }
 }
 
@@ -684,7 +814,7 @@ async function changePassword() {
     if (nw !== cf) return alert('Пароли не совпадают');
     try {
         await put('/auth/password', { currentPassword: cur, newPassword: nw });
-        alert('✅ Пароль изменён!');
+        showToast('Пароль изменён');
         document.getElementById('sett-cur-pw').value = '';
         document.getElementById('sett-new-pw').value = '';
         document.getElementById('sett-cf-pw').value = '';
@@ -836,19 +966,44 @@ async function loadTeacherDash() {
     }
     document.getElementById('td-prof-name').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     try {
-        const [stats, courses] = await Promise.all([get('/teachers/my/stats'), get('/courses/my/list')]);
+        const [stats, courses, myProfile] = await Promise.all([
+            get('/teachers/my/stats'),
+            get('/courses/my/list'),
+            get('/teachers/' + currentUser.id).catch(() => null)
+        ]);
         document.getElementById('tdm-students').textContent = stats.totalStudents;
         document.getElementById('tdm-courses').textContent = stats.totalCourses;
-        document.getElementById('tdm-earn').textContent = stats.netRevenue + ' смн';
+        document.getElementById('tdm-earn').textContent = parseFloat(stats.netRevenue).toLocaleString('ru') + ' смн';
+        const ratingEl = document.getElementById('tdm-rating');
+        if (ratingEl) ratingEl.textContent = myProfile && myProfile.rating > 0 ? parseFloat(myProfile.rating).toFixed(1) + ' ★' : '—';
         document.getElementById('td-courses-cnt').textContent = courses.length;
-        document.getElementById('earn-gross').textContent = stats.grossRevenue + ' смн';
-        document.getElementById('earn-comm').textContent = stats.commission + ' смн';
-        document.getElementById('earn-net').textContent = stats.netRevenue + ' смн';
-        if (courses.length > 0) {
-            document.getElementById('td-courses-preview').innerHTML = courses.slice(0,3).map(c =>
-                `<div class="d-cr-row"><div class="d-cr-ico">${c.emoji}</div><div class="d-cr-inf"><div class="d-cr-t">${c.title}</div><div class="d-cr-m">${c.category} · ${c.student_count||0} уч. · <span class="st-badge2 ${c.status==='active'?'st-on':'st-rev'}">${c.status==='active'?'Активен':'На проверке'}</span></div></div><div class="d-cr-price">${c.price} смн</div></div>`
-            ).join('');
+        document.getElementById('earn-gross').textContent = parseFloat(stats.grossRevenue).toLocaleString('ru') + ' смн';
+        document.getElementById('earn-comm').textContent = parseFloat(stats.commission).toLocaleString('ru') + ' смн';
+        document.getElementById('earn-net').textContent = parseFloat(stats.netRevenue).toLocaleString('ru') + ' смн';
+        const previewEl = document.getElementById('td-courses-preview');
+        if (previewEl) {
+            if (courses.length > 0) {
+                previewEl.innerHTML = courses.slice(0,3).map(c =>
+                    `<div class="d-cr-row">
+                      <div class="d-cr-ico">${c.emoji}</div>
+                      <div class="d-cr-inf">
+                        <div class="d-cr-t">${c.title}</div>
+                        <div class="d-cr-m">${c.category} · ${c.student_count||0} уч. · <span class="st-badge2 ${c.status==='active'?'st-on':'st-rev'}">${c.status==='active'?'Активен':'На проверке'}</span></div>
+                      </div>
+                      <div class="d-cr-price">${parseFloat(c.price).toLocaleString('ru')} смн</div>
+                    </div>`
+                ).join('');
+            } else {
+                previewEl.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-icon">📚</div><div class="empty-title">Курсов пока нет</div><button class="btn-sm solid" onclick="tdShow(\'t-add-course\')">Добавить курс</button></div>';
+            }
         }
+        // Load chats badge for teacher
+        try {
+            const chats = await get('/users/chats');
+            const unreadChats = chats.filter(c => c.unread > 0).length;
+            const chatBadge = document.getElementById('td-chat-cnt');
+            if (chatBadge) { chatBadge.textContent = unreadChats; chatBadge.style.display = unreadChats > 0 ? '' : 'none'; }
+        } catch(e) {}
     } catch(e) { console.error('loadTeacherDash:', e); }
     document.getElementById('tp-fname').value = currentUser.firstName || '';
     document.getElementById('tp-lname').value = currentUser.lastName || '';
@@ -876,8 +1031,12 @@ async function loadTeacherDash() {
 function tdShow(panel) {
     document.querySelectorAll('[id^="tdp-"]').forEach(p => p.classList.remove('on'));
     document.getElementById('tdp-' + panel)?.classList.add('on');
-    if (panel === 't-courses') loadTeacherCourses();
+    // Update sidebar active state
+    document.querySelectorAll('#page-teacher-dash .sidebar .sb-item').forEach(el => el.classList.remove('on'));
+    if (panel === 't-courses')  loadTeacherCourses();
     if (panel === 't-students') loadTeacherStudents();
+    if (panel === 't-chats')    loadTeacherChats();
+    setMobNav(panel, 'td');
 }
 
 async function loadTeacherCourses() {
@@ -934,8 +1093,50 @@ async function saveTeacherProfile() {
         showLoggedIn();
         var saveBtn = document.querySelector('button.btn-save');
         if (saveBtn) { saveBtn.textContent = 'Сохранить изменения'; saveBtn.disabled = false; }
-        alert('✅ Профиль сохранён!');
+        showToast('Профиль сохранён');
     } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+
+// ═══════════════════════════════════════════════════════
+// TEACHER CHATS
+// ═══════════════════════════════════════════════════════
+async function loadTeacherChats() {
+    const el = document.getElementById('td-chats-list');
+    if (!el) return;
+    try {
+        const chats = await get('/users/chats');
+        if (!chats.length) {
+            el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет сообщений</div><div class="empty-sub">Ученики ещё не написали вам</div></div>';
+            return;
+        }
+        el.innerHTML = chats.map(c => {
+            const initials = (c.first_name?.[0] || '') + (c.last_name?.[0] || '');
+            return `<div class="chat-list-item" onclick="openChatWithStudent('${c.id}', '${c.first_name} ${c.last_name}', '${initials}', '${c.color||'#18A96A'}')">
+                <div class="cli-av" style="background:${c.color||'#18A96A'}">${initials || '?'}</div>
+                <div class="cli-info">
+                    <div class="cli-name">${c.first_name} ${c.last_name}</div>
+                    <div class="cli-last">${c.last_message ? c.last_message.substring(0,45) + (c.last_message.length > 45 ? '…' : '') : 'Нет сообщений'}</div>
+                </div>
+                ${c.unread > 0 ? `<span class="cli-badge">${c.unread}</span>` : ''}
+            </div>`;
+        }).join('');
+    } catch(e) { console.error('loadTeacherChats:', e); }
+}
+
+function openChatWithStudent(studentId, name, initials, color) {
+    chatTeacherId = studentId;
+    var nameEl = document.getElementById('chat-name');
+    var avEl   = document.getElementById('chat-av');
+    if (nameEl) nameEl.textContent = name;
+    if (avEl)   { avEl.textContent = initials; avEl.style.background = color; }
+    var modal = document.getElementById('chat-modal');
+    if (modal) modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { document.getElementById('chat-input')?.focus(); }, 150);
+    loadMessages();
+    if (chatInterval) clearInterval(chatInterval);
+    chatInterval = setInterval(loadMessages, 4000);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1144,7 +1345,7 @@ async function addTeacherDoc() {
         document.getElementById('new-doc-fname').textContent = 'Выбрать файл';
         
         loadTeacherDocs();
-        alert('✅ Документ загружен и отправлен на проверку!');
+        showToast('Документ загружен на проверку');
     } catch(e) {
         alert('Ошибка: ' + e.message);
     }
@@ -1173,7 +1374,7 @@ async function submitReview() {
     try {
         var enrollments = await get('/payments/enrollments');
         var teacherEnroll = enrollments.find(function(e) { return e.teacherId === currentProfileId || e.teacher_id === currentProfileId; });
-        if (!teacherEnroll) return alert('Вы можете оставить отзыв только после записи на курс');
+        if (!teacherEnroll) return showToast('Запишитесь на курс чтобы оставить отзыв', 'info');
 
         var btn = event.target;
         btn.textContent = 'Отправка...';
@@ -1194,7 +1395,7 @@ async function submitReview() {
         btn.textContent = 'Отправить отзыв';
         btn.disabled = false;
 
-        alert('✅ Спасибо за отзыв!');
+        showToast('Отзыв отправлен! Спасибо');
         openProfile(currentProfileId); // Reload profile
     } catch(e) {
         alert('Ошибка: ' + e.message);
@@ -1223,23 +1424,36 @@ var chatLastId = 0;
 function openChat() {
     if (!currentUser) { go('login'); return; }
     if (!currentProfileId) return;
+    if (currentUser.role === 'teacher' && currentProfileId === currentUser.id) {
+        alert('Вы не можете написать самому себе');
+        return;
+    }
     chatTeacherId = currentProfileId;
 
     // Set teacher info in chat header
     var nameEl = document.getElementById('chat-name');
-    var avEl = document.getElementById('chat-av');
-    if (nameEl) nameEl.textContent = document.getElementById('pp-hname') ? document.getElementById('pp-hname').textContent : 'Учитель';
-    if (avEl) avEl.textContent = '?';
+    var avEl   = document.getElementById('chat-av');
+    var hnameEl = document.getElementById('pp-hname');
+    if (nameEl) nameEl.textContent = hnameEl ? hnameEl.textContent : 'Преподаватель';
+    if (avEl) {
+        var ppAv = document.getElementById('pp-av');
+        if (ppAv) avEl.innerHTML = ppAv.innerHTML || ppAv.textContent;
+    }
 
     var modal = document.getElementById('chat-modal');
+    if (!modal) return;
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    // Focus input
+    setTimeout(function() { document.getElementById('chat-input')?.focus(); }, 150);
     loadMessages();
-    chatInterval = setInterval(loadMessages, 5000);
+    if (chatInterval) clearInterval(chatInterval);
+    chatInterval = setInterval(loadMessages, 4000);
 }
 
 function closeChat() {
-    document.getElementById('chat-modal').style.display = 'none';
+    var modal = document.getElementById('chat-modal');
+    if (modal) modal.style.display = 'none';
     document.body.style.overflow = '';
     if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
 }
@@ -1247,35 +1461,124 @@ function closeChat() {
 async function loadMessages() {
     if (!chatTeacherId || !currentUser) return;
     try {
-        var otherId = currentUser.role === 'student' ? chatTeacherId : chatTeacherId;
         var msgs = await get('/users/chat/' + chatTeacherId);
         var el = document.getElementById('chat-messages');
         if (!msgs.length) {
-            el.innerHTML = '<div style="text-align:center;font-size:12px;color:var(--text3);padding:1rem">Начните общение с преподавателем</div>';
+            el.innerHTML = '<div class="chat-empty"><div class="chat-empty-ico">💬</div>Начните общение с преподавателем</div>';
             return;
         }
-        el.innerHTML = msgs.map(function(m) {
+        var html = msgs.map(function(m) {
             var isMe = m.sender_id === currentUser.id;
-            return '<div style="display:flex;justify-content:' + (isMe?'flex-end':'flex-start') + '">' +
-                '<div style="max-width:75%;padding:10px 14px;border-radius:' + (isMe?'14px 4px 14px 14px':'4px 14px 14px 14px') + ';background:' + (isMe?'var(--g)':'var(--bg)') + ';color:' + (isMe?'#fff':'var(--text)') + ';font-size:13px;line-height:1.5">' +
-                '<div>' + m.text + '</div>' +
-                '<div style="font-size:10px;opacity:.6;margin-top:3px;text-align:right">' + new Date(m.created_at).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}) + '</div>' +
-                '</div></div>';
+            var time = new Date(m.created_at).toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
+            // Escape HTML to prevent XSS
+            var safeText = m.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return '<div class="chat-msg ' + (isMe ? 'me' : 'them') + '">' +
+                '<div class="chat-bubble">' + safeText + '</div>' +
+                '<div class="chat-time">' + time + '</div>' +
+                '</div>';
         }).join('');
+        el.innerHTML = html;
         el.scrollTop = el.scrollHeight;
-    } catch(e) {}
+    } catch(e) { console.error('loadMessages:', e); }
 }
 
-async function sendMsg() {
+async function sendMsg(e) {
+    if (e && e.key && e.key !== 'Enter') return;
+    if (e && e.key === 'Enter' && e.shiftKey) return; // allow shift+enter for newline
     var input = document.getElementById('chat-input');
     var text = input.value.trim();
     if (!text || !chatTeacherId) return;
     input.value = '';
+    input.style.height = 'auto';
     try {
         await post('/users/chat/' + chatTeacherId, { text: text });
         loadMessages();
-    } catch(e) { input.value = text; alert('Ошибка: ' + e.message); }
+    } catch(ex) { input.value = text; alert('Ошибка: ' + ex.message); }
 }
+
+
+
+// ═══════════════════════════════════════════════════════
+// TOAST NOTIFICATIONS (replaces alert())
+// ═══════════════════════════════════════════════════════
+function showToast(msg, type) {
+    type = type || 'success'; // 'success' | 'error' | 'info'
+    var existing = document.getElementById('edu-toast');
+    if (existing) existing.remove();
+    var t = document.createElement('div');
+    t.id = 'edu-toast';
+    var colors = { success: '#18A96A', error: '#DC2626', info: '#2563EB' };
+    var icons  = { success: '✅', error: '❌', info: 'ℹ️' };
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0C1810;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.3);opacity:0;transition:all .3s ease;white-space:nowrap;max-width:90vw;border-left:3px solid ' + colors[type];
+    t.innerHTML = '<span>' + icons[type] + '</span><span>' + msg + '</span>';
+    document.body.appendChild(t);
+    requestAnimationFrame(function() {
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(function() {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(10px)';
+        setTimeout(function() { t.remove(); }, 300);
+    }, 3200);
+}
+
+// ═══════════════════════════════════════════════════════
+// MOBILE NAVIGATION
+// ═══════════════════════════════════════════════════════
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const ham  = document.getElementById('nav-ham');
+    const isOpen = menu.classList.toggle('open');
+    ham.setAttribute('aria-expanded', isOpen);
+    // sync guest/user state
+    const isLoggedIn = !!currentUser;
+    const guestEl = document.getElementById('mob-menu-guest');
+    const userEl  = document.getElementById('mob-menu-user');
+    if (guestEl) guestEl.style.display = isLoggedIn ? 'none' : '';
+    if (userEl)  userEl.style.display  = isLoggedIn ? 'block' : 'none';
+}
+
+function closeMobileMenu() {
+    document.getElementById('mobile-menu')?.classList.remove('open');
+}
+
+// Mobile dash panel label map
+const SD_LABELS = {
+    'overview': 'Обзор', 'my-courses': 'Мои курсы', 'balance': 'Баланс',
+    'favorites': 'Избранное', 'notifications': 'Уведомления',
+    'settings': 'Настройки', 'payment-flow': 'Оплата'
+};
+const TD_LABELS = {
+    't-overview': 'Обзор', 't-courses': 'Мои курсы', 't-students': 'Ученики',
+    't-chats': '💬 Сообщения', 't-add-course': 'Добавить курс', 't-earnings': 'Доходы',
+    't-notifs': 'Уведомления', 't-profile': 'Профиль', 't-docs': 'Документы'
+};
+
+function setMobNav(panel, prefix) {
+    // Update active bottom nav item
+    const navId = prefix === 'sd' ? 'sd-mob-nav' : 'td-mob-nav';
+    const navEl = document.getElementById(navId);
+    if (navEl) {
+        navEl.querySelectorAll('.mob-nav-item').forEach(b => b.classList.remove('on'));
+        const btnId = prefix === 'sd' ? 'mni-' + panel : 'tmni-' + panel;
+        document.getElementById(btnId)?.classList.add('on');
+    }
+    // Update title
+    const titleId = prefix === 'sd' ? 'sd-mob-title' : 'td-mob-title';
+    const labels  = prefix === 'sd' ? SD_LABELS : TD_LABELS;
+    const titleEl = document.getElementById(titleId);
+    if (titleEl) titleEl.textContent = labels[panel] || panel;
+}
+
+// Close mobile menu when clicking outside
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('mobile-menu');
+    const ham  = document.getElementById('nav-ham');
+    if (menu && menu.classList.contains('open') && !menu.contains(e.target) && e.target !== ham && !ham?.contains(e.target)) {
+        closeMobileMenu();
+    }
+});
 
 // ═══════════════════════════════════════════════════════
 // START
@@ -1302,7 +1605,7 @@ async function uploadTeacherPhoto(input) {
         const result = await upload('/teachers/profile/photo', fd);
         currentUser.avatarUrl = result.avatarUrl;
         localStorage.setItem('user', JSON.stringify(currentUser));
-        alert('✅ Фото обновлено!');
+        showToast('Фото обновлено');
     } catch(e) {
         alert('Ошибка загрузки: ' + e.message);
     }
