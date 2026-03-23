@@ -821,6 +821,7 @@ function setQuickTopup(amt) { topupAmt = amt; sdShow('payment-flow'); selAmt(nul
 async function loadTeacherDash() {
     if (!currentUser) return;
     setAvatar(document.getElementById('td-av'), currentUser);
+    loadTeacherDocs();
     document.getElementById('td-uname').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     const tdAv = document.getElementById('td-prof-av');
     if (currentUser.avatarUrl) {
@@ -1082,6 +1083,71 @@ async function uploadTeacherVideo() {
         btn.textContent = 'Загрузить';
         btn.disabled = false;
     }
+}
+
+
+async function loadTeacherDocs() {
+    var el = document.getElementById('td-docs-list');
+    if (!el) return;
+    try {
+        var t = await get('/teachers/' + currentUser.id);
+        var docs = t.documents || [];
+        if (!docs.length) {
+            el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px;background:var(--bg);border-radius:9px">Документы не загружены</div>';
+            return;
+        }
+        el.innerHTML = docs.map(function(d) {
+            var ico = d.type==='diploma'?'🎓':d.type==='certificate'?'📜':'📋';
+            var typeName = d.type==='diploma'?'Диплом':d.type==='certificate'?'Сертификат':'Трудовая';
+            var status = d.isVerified
+                ? '<span style="color:var(--g2);font-weight:700;font-size:12px">✓ Проверен</span>'
+                : '<span style="color:var(--yellow);font-weight:700;font-size:12px">⏳ На проверке</span>';
+            return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:9px;margin-bottom:8px">' +
+                '<div style="font-size:22px">' + ico + '</div>' +
+                '<div style="flex:1"><div style="font-size:12px;color:var(--text3);font-weight:700">' + typeName + '</div>' +
+                '<div style="font-size:13px;font-weight:700">' + d.name + '</div></div>' +
+                status + '</div>';
+        }).join('');
+    } catch(e) { console.log(e); }
+}
+
+async function addTeacherDoc() {
+    var type = document.getElementById('new-doc-type').value;
+    var name = document.getElementById('new-doc-name').value.trim();
+    var inst = document.getElementById('new-doc-inst').value.trim();
+    var year = document.getElementById('new-doc-year').value.trim();
+    var fileInput = document.getElementById('new-doc-file');
+
+    if (!name) return alert('Введите название документа');
+    if (!fileInput.files || !fileInput.files[0]) return alert('Выберите файл');
+
+    var btn = event.target;
+    btn.textContent = 'Загрузка...';
+    btn.disabled = true;
+
+    try {
+        var fd = new FormData();
+        fd.append('document', fileInput.files[0]);
+        fd.append('docType', type);
+        fd.append('docName', name);
+        fd.append('institution', inst);
+        fd.append('year', year);
+        await upload('/teachers/profile/documents', fd);
+        
+        // Reset form
+        document.getElementById('new-doc-name').value = '';
+        document.getElementById('new-doc-inst').value = '';
+        document.getElementById('new-doc-year').value = '';
+        fileInput.value = '';
+        document.getElementById('new-doc-fname').textContent = 'Выбрать файл';
+        
+        loadTeacherDocs();
+        alert('✅ Документ загружен и отправлен на проверку!');
+    } catch(e) {
+        alert('Ошибка: ' + e.message);
+    }
+    btn.textContent = '+ Добавить документ';
+    btn.disabled = false;
 }
 
 // ═══════════════════════════════════════════════════════
