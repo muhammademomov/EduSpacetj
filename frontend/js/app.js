@@ -215,7 +215,24 @@ function renderProfile(t) {
 
     // Price card
     document.getElementById('ppc-price').textContent = t.price > 0 ? t.price : '—';
-    document.getElementById('ppc-note').textContent = t.price > 0 ? 'Первый урок бесплатно' : 'Свяжитесь с преподавателем';
+    var cond = t.conditions || {};
+    document.getElementById('ppc-note').textContent = cond.trial ? 'Первый урок бесплатно' : 'Свяжитесь с преподавателем';
+    // Show/hide features based on teacher conditions
+    var feats = document.getElementById('ppc-feats');
+    if (feats) {
+        var items = [
+            {key:'trial',    ico:'🎁', text:'Пробный урок бесплатно'},
+            {key:'homework', ico:'📝', text:'Домашние задания'},
+        ];
+        feats.innerHTML = items.filter(function(i){ return cond[i.key]; }).map(function(i){
+            return '<div class="ppc-feat"><div class="ppc-feat-ico">' + i.ico + '</div>' + i.text + '</div>';
+        }).join('') || '<div class="ppc-feat"><div class="ppc-feat-ico">🎥</div>Живые онлайн-занятия</div>';
+    }
+    // Show/hide trial and guarantee buttons
+    var trialBtn = document.querySelector('.btn-trial');
+    if (trialBtn) trialBtn.style.display = cond.trial ? '' : 'none';
+    var guarEl = document.querySelector('.ppc-guar');
+    if (guarEl) guarEl.style.display = 'none';
 
     // About
     document.getElementById('pp-desc-txt').textContent = t.bio || 'Описание не добавлено';
@@ -257,12 +274,18 @@ function renderProfile(t) {
     // Documents
     document.getElementById('pp-docs-list').innerHTML = (t.documents||[]).length
         ? t.documents.map(function(d) {
+            var ico = d.type==='diploma'?'🎓':d.type==='certificate'?'📜':'📋';
+            var typeName = d.type==='diploma'?'Диплом':d.type==='certificate'?'Сертификат':'Трудовая';
+            var viewBtn = d.fileUrl
+                ? '<a href="' + d.fileUrl + '" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:5px 14px;background:#2563EB;color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;flex-shrink:0">👁 Открыть</a>'
+                : '';
+            var badge = '<span class="doc-ok-badge">' + (d.isVerified?'✓ Проверен':'⏳ На проверке') + '</span>';
             return '<div class="doc-row">' +
-                '<div class="doc-ico">' + (d.type==='diploma'?'🎓':d.type==='certificate'?'📜':'📋') + '</div>' +
-                '<div class="doc-info"><div class="doc-type-lbl">' + (d.type==='diploma'?'Диплом':d.type==='certificate'?'Сертификат':'Трудовая') + '</div>' +
+                '<div class="doc-ico">' + ico + '</div>' +
+                '<div class="doc-info"><div class="doc-type-lbl">' + typeName + '</div>' +
                 '<div class="doc-name">' + d.name + '</div>' +
                 '<div class="doc-meta">' + (d.institution||'') + (d.year?' · '+d.year:'') + '</div></div>' +
-                '<span class="doc-ok-badge">' + (d.isVerified?'✓ Проверен':'⏳ На проверке') + '</span>' +
+                '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">' + viewBtn + badge + '</div>' +
                 '</div>';
         }).join('')
         : '<div style="text-align:center;padding:2rem;color:var(--text3)">Документы не загружены</div>';
@@ -838,6 +861,10 @@ async function loadTeacherDash() {
         preview.style.display = 'block';
         if (fname) fname.textContent = 'Видео загружено ✓';
     }
+    // Load conditions checkboxes
+    var cond = currentUser.conditions || {};
+    if (document.getElementById('tp-trial'))    document.getElementById('tp-trial').checked    = !!cond.trial;
+    if (document.getElementById('tp-homework')) document.getElementById('tp-homework').checked = !!cond.homework;
 }
 
 function tdShow(panel) {
@@ -889,6 +916,10 @@ async function saveTeacherProfile() {
             subject: document.getElementById('tp-subject').value,
             bio: document.getElementById('tp-bio').value,
             price: parseFloat(document.getElementById('tp-price').value) || 0,
+            conditions: {
+                trial:    document.getElementById('tp-trial')    ? document.getElementById('tp-trial').checked    : false,
+                homework: document.getElementById('tp-homework') ? document.getElementById('tp-homework').checked : false,
+            }
         });
         // video handled above
         const fresh = await get('/auth/me');
