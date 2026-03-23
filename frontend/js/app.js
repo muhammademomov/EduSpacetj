@@ -2282,20 +2282,40 @@ function renderHomework(homework) {
 function renderMaterials(materials) {
     const el    = document.getElementById('cp-mat-list');
     const empty = document.getElementById('cp-mat-empty');
-    if (!materials.length) { empty.style.display = ''; el.innerHTML = ''; return; }
-    empty.style.display = 'none';
-    const TYPE_ICONS = { pdf:'📄', doc:'📝', docx:'📝', ppt:'📊', pptx:'📊', xls:'📈', xlsx:'📈', jpg:'🖼️', jpeg:'🖼️', png:'🖼️', mp4:'🎬', zip:'🗜️', rar:'🗜️' };
+    if (!materials || !materials.length) {
+        if (empty) empty.style.display = '';
+        if (el)    el.innerHTML = '';
+        return;
+    }
+    if (empty) empty.style.display = 'none';
+    const TYPE_ICONS = {
+        pdf:'📄', doc:'📝', docx:'📝', ppt:'📊', pptx:'📊',
+        xls:'📈', xlsx:'📈', jpg:'🖼️', jpeg:'🖼️', png:'🖼️',
+        mp4:'🎬', mp3:'🎵', zip:'🗜️', rar:'🗜️', txt:'📋', csv:'📊'
+    };
     el.innerHTML = materials.map(function(m) {
-        var ext  = m.fileUrl ? m.fileUrl.split('.').pop().toLowerCase() : '';
+        // Use fileType field from DB (set during upload), fallback to URL extension
+        var ext = m.fileType || (m.fileUrl ? m.fileUrl.split('?')[0].split('.').pop().toLowerCase() : '');
         var ico  = TYPE_ICONS[ext] || '📎';
-        var size = m.fileSize ? (m.fileSize > 1024*1024 ? (m.fileSize/1024/1024).toFixed(1)+' МБ' : (m.fileSize/1024).toFixed(0)+' КБ') : '';
+        var size = m.fileSize
+            ? (m.fileSize > 1024*1024
+                ? (m.fileSize/1024/1024).toFixed(1)+' МБ'
+                : (m.fileSize/1024).toFixed(0)+' КБ')
+            : '';
+        var date = m.createdAt
+            ? new Date(m.createdAt).toLocaleDateString('ru',{day:'numeric',month:'short'})
+            : '';
         var tag  = m.fileUrl ? 'a' : 'div';
         var href = m.fileUrl ? ' href="' + m.fileUrl + '" target="_blank"' : '';
         return '<' + tag + href + ' class="cp-mat-card">' +
             '<div class="cp-mat-ico">' + ico + '</div>' +
             '<div class="cp-mat-info">' +
                 '<div class="cp-mat-title">' + m.title + '</div>' +
-                '<div class="cp-mat-meta">' + (m.lessonTitle || '') + (size ? ' · ' + size : '') + '</div>' +
+                '<div class="cp-mat-meta">' +
+                    (m.lessonTitle ? m.lessonTitle + ' · ' : '') +
+                    (size ? size + ' · ' : '') + date +
+                    (ext ? ' · ' + ext.toUpperCase() : '') +
+                '</div>' +
             '</div>' +
             (m.fileUrl ? '<div class="cp-mat-dl">⬇️ Скачать</div>' : '') +
         '</' + tag + '>';
