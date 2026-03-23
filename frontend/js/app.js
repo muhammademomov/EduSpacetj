@@ -353,8 +353,11 @@ function fltRev(btn, m) {
 
 function ppTab(tab, btn) {
     document.querySelectorAll('.pp-tab').forEach(t => t.classList.remove('on')); btn.classList.add('on');
-    ['pp-about','pp-courses','pp-reviews','pp-docs'].forEach(id => document.getElementById(id).style.display = 'none');
-    document.getElementById(tab).style.display = '';
+    ['pp-about','pp-courses','pp-reviews','pp-docs'].forEach(id => {
+        var el = document.getElementById(id);
+        if (el) el.style.display = id === tab ? '' : 'none';
+    });
+    if (tab === 'pp-reviews') showReviewForm();
 }
 
 async function toggleFavTeacher() {
@@ -1147,6 +1150,131 @@ async function addTeacherDoc() {
     }
     btn.textContent = '+ Добавить документ';
     btn.disabled = false;
+}
+
+
+var selectedStars = 0;
+
+function setStars(n) {
+    selectedStars = n;
+    document.querySelectorAll('.star-btn').forEach(function(s) {
+        s.style.opacity = parseInt(s.getAttribute('data-v')) <= n ? '1' : '0.3';
+        s.style.color = parseInt(s.getAttribute('data-v')) <= n ? '#F59E0B' : '';
+    });
+}
+
+async function submitReview() {
+    if (!selectedStars) return alert('Поставьте оценку от 1 до 5 звёзд');
+    var text = document.getElementById('pp-rev-text').value.trim();
+    if (!text) return alert('Напишите отзыв');
+    if (!currentProfileId) return;
+
+    // Need a course_id - get first enrolled course of this teacher
+    try {
+        var enrollments = await get('/payments/enrollments');
+        var teacherEnroll = enrollments.find(function(e) { return e.teacherId === currentProfileId || e.teacher_id === currentProfileId; });
+        if (!teacherEnroll) return alert('Вы можете оставить отзыв только после записи на курс');
+
+        var btn = event.target;
+        btn.textContent = 'Отправка...';
+        btn.disabled = true;
+
+        await post('/users/reviews', {
+            teacherId: currentProfileId,
+            courseId: teacherEnroll.courseId || teacherEnroll.course_id,
+            stars: selectedStars,
+            text: text
+        });
+
+        // Reset form
+        selectedStars = 0;
+        setStars(0);
+        document.getElementById('pp-rev-text').value = '';
+        document.getElementById('pp-rev-form').style.display = 'none';
+        btn.textContent = 'Отправить отзыв';
+        btn.disabled = false;
+
+        alert('✅ Спасибо за отзыв!');
+        openProfile(currentProfileId); // Reload profile
+    } catch(e) {
+        alert('Ошибка: ' + e.message);
+        event.target.textContent = 'Отправить отзыв';
+        event.target.disabled = false;
+    }
+}
+
+function showReviewForm() {
+    if (!currentUser) {
+        document.getElementById('pp-rev-login-hint').style.display = 'block';
+        document.getElementById('pp-rev-form').style.display = 'none';
+        return;
+    }
+    if (currentUser.role === 'student') {
+        document.getElementById('pp-rev-form').style.display = 'block';
+        document.getElementById('pp-rev-login-hint').style.display = 'none';
+    }
+}
+
+
+var chatTeacherId = null;
+var chatInterval = null;
+var chatLastId = 0;
+
+function openChat() {
+    if (!currentUser) { go('login'); return; }
+    if (!currentProfileId) return;
+    chatTeacherId = currentProfileId;
+
+    // Set teacher info in chat header
+    var nameEl = document.getElementById('chat-name');
+    var avEl = document.getElementById('chat-av');
+    if (nameEl) nameEl.textContent = document.getElementById('pp-hname') ? document.getElementById('pp-hname').textContent : 'Учитель';
+    if (avEl) avEl.textContent = '?';
+
+    var modal = document.getElementById('chat-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    loadMessages();
+    chatInterval = setInterval(loadMessages, 5000);
+}
+
+function closeChat() {
+    document.getElementById('chat-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
+}
+
+async function loadMessages() {
+    if (!chatTeacherId || !currentUser) return;
+    try {
+        var otherId = currentUser.role === 'student' ? chatTeacherId : chatTeacherId;
+        var msgs = await get('/users/chat/' + chatTeacherId);
+        var el = document.getElementById('chat-messages');
+        if (!msgs.length) {
+            el.innerHTML = '<div style="text-align:center;font-size:12px;color:var(--text3);padding:1rem">Начните общение с преподавателем</div>';
+            return;
+        }
+        el.innerHTML = msgs.map(function(m) {
+            var isMe = m.sender_id === currentUser.id;
+            return '<div style="display:flex;justify-content:' + (isMe?'flex-end':'flex-start') + '">' +
+                '<div style="max-width:75%;padding:10px 14px;border-radius:' + (isMe?'14px 4px 14px 14px':'4px 14px 14px 14px') + ';background:' + (isMe?'var(--g)':'var(--bg)') + ';color:' + (isMe?'#fff':'var(--text)') + ';font-size:13px;line-height:1.5">' +
+                '<div>' + m.text + '</div>' +
+                '<div style="font-size:10px;opacity:.6;margin-top:3px;text-align:right">' + new Date(m.created_at).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}) + '</div>' +
+                '</div></div>';
+        }).join('');
+        el.scrollTop = el.scrollHeight;
+    } catch(e) {}
+}
+
+async function sendMsg() {
+    var input = document.getElementById('chat-input');
+    var text = input.value.trim();
+    if (!text || !chatTeacherId) return;
+    input.value = '';
+    try {
+        await post('/users/chat/' + chatTeacherId, { text: text });
+        loadMessages();
+    } catch(e) { input.value = text; alert('Ошибка: ' + e.message); }
 }
 
 // ═══════════════════════════════════════════════════════
