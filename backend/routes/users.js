@@ -202,4 +202,83 @@ router.post('/admin/verify-doc/:docId', auth, adminOnly, async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// POST /api/users/reviews — оставить отзыв
+router.post('/reviews', auth, async (req, res) => {
+    if (req.user.role !== 'student') return res.status(403).json({ error: 'Только ученики могут оставлять отзывы' });
+    const { teacherId, courseId, stars, text } = req.body;
+    if (!stars || stars < 1 || stars > 5) return res.status(400).json({ error: 'Оценка от 1 до 5' });
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Напишите текст отзыва' });
+    try {
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [teacherId]);
+        if (!tp.length) return res.status(404).json({ error: 'Учитель не найден' });
+        
+        const { randomUUID } = require('crypto');
+        await db.query(
+            'INSERT IGNORE INTO reviews (id, student_id, teacher_id, course_id, stars, text) VALUES (?,?,?,?,?,?)',
+            [randomUUID(), req.user.id, tp[0].id, courseId, stars, text.trim()]
+        );
+        
+        // Update teacher rating
+        const [ratingRes] = await db.query(
+            'SELECT AVG(stars) as avg, COUNT(*) as cnt FROM reviews WHERE teacher_id=?', [tp[0].id]
+        );
+        await db.query(
+            'UPDATE teacher_profiles SET rating=?, review_count=? WHERE id=?',
+            [parseFloat(ratingRes[0].avg||0).toFixed(2), ratingRes[0].cnt, tp[0].id]
+        );
+        
+        res.json({ message: 'Отзыв добавлен' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+
+// GET /api/users/chat/:teacherId — получить сообщения
+router.get('/chat/:teacherId', auth, async (req, res) => {
+    try {
+        const otherId = req.params.teacherId;
+        const myId = req.user.id;
+        const [msgs] = await db.query(
+            `SELECT * FROM chat_messages
+             WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?)
+             ORDER BY created_at ASC LIMIT 100`,
+            [myId, otherId, otherId, myId]
+        );
+        // Mark as read
+        await db.query('UPDATE chat_messages SET is_read=1 WHERE receiver_id=? AND sender_id=?', [myId, otherId]);
+        res.json(msgs);
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// POST /api/users/chat/:teacherId — отправить сообщение
+router.post('/chat/:teacherId', auth, async (req, res) => {
+    const { text } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Пустое сообщение' });
+    try {
+        const { randomUUID } = require('crypto');
+        await db.query(
+            'INSERT INTO chat_messages (id, sender_id, receiver_id, text) VALUES (?,?,?,?)',
+            [randomUUID(), req.user.id, req.params.teacherId, text.trim()]
+        );
+        res.json({ message: 'Отправлено' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// GET /api/users/chat — все чаты пользователя (для учителя)
+router.get('/chats', auth, async (req, res) => {
+    try {
+        const [chats] = await db.query(
+            `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url,
+                    m.text as last_msg, m.created_at as last_time,
+                    (SELECT COUNT(*) FROM chat_messages WHERE receiver_id=? AND sender_id=u.id AND is_read=0) as unread
+             FROM users u
+             JOIN chat_messages m ON (m.sender_id=u.id AND m.receiver_id=?) OR (m.sender_id=? AND m.receiver_id=u.id)
+             WHERE u.id != ?
+             GROUP BY u.id ORDER BY m.created_at DESC`,
+            [req.user.id, req.user.id, req.user.id, req.user.id]
+        );
+        res.json(chats);
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 module.exports = router;
