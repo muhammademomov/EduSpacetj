@@ -18,6 +18,7 @@
     <button class="nav-link" id="nl-catalog" onclick="go('catalog')">Каталог</button>
     <button class="nav-link" id="nl-about" onclick="go('about')">О нас</button>
   </div>
+  <button class="nav-hamburger" id="nav-ham" onclick="toggleMobileMenu()" aria-label="Меню"><span></span><span></span><span></span></button>
   <div class="nav-right" id="nav-guest">
     <button class="btn-sm ghost" onclick="go('login')">Войти</button>
     <button class="btn-sm solid" onclick="go('register')">Регистрация</button>
@@ -32,6 +33,23 @@
     </div>
   </div>
 </nav>
+
+<!-- ═══ MOBILE MENU ═══ -->
+<div class="nav-mobile-menu" id="mobile-menu">
+  <div class="nav-mobile-links">
+    <button class="nav-mobile-link active" id="mnl-home" onclick="go('home');closeMobileMenu()">🏠 Главная</button>
+    <button class="nav-mobile-link" id="mnl-catalog" onclick="go('catalog');closeMobileMenu()">🔍 Каталог</button>
+    <button class="nav-mobile-link" id="mnl-about" onclick="go('about');closeMobileMenu()">ℹ️ О нас</button>
+  </div>
+  <div id="mob-menu-guest" class="nav-mobile-btns">
+    <button class="btn-sm ghost" onclick="go('login');closeMobileMenu()" style="flex:1;height:42px">Войти</button>
+    <button class="btn-sm solid" onclick="go('register');closeMobileMenu()" style="flex:1;height:42px">Регистрация</button>
+  </div>
+  <div id="mob-menu-user" style="display:none">
+    <button class="btn-full green" onclick="goDash();closeMobileMenu()" style="height:42px">Личный кабинет</button>
+    <button class="btn-full outline" onclick="logout();closeMobileMenu()" style="height:42px;margin-top:8px">Выйти</button>
+  </div>
+</div>
 
 <!-- ═══ HOME ═══ -->
 <div class="page active" id="page-home">
@@ -98,7 +116,7 @@
     <h1>Найди своего <em>преподавателя</em></h1>
     <p>Проверенные специалисты Таджикистана</p>
     <div class="cat-search-box">
-      <input type="text" placeholder="Имя преподавателя, предмет, курс..." id="cat-srch" oninput="catSearch(this.value)">
+      <input type="text" placeholder="Имя преподавателя, предмет, курс..." id="cat-search-inp" oninput="catSearch(this.value)">
       <button onclick="catSearch(document.getElementById('cat-srch').value)">Найти</button>
     </div>
   </div>
@@ -107,38 +125,38 @@
       <div class="flt-hdr"><div class="flt-title">Фильтры</div><button class="flt-reset" onclick="resetFlt()">Сбросить</button></div>
       <div class="flt-grp">
         <div class="flt-lbl">Предмет</div>
-        <div class="chips" id="subj-chips">
-          <button class="chip on" onclick="togChip(this,'subj')">Все</button>
-          <button class="chip" onclick="togChip(this,'subj')">Математика</button>
-          <button class="chip" onclick="togChip(this,'subj')">Английский</button>
-          <button class="chip" onclick="togChip(this,'subj')">IT / Программирование</button>
-          <button class="chip" onclick="togChip(this,'subj')">Дизайн</button>
-          <button class="chip" onclick="togChip(this,'subj')">Бизнес</button>
-          <button class="chip" onclick="togChip(this,'subj')">Физика</button>
-          <button class="chip" onclick="togChip(this,'subj')">Русский язык</button>
-          <button class="chip" onclick="togChip(this,'subj')">Таджикский</button>
+        <div class="chips" id="flt-subject">
+          <button class="chip on" data-val="all" onclick="togChip(this)">Все</button>
+          <button class="chip" data-val="Математика" onclick="togChip(this)">Математика</button>
+          <button class="chip" data-val="Английский язык" onclick="togChip(this)">Английский</button>
+          <button class="chip" data-val="IT / Программирование" onclick="togChip(this)">IT / Прогр.</button>
+          <button class="chip" data-val="Дизайн" onclick="togChip(this)">Дизайн</button>
+          <button class="chip" data-val="Бизнес / Маркетинг" onclick="togChip(this)">Бизнес</button>
+          <button class="chip" data-val="Физика" onclick="togChip(this)">Физика</button>
+          <button class="chip" data-val="Русский язык" onclick="togChip(this)">Русский</button>
+          <button class="chip" data-val="Таджикский язык" onclick="togChip(this)">Таджикский</button>
         </div>
       </div>
       <div class="flt-grp">
         <div class="flt-lbl">Уровень</div>
-        <div class="chips">
-          <button class="chip on" onclick="togChip(this,'lvl')">Все</button>
-          <button class="chip" onclick="togChip(this,'lvl')">Начинающий</button>
-          <button class="chip" onclick="togChip(this,'lvl')">Средний</button>
-          <button class="chip" onclick="togChip(this,'lvl')">Продвинутый</button>
+        <div class="chips" id="flt-level">
+          <button class="chip on" data-val="all" onclick="togChip(this)">Все</button>
+          <button class="chip" data-val="Начинающий" onclick="togChip(this)">Начинающий</button>
+          <button class="chip" data-val="Средний" onclick="togChip(this)">Средний</button>
+          <button class="chip" data-val="Продвинутый" onclick="togChip(this)">Продвинутый</button>
         </div>
       </div>
       <div class="flt-grp" style="border-bottom:none">
         <div class="flt-lbl">Платформа</div>
-        <div class="chips">
-          <button class="chip on" onclick="togChip(this,'plat')">Все</button>
-          <button class="chip" onclick="togChip(this,'plat')">Zoom</button>
-          <button class="chip" onclick="togChip(this,'plat')">Google Meet</button>
-          <button class="chip" onclick="togChip(this,'plat')">Telegram</button>
-          <button class="chip" onclick="togChip(this,'plat')">MS Teams</button>
+        <div class="chips" id="flt-platform">
+          <button class="chip on" data-val="all" onclick="togChip(this)">Все</button>
+          <button class="chip" data-val="zoom" onclick="togChip(this)">Zoom</button>
+          <button class="chip" data-val="meet" onclick="togChip(this)">Google Meet</button>
+          <button class="chip" data-val="tg" onclick="togChip(this)">Telegram</button>
+          <button class="chip" data-val="teams" onclick="togChip(this)">MS Teams</button>
         </div>
       </div>
-      <button class="flt-apply" style="margin-top:16px">Применить фильтры</button>
+      <button class="flt-apply" onclick="applyFilters()" style="margin-top:16px">Применить фильтры</button>
     </aside>
     <div class="cat-main">
       <div class="cat-toolbar">
@@ -293,7 +311,7 @@
           <div class="ppc-feat"><div class="ppc-feat-ico">💬</div>Чат с преподавателем</div>
         </div>
         <div class="ppc-div"></div>
-        <button class="btn-bkf" onclick="goPayForProfile()">Записаться на курс</button>
+        <button class="btn-bkf" id="pp-enroll-btn" onclick="goPayForProfile()">Записаться на курс</button>
         <button class="btn-chat" id="pp-chat-btn" onclick="openChat()" style="width:100%;height:44px;background:transparent;border:1.5px solid var(--g);color:var(--g2);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px">💬 Написать учителю</button>
         <button class="btn-trial" id="btn-trial" style="display:none">Пробный урок — бесплатно</button>
       </div>
@@ -316,17 +334,17 @@
     </div>
   </div>
   <div style="max-width:900px;margin:3rem auto;padding:0 2rem">
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2rem">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2rem" class="about-grid-3">
       <div class="card" style="padding:1.5rem;text-align:center"><div style="font-size:32px;margin-bottom:10px">🎓</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Для преподавателей</div><div style="font-size:13px;color:var(--text2)">Регистрируйтесь, создавайте курсы, получайте учеников</div></div>
       <div class="card" style="padding:1.5rem;text-align:center"><div style="font-size:32px;margin-bottom:10px">👥</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Для учеников</div><div style="font-size:13px;color:var(--text2)">Найдите курс, пополните баланс, учитесь онлайн</div></div>
       <div class="card" style="padding:1.5rem;text-align:center"><div style="font-size:32px;margin-bottom:10px">💳</div><div style="font-size:15px;font-weight:800;margin-bottom:5px">Комиссия 15%</div><div style="font-size:13px;color:var(--text2)">Платформа берёт 15% — преподаватель получает 85%</div></div>
     </div>
     <div class="card" style="padding:1.5rem">
       <div style="font-size:16px;font-weight:800;margin-bottom:1rem">💰 Как работает оплата</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem" class="about-grid-4">
         <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">1️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Пополнение</div><div style="font-size:12px;color:var(--text2)">Ученик вносит деньги на баланс</div></div>
         <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">2️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Оплата</div><div style="font-size:12px;color:var(--text2)">Оплачивает курс с баланса</div></div>
-        <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">3️⃣</div><div style="font-size:24px;margin-bottom:6px">3️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Комиссия 15%</div><div style="font-size:12px;color:var(--text2)">Удерживается автоматически</div></div>
+        <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">3️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">Комиссия 15%</div><div style="font-size:12px;color:var(--text2)">Удерживается автоматически</div></div>
         <div style="text-align:center"><div style="font-size:24px;margin-bottom:6px">4️⃣</div><div style="font-size:12.5px;font-weight:700;margin-bottom:3px">85% преподавателю</div><div style="font-size:12px;color:var(--text2)">Зачисляется на счёт</div></div>
       </div>
     </div>
@@ -493,7 +511,20 @@
 
 <!-- ═══ STUDENT DASH ═══ -->
 <div class="page" id="page-student-dash">
+<!-- Mobile header -->
+<div class="mob-dash-header" id="sd-mob-header">
+  <button class="mob-back-btn" onclick="go('home')">← На главную</button>
+  <span class="mob-panel-title" id="sd-mob-title">Обзор</span>
+</div>
 <div class="dash-layout">
+  <!-- Mobile bottom nav -->
+  <nav class="mob-nav-btn" id="sd-mob-nav">
+    <button class="mob-nav-item on" id="mni-overview" onclick="sdShow('overview');setMobNav('overview','sd')"><span class="mob-nav-icon">📊</span>Обзор</button>
+    <button class="mob-nav-item" id="mni-my-courses" onclick="sdShow('my-courses');setMobNav('my-courses','sd')"><span class="mob-nav-icon">📚</span>Курсы</button>
+    <button class="mob-nav-item" id="mni-balance" onclick="sdShow('balance');setMobNav('balance','sd')"><span class="mob-nav-icon">💳</span>Баланс</button>
+    <button class="mob-nav-item" id="mni-favorites" onclick="sdShow('favorites');setMobNav('favorites','sd')"><span class="mob-nav-icon">♡</span>Избранное</button>
+    <button class="mob-nav-item" id="mni-settings" onclick="sdShow('settings');loadSettingsPage();setMobNav('settings','sd')"><span class="mob-nav-icon">⚙️</span>Настройки</button>
+  </nav>
   <aside class="sidebar">
     <div class="sb-user">
       <div class="sb-av" id="sd-av" style="background:var(--g)">?</div>
@@ -529,10 +560,10 @@
         </div>
       </div>
       <div class="d-metrics">
-        <div class="d-metric"><div class="d-metric-label">Активных курса</div><div class="d-metric-val g" id="dm-courses">0</div><div class="d-metric-sub">Записей</div></div>
-        <div class="d-metric"><div class="d-metric-label">Баланс (смн)</div><div class="d-metric-val g" id="dm-balance" onclick="sdShow('balance')" style="cursor:pointer">0</div><div class="d-metric-sub">Пополнить →</div></div>
-        <div class="d-metric"><div class="d-metric-label">В избранном</div><div class="d-metric-val" id="dm-favs">0</div><div class="d-metric-sub">Сохранено</div></div>
-        <div class="d-metric"><div class="d-metric-label">Уведомления</div><div class="d-metric-val" id="dm-notifs">0</div><div class="d-metric-sub">Непрочитанных</div></div>
+        <div class="d-metric"><div class="d-metric-icon">📚</div><div class="d-metric-label">Мои курсы</div><div class="d-metric-val g" id="dm-courses">0</div><div class="d-metric-sub">Активных записей</div></div>
+        <div class="d-metric" onclick="sdShow('balance')" style="cursor:pointer"><div class="d-metric-icon">💳</div><div class="d-metric-label">Баланс</div><div class="d-metric-val g" id="dm-balance">0</div><div class="d-metric-sub">смн · Пополнить →</div></div>
+        <div class="d-metric" onclick="sdShow('favorites')" style="cursor:pointer"><div class="d-metric-icon">♡</div><div class="d-metric-label">Избранное</div><div class="d-metric-val" id="dm-favs">0</div><div class="d-metric-sub">Преподавателей</div></div>
+        <div class="d-metric" onclick="sdShow('notifications')" style="cursor:pointer"><div class="d-metric-icon">🔔</div><div class="d-metric-label">Уведомления</div><div class="d-metric-val" id="dm-notifs">0</div><div class="d-metric-sub">Непрочитанных</div></div>
       </div>
       <div class="d-card">
         <div class="d-card-title">📚 Мои курсы <a class="d-card-link" onclick="sdShow('my-courses')">Все →</a></div>
@@ -723,7 +754,20 @@
 
 <!-- ═══ TEACHER DASH ═══ -->
 <div class="page" id="page-teacher-dash">
+<!-- Mobile header -->
+<div class="mob-dash-header" id="td-mob-header">
+  <button class="mob-back-btn" onclick="go('home')">← На главную</button>
+  <span class="mob-panel-title" id="td-mob-title">Обзор</span>
+</div>
 <div class="dash-layout">
+  <!-- Mobile bottom nav -->
+  <nav class="mob-nav-btn" id="td-mob-nav">
+    <button class="mob-nav-item on" id="tmni-t-overview" onclick="tdShow('t-overview');setMobNav('t-overview','td')"><span class="mob-nav-icon">📊</span>Обзор</button>
+    <button class="mob-nav-item" id="tmni-t-courses" onclick="tdShow('t-courses');setMobNav('t-courses','td')"><span class="mob-nav-icon">📚</span>Курсы</button>
+    <button class="mob-nav-item" id="tmni-t-students" onclick="tdShow('t-students');setMobNav('t-students','td')"><span class="mob-nav-icon">👥</span>Ученики</button>
+    <button class="mob-nav-item" id="tmni-t-chats" onclick="tdShow('t-chats');setMobNav('t-chats','td')"><span class="mob-nav-icon">💬</span>Чаты</button>
+    <button class="mob-nav-item" id="tmni-t-profile" onclick="tdShow('t-profile');setMobNav('t-profile','td')"><span class="mob-nav-icon">👤</span>Профиль</button>
+  </nav>
   <aside class="sidebar">
     <div class="sb-user">
       <div class="sb-av" id="td-av" style="background:#7C3AED">?</div>
@@ -735,6 +779,7 @@
     <div class="sb-item on" onclick="tdShow('t-overview')"><span class="sb-ico">📊</span>Обзор</div>
     <div class="sb-item" onclick="tdShow('t-courses')"><span class="sb-ico">📚</span>Мои курсы<span class="sb-badge" id="td-courses-cnt">0</span></div>
     <div class="sb-item" onclick="tdShow('t-students')"><span class="sb-ico">👥</span>Ученики<span class="sb-badge" id="td-students-cnt">0</span></div>
+    <div class="sb-item" onclick="tdShow('t-chats')"><span class="sb-ico">💬</span>Чаты<span class="sb-badge red" id="td-chat-cnt" style="display:none">0</span></div>
     <div class="sb-item" onclick="tdShow('t-add-course')"><span class="sb-ico">➕</span>Добавить курс</div>
     <div class="sb-lbl">Финансы</div>
     <div class="sb-item" onclick="tdShow('t-earnings')"><span class="sb-ico">💰</span>Мои доходы</div>
@@ -748,10 +793,10 @@
     <div class="dpanel on" id="tdp-t-overview">
       <div class="dp-hdr"><div class="dp-title">Обзор</div><button class="btn-sm solid" onclick="tdShow('t-add-course')">+ Добавить курс</button></div>
       <div class="d-metrics">
-        <div class="d-metric"><div class="d-metric-label">Учеников</div><div class="d-metric-val g" id="tdm-students">0</div><div class="d-metric-sub">Записались</div></div>
-        <div class="d-metric"><div class="d-metric-label">Курсов</div><div class="d-metric-val" id="tdm-courses">0</div><div class="d-metric-sub">Опубликовано</div></div>
-        <div class="d-metric"><div class="d-metric-label">Заработано</div><div class="d-metric-val g" id="tdm-earn">0 смн</div><div class="d-metric-sub">После 15% комиссии</div></div>
-        <div class="d-metric"><div class="d-metric-label">Рейтинг</div><div class="d-metric-val" id="tdm-rating">—</div><div class="d-metric-sub">Средний балл</div></div>
+        <div class="d-metric"><div class="d-metric-icon">👨‍🎓</div><div class="d-metric-label">Учеников</div><div class="d-metric-val g" id="tdm-students">0</div><div class="d-metric-sub">Всего записей</div></div>
+        <div class="d-metric" onclick="tdShow('t-courses')" style="cursor:pointer"><div class="d-metric-icon">📚</div><div class="d-metric-label">Курсов</div><div class="d-metric-val" id="tdm-courses">0</div><div class="d-metric-sub">Опубликовано</div></div>
+        <div class="d-metric" onclick="tdShow('t-earnings')" style="cursor:pointer"><div class="d-metric-icon">💰</div><div class="d-metric-label">Заработано</div><div class="d-metric-val g" id="tdm-earn">0 смн</div><div class="d-metric-sub">После 15% комиссии</div></div>
+        <div class="d-metric"><div class="d-metric-icon">⭐</div><div class="d-metric-label">Рейтинг</div><div class="d-metric-val" id="tdm-rating">—</div><div class="d-metric-sub">Средний балл</div></div>
       </div>
       <div class="d-grid2">
         <div class="d-card">
@@ -786,6 +831,12 @@
       </div>
     </div>
     <!-- ADD COURSE -->
+    <div class="dpanel" id="tdp-t-chats">
+      <div class="dp-hdr"><div class="dp-title">💬 Сообщения</div></div>
+      <div class="d-card" style="padding:0;overflow:hidden">
+        <div id="td-chats-list" style="min-height:200px;padding:8px"></div>
+      </div>
+    </div>
     <div class="dpanel" id="tdp-t-add-course">
       <div class="dp-hdr"><div class="dp-title">Добавить курс</div><button class="btn-sm ghost" onclick="tdShow('t-courses')">Отмена</button></div>
       <div class="ac-toast" id="ac-toast">🎉 Курс отправлен на проверку! Ответ в течение 1–2 дней.</div>
@@ -944,19 +995,28 @@
 </div>
 </div>
 <!-- CHAT MODAL -->
-<div id="chat-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center;padding:1rem">
-  <div style="background:var(--white);border-radius:16px 16px 0 0;width:100%;max-width:600px;height:70vh;display:flex;flex-direction:column;box-shadow:0 -8px 32px rgba(0,0,0,.15)">
-    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px">
-      <div id="chat-av" style="width:38px;height:38px;border-radius:10px;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0"></div>
-      <div style="flex:1"><div style="font-weight:800;font-size:14px" id="chat-name">Учитель</div><div style="font-size:12px;color:var(--text2)">Чат с преподавателем</div></div>
-      <button onclick="closeChat()" style="width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:none;font-size:16px;cursor:pointer">✕</button>
+<!-- ═══ CHAT MODAL ═══ -->
+<div class="chat-modal" id="chat-modal">
+  <div class="chat-box">
+    <div class="chat-hdr">
+      <div class="chat-hdr-av" id="chat-av">?</div>
+      <div class="chat-hdr-info">
+        <div class="chat-hdr-name" id="chat-name">Преподаватель</div>
+        <div class="chat-hdr-status">Онлайн</div>
+      </div>
+      <button class="chat-close-btn" onclick="closeChat()" title="Закрыть">✕</button>
     </div>
-    <div id="chat-messages" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:10px">
-      <div style="text-align:center;font-size:12px;color:var(--text3);padding:1rem">Начните общение с преподавателем</div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-empty">
+        <div class="chat-empty-ico">💬</div>
+        Начните общение с преподавателем
+      </div>
     </div>
-    <div style="padding:12px;border-top:1px solid var(--border2);display:flex;gap:8px">
-      <input type="text" id="chat-input" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter')sendMsg()" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none">
-      <button onclick="sendMsg()" style="width:44px;height:44px;background:var(--g);border:none;border-radius:10px;font-size:18px;cursor:pointer">➤</button>
+    <div class="chat-footer">
+      <textarea class="chat-input" id="chat-input" placeholder="Напишите сообщение..." rows="1" onkeydown="sendMsg(event)"></textarea>
+      <button class="chat-send-btn" onclick="sendMsg()" title="Отправить">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+      </button>
     </div>
   </div>
 </div>
