@@ -866,8 +866,8 @@ async function saveTeacherProfile() {
         // Upload video first if selected
         var videoInput = document.getElementById('tp-video-input');
         if (videoInput && videoInput.files && videoInput.files[0]) {
-            var btn = document.getElementById('tp-video-btn');
-            if (btn) { btn.textContent = 'Загрузка видео...'; btn.disabled = true; }
+            var saveBtn = document.querySelector('button.btn-save[onclick="saveTeacherProfile()"]');
+            if (saveBtn) { saveBtn.textContent = '⏳ Загрузка видео...'; saveBtn.disabled = true; }
             try {
                 var fd = new FormData();
                 fd.append('video', videoInput.files[0]);
@@ -890,6 +890,8 @@ async function saveTeacherProfile() {
         currentUser = { ...currentUser, ...fresh };
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
+        var saveBtn = document.querySelector('button.btn-save');
+        if (saveBtn) { saveBtn.textContent = 'Сохранить изменения'; saveBtn.disabled = false; }
         alert('✅ Профиль сохранён!');
     } catch(e) { alert('Ошибка: ' + e.message); }
 }
