@@ -45,14 +45,42 @@ const videoStorage = new CloudinaryStorage({
 const uploadVideo = multer({ storage: videoStorage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB
 
 // Storage для материалов курса
+// Cloudinary не поддерживает docx/pptx/xlsx напрямую — используем resource_type: 'raw'
 const materialStorage = new CloudinaryStorage({
     cloudinary,
-    params: {
-        folder: 'eduspace/materials',
-        resource_type: 'auto',
-        allowed_formats: ['jpg','jpeg','png','pdf','doc','docx','ppt','pptx','xls','xlsx','mp4','mp3','zip','rar','txt'],
+    params: async (req, file) => {
+        const ext = file.originalname.split('.').pop().toLowerCase();
+        const imageTypes = ['jpg','jpeg','png','gif','webp','bmp'];
+        const videoTypes = ['mp4','mov','avi','webm','mkv'];
+        const audioTypes = ['mp3','wav','ogg','aac'];
+
+        let resourceType = 'raw'; // default for docs, pdf, zip, etc.
+        if (imageTypes.includes(ext)) resourceType = 'image';
+        if (videoTypes.includes(ext)) resourceType = 'video';
+        if (audioTypes.includes(ext)) resourceType = 'video'; // Cloudinary treats audio as video
+
+        return {
+            folder: 'eduspace/materials',
+            resource_type: resourceType,
+            // No allowed_formats restriction - let all files through
+        };
     },
 });
-const uploadMaterial = multer({ storage: materialStorage, limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
+const uploadMaterial = multer({
+    storage: materialStorage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    fileFilter: (req, file, cb) => {
+        // Allow all common file types
+        const allowed = ['jpg','jpeg','png','gif','webp','pdf',
+                         'doc','docx','ppt','pptx','xls','xlsx',
+                         'mp4','mov','mp3','wav','zip','rar','txt','csv'];
+        const ext = file.originalname.split('.').pop().toLowerCase();
+        if (allowed.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Формат файла не поддерживается: .' + ext));
+        }
+    }
+}); // 50MB
 
 module.exports = { cloudinary, uploadPhoto, uploadDoc, uploadVideo, uploadMaterial };
