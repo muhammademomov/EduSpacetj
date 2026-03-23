@@ -268,17 +268,13 @@
       <div class="pp-price-card">
         <div class="ppc-row"><span class="ppc-from">от</span><span class="ppc-val" id="ppc-price">—</span><span class="ppc-per">смн/мес</span></div>
         <div class="ppc-note" id="ppc-note">Свяжитесь с преподавателем</div>
-        <div class="ppc-feats">
+        <div class="ppc-feats" id="ppc-feats">
           <div class="ppc-feat"><div class="ppc-feat-ico">🎥</div>Живые онлайн-занятия</div>
-          <div class="ppc-feat"><div class="ppc-feat-ico">📝</div>Домашние задания</div>
           <div class="ppc-feat"><div class="ppc-feat-ico">💬</div>Чат с преподавателем</div>
-          <div class="ppc-feat"><div class="ppc-feat-ico">🎓</div>Сертификат по окончании</div>
-          <div class="ppc-feat"><div class="ppc-feat-ico">🛡</div>Гарантия возврата 7 дней</div>
         </div>
         <div class="ppc-div"></div>
         <button class="btn-bkf" onclick="goPayForProfile()">Записаться на курс</button>
-        <button class="btn-trial">Пробный урок — бесплатно</button>
-        <div class="ppc-guar">🛡 Гарантия возврата 7 дней</div>
+        <button class="btn-trial" id="btn-trial" style="display:none">Пробный урок — бесплатно</button>
       </div>
       <div class="avail-card">
         <div class="avail-title">📅 Расписание</div>
@@ -857,6 +853,19 @@
         <div class="field"><label>Предмет / специализация</label><input type="text" id="tp-subject"></div>
         <div class="field"><label>О себе</label><textarea rows="4" id="tp-bio" placeholder="Расскажите об опыте..."></textarea></div>
         <div class="field"><label>Цена (смн/мес)</label><input type="number" id="tp-price" placeholder="500"></div>
+        <div class="field">
+          <label>⚙️ Условия для учеников</label>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border)">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:600">
+              <input type="checkbox" id="tp-trial" style="width:18px;height:18px;accent-color:var(--g)">
+              🎁 Предлагаю пробный урок бесплатно
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:600">
+              <input type="checkbox" id="tp-homework" style="width:18px;height:18px;accent-color:var(--g)">
+              📝 Даю домашние задания
+            </label>
+          </div>
+        </div>
         <div class="field">
           <label>🎥 Видео-визитка</label>
           <div id="tp-video-preview" style="display:none;margin-bottom:10px;border-radius:9px;overflow:hidden;background:#000;position:relative;padding-bottom:40%;"><video id="tp-video-player" style="position:absolute;top:0;left:0;width:100%;height:100%" controls></video></div>
