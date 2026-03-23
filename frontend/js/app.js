@@ -101,6 +101,9 @@ function logout() {
     if (typeof teacherPollInterval !== 'undefined' && teacherPollInterval) {
         clearInterval(teacherPollInterval); teacherPollInterval = null;
     }
+    if (typeof studentChatPollInterval !== 'undefined' && studentChatPollInterval) {
+        clearInterval(studentChatPollInterval); studentChatPollInterval = null;
+    }
     if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
     document.getElementById('nav-guest').style.display = '';
     document.getElementById('nav-user').style.display = 'none';
@@ -679,6 +682,7 @@ async function finishSetup() {
 // ═══════════════════════════════════════════════════════
 async function loadStudentDash() {
     if (!currentUser) return;
+    startStudentChatPoll();
     setAvatar(document.getElementById('sd-av'), currentUser);
     document.getElementById('sd-uname').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sd-greet').textContent = currentUser.firstName + '!';
@@ -720,12 +724,13 @@ function sdShow(panel) {
     document.getElementById('sdp-' + panel)?.classList.add('on');
     // Update sidebar active state
     document.querySelectorAll('#page-student-dash .sidebar .sb-item').forEach(el => el.classList.remove('on'));
-    if (panel === 'my-courses') loadMyCourses();
-    if (panel === 'favorites') loadFavorites();
-    if (panel === 'balance') loadBalance();
+    if (panel === 'my-courses')   loadMyCourses();
+    if (panel === 'favorites')    loadFavorites();
+    if (panel === 'balance')      loadBalance();
     if (panel === 'payment-flow') initPayFlow();
     if (panel === 'notifications') loadNotifications();
-    if (panel === 'settings') loadSettingsPage();
+    if (panel === 'settings')     loadSettingsPage();
+    if (panel === 'chats')        loadStudentChats();
     setMobNav(panel, 'sd');
 }
 
@@ -1127,6 +1132,79 @@ async function saveTeacherProfile() {
     } catch(e) { alert('Ошибка: ' + e.message); }
 }
 
+
+
+// ═══════════════════════════════════════════════════════
+// STUDENT CHATS
+// ═══════════════════════════════════════════════════════
+async function loadStudentChats() {
+    const el = document.getElementById('sd-chats-list');
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
+    try {
+        const chats = await get('/users/chats');
+
+        // Clear chat badge
+        const badge = document.getElementById('sb-chat-cnt');
+        if (badge) { badge.textContent = '0'; badge.style.display = 'none'; }
+
+        if (!chats.length) {
+            el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div>' +
+                '<div class="empty-title">Нет переписок</div>' +
+                '<div class="empty-sub">Напишите преподавателю через его профиль</div>' +
+                '<button class="btn-lg green" onclick="go(\'catalog\')">Найти преподавателя</button></div>';
+            return;
+        }
+
+        el.innerHTML = chats.map(function(c) {
+            var initials   = (c.first_name?.[0] || '') + (c.last_name?.[0] || '');
+            var lastMsg    = c.last_msg || c.last_message || '';
+            var shortMsg   = lastMsg ? lastMsg.substring(0, 50) + (lastMsg.length > 50 ? '…' : '') : 'Нет сообщений';
+            var unreadNum  = parseInt(c.unread) || 0;
+            var timeStr    = c.last_time ? new Date(c.last_time).toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'}) : '';
+            var safeName   = (c.first_name + ' ' + c.last_name).replace(/'/g, "\'");
+            var safeColor  = c.color || '#18A96A';
+
+            return '<div class="chat-list-item" onclick="openChatWithStudent(\'' + c.id + '\', \'' + safeName + '\', \'' + initials + '\', \'' + safeColor + '\')">' +
+                '<div class="cli-av" style="background:' + safeColor + '">' +
+                    (c.avatar_url
+                        ? '<img src="' + c.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
+                        : (initials || '?')) +
+                '</div>' +
+                '<div class="cli-info">' +
+                    '<div class="cli-name">' + c.first_name + ' ' + c.last_name + '</div>' +
+                    '<div class="cli-last">' + shortMsg + '</div>' +
+                '</div>' +
+                '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">' +
+                    (timeStr ? '<div style="font-size:11px;color:var(--text3);font-weight:600">' + timeStr + '</div>' : '') +
+                    (unreadNum > 0 ? '<span class="cli-badge">' + unreadNum + '</span>' : '') +
+                '</div>' +
+                '</div>';
+        }).join('');
+
+    } catch(e) {
+        console.error('loadStudentChats:', e);
+        el.innerHTML = '<div style="text-align:center;padding:2rem;color:#EF4444">Ошибка загрузки. Попробуйте снова.</div>';
+    }
+}
+
+// Student chat polling — check for new messages every 10s
+var studentChatPollInterval = null;
+function startStudentChatPoll() {
+    if (studentChatPollInterval) clearInterval(studentChatPollInterval);
+    studentChatPollInterval = setInterval(async function() {
+        if (!currentUser || currentUser.role !== 'student') { clearInterval(studentChatPollInterval); return; }
+        try {
+            var chats = await get('/users/chats');
+            var unread = chats.reduce(function(sum, c) { return sum + (parseInt(c.unread)||0); }, 0);
+            var badge = document.getElementById('sb-chat-cnt');
+            if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+            // If panel is open - refresh it
+            var panel = document.getElementById('sdp-chats');
+            if (panel && panel.classList.contains('on')) loadStudentChats();
+        } catch(e) {}
+    }, 10000);
+}
 
 // ═══════════════════════════════════════════════════════
 // TEACHER CHATS
@@ -1588,7 +1666,7 @@ function closeMobileMenu() {
 // Mobile dash panel label map
 const SD_LABELS = {
     'overview': 'Обзор', 'my-courses': 'Мои курсы', 'balance': 'Баланс',
-    'favorites': 'Избранное', 'notifications': 'Уведомления',
+    'favorites': 'Избранное', 'chats': '💬 Сообщения', 'notifications': 'Уведомления',
     'settings': 'Настройки', 'payment-flow': 'Оплата'
 };
 const TD_LABELS = {
