@@ -44,4 +44,15 @@ const videoStorage = new CloudinaryStorage({
 
 const uploadVideo = multer({ storage: videoStorage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB
 
-module.exports = { cloudinary, uploadPhoto, uploadDoc, uploadVideo };
+// Storage для материалов курса
+const materialStorage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'eduspace/materials',
+        resource_type: 'auto',
+        allowed_formats: ['jpg','jpeg','png','pdf','doc','docx','ppt','pptx','xls','xlsx','mp4','mp3','zip','rar','txt'],
+    },
+});
+const uploadMaterial = multer({ storage: materialStorage, limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
+
+module.exports = { cloudinary, uploadPhoto, uploadDoc, uploadVideo, uploadMaterial };
