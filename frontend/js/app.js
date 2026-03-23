@@ -85,14 +85,23 @@ function go(p) {
 
 function goDash() {
     if (!currentUser) { go('login'); return; }
-    if (currentUser.role === 'teacher') { go('teacher-dash'); loadTeacherDash(); }
-    else { go('student-dash'); loadStudentDash(); }
+    if (currentUser.role === 'teacher') {
+        go('teacher-dash');
+        loadTeacherDash();
+    } else {
+        go('student-dash');
+        loadStudentDash();
+    }
 }
 
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     currentUser = null;
+    if (typeof teacherPollInterval !== 'undefined' && teacherPollInterval) {
+        clearInterval(teacherPollInterval); teacherPollInterval = null;
+    }
+    if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
     document.getElementById('nav-guest').style.display = '';
     document.getElementById('nav-user').style.display = 'none';
     const gEl = document.getElementById('mob-menu-guest');
@@ -950,6 +959,24 @@ function setQuickTopup(amt) { topupAmt = amt; sdShow('payment-flow'); selAmt(nul
 // ═══════════════════════════════════════════════════════
 // TEACHER DASH
 // ═══════════════════════════════════════════════════════
+// Background chat polling for teacher
+var teacherPollInterval = null;
+function startTeacherChatPoll() {
+    if (teacherPollInterval) clearInterval(teacherPollInterval);
+    teacherPollInterval = setInterval(async function() {
+        if (!currentUser || currentUser.role !== 'teacher') { clearInterval(teacherPollInterval); return; }
+        try {
+            var chats = await get('/users/chats');
+            var unread = chats.reduce(function(sum, c) { return sum + (parseInt(c.unread)||0); }, 0);
+            var badge = document.getElementById('td-chat-cnt');
+            if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+            // If chat panel is open, refresh it
+            var chatPanel = document.getElementById('tdp-t-chats');
+            if (chatPanel && chatPanel.classList.contains('on')) loadTeacherChats();
+        } catch(e) {}
+    }, 10000); // every 10 seconds
+}
+
 async function loadTeacherDash() {
     if (!currentUser) return;
     setAvatar(document.getElementById('td-av'), currentUser);
@@ -1022,6 +1049,9 @@ async function loadTeacherDash() {
         preview.style.display = 'block';
         if (fname) fname.textContent = 'Видео загружено ✓';
     }
+    // Start background chat polling
+    startTeacherChatPoll();
+
     // Load conditions checkboxes
     var cond = currentUser.conditions || {};
     if (document.getElementById('tp-trial'))    document.getElementById('tp-trial').checked    = !!cond.trial;
@@ -1104,6 +1134,8 @@ async function saveTeacherProfile() {
 async function loadTeacherChats() {
     const el = document.getElementById('td-chats-list');
     if (!el) return;
+    // Show loading
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
     try {
         const chats = await get('/users/chats');
         if (!chats.length) {
@@ -1112,14 +1144,17 @@ async function loadTeacherChats() {
         }
         el.innerHTML = chats.map(c => {
             const initials = (c.first_name?.[0] || '') + (c.last_name?.[0] || '');
-            return `<div class="chat-list-item" onclick="openChatWithStudent('${c.id}', '${c.first_name} ${c.last_name}', '${initials}', '${c.color||'#18A96A'}')">
-                <div class="cli-av" style="background:${c.color||'#18A96A'}">${initials || '?'}</div>
-                <div class="cli-info">
-                    <div class="cli-name">${c.first_name} ${c.last_name}</div>
-                    <div class="cli-last">${c.last_message ? c.last_message.substring(0,45) + (c.last_message.length > 45 ? '…' : '') : 'Нет сообщений'}</div>
-                </div>
-                ${c.unread > 0 ? `<span class="cli-badge">${c.unread}</span>` : ''}
-            </div>`;
+            var lastMsg = c.last_msg || c.last_message || '';
+            var shortMsg = lastMsg ? lastMsg.substring(0,45) + (lastMsg.length > 45 ? '…' : '') : 'Нет сообщений';
+            var unreadNum = parseInt(c.unread) || 0;
+            return '<div class="chat-list-item" onclick="openChatWithStudent(\'' + c.id + '\', \'' + (c.first_name + ' ' + c.last_name).replace(/'/g,"\\'" ) + '\', \'' + initials + '\', \'' + (c.color||'#18A96A') + '\')">' +
+                '<div class="cli-av" style="background:' + (c.color||'#18A96A') + '">' + (initials || '?') + '</div>' +
+                '<div class="cli-info">' +
+                '<div class="cli-name">' + c.first_name + ' ' + c.last_name + '</div>' +
+                '<div class="cli-last">' + shortMsg + '</div>' +
+                '</div>' +
+                (unreadNum > 0 ? '<span class="cli-badge">' + unreadNum + '</span>' : '') +
+                '</div>';
         }).join('');
     } catch(e) { console.error('loadTeacherChats:', e); }
 }
@@ -1488,12 +1523,19 @@ async function sendMsg(e) {
     var input = document.getElementById('chat-input');
     var text = input.value.trim();
     if (!text || !chatTeacherId) return;
+    var sendBtn = document.querySelector('.chat-send-btn');
     input.value = '';
     input.style.height = 'auto';
+    if (sendBtn) sendBtn.style.opacity = '0.5';
     try {
         await post('/users/chat/' + chatTeacherId, { text: text });
-        loadMessages();
-    } catch(ex) { input.value = text; alert('Ошибка: ' + ex.message); }
+        await loadMessages();
+    } catch(ex) {
+        input.value = text;
+        showToast('Ошибка отправки: ' + ex.message, 'error');
+    } finally {
+        if (sendBtn) sendBtn.style.opacity = '1';
+    }
 }
 
 
