@@ -293,24 +293,32 @@ router.get('/:id/my', auth, async (req, res) => {
         progress.forEach(p => { progressMap[p.lesson_id] = { isDone: !!p.is_done, doneAt: p.done_at }; });
 
         // Домашние задания
-        const [hw] = await db.query(
-            `SELECT h.*, cl.title as lesson_title
-             FROM homework h
-             LEFT JOIN course_lessons cl ON cl.id = h.lesson_id
-             WHERE h.course_id = ? AND (h.student_id = ? OR h.student_id IS NULL)
-             ORDER BY h.created_at DESC`,
-            [courseId, studentId]
-        );
+        let hw = [];
+        try {
+            const [hwRows] = await db.query(
+                `SELECT h.*, cl.title as lesson_title
+                 FROM homework h
+                 LEFT JOIN course_lessons cl ON cl.id = h.lesson_id
+                 WHERE h.course_id = ? AND (h.student_id = ? OR h.student_id IS NULL)
+                 ORDER BY h.created_at DESC`,
+                [courseId, studentId]
+            );
+            hw = hwRows;
+        } catch(e) { console.log('homework query skipped:', e.message); }
 
         // Материалы
-        const [materials] = await db.query(
-            `SELECT m.*, cl.title as lesson_title
-             FROM course_materials m
-             LEFT JOIN course_lessons cl ON cl.id = m.lesson_id
-             WHERE m.course_id = ?
-             ORDER BY m.created_at DESC`,
-            [courseId]
-        );
+        let materials = [];
+        try {
+            const [matRows] = await db.query(
+                `SELECT m.*, cl.title as lesson_title
+                 FROM course_materials m
+                 LEFT JOIN course_lessons cl ON cl.id = m.lesson_id
+                 WHERE m.course_id = ?
+                 ORDER BY m.created_at DESC`,
+                [courseId]
+            );
+            materials = matRows;
+        } catch(e) { console.log('materials query skipped:', e.message); }
 
         // Расписание
         const [sched] = await db.query(
