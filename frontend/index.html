@@ -882,6 +882,154 @@
 
 </div><!-- /page-course -->
 
+<!-- ═══ TEACHER STUDENT PAGE ═══ -->
+<div class="page" id="page-teacher-student">
+  <!-- Top bar -->
+  <div class="pp-bar">
+    <button class="pp-back" onclick="go('teacher-dash');loadTeacherDash();tdShow('t-students')">← Мои ученики</button>
+    <div class="pp-bc"><span id="ts-bc-name">Ученик</span></div>
+    <div class="pp-bar-right">
+      <button class="btn-sm ghost" onclick="openChatWithStudentFromPage()">💬 Написать</button>
+    </div>
+  </div>
+
+  <!-- Student hero -->
+  <div class="cp-hero">
+    <div class="cp-hero-inner">
+      <div class="cp-teacher-av" id="ts-av" style="width:64px;height:64px;border-radius:16px;font-size:22px;flex-shrink:0">?</div>
+      <div class="cp-hero-info">
+        <div class="cp-cat" id="ts-course-cat">Курс</div>
+        <h1 class="cp-title" id="ts-student-name">Ученик</h1>
+        <div class="cp-teacher-row">
+          <span id="ts-course-emoji">📖</span>
+          <span id="ts-course-title">Курс</span>
+          <span class="cp-level" id="ts-enrolled-at">Записан</span>
+        </div>
+      </div>
+      <!-- Progress ring -->
+      <div class="cp-progress-wrap">
+        <svg class="cp-ring" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="32" class="cp-ring-bg"/>
+          <circle cx="40" cy="40" r="32" class="cp-ring-fill" id="ts-ring-fill"/>
+        </svg>
+        <div class="cp-progress-inner">
+          <div class="cp-pct" id="ts-pct">0%</div>
+          <div class="cp-pct-lbl">прогресс</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="cp-tabs-wrap">
+    <div class="cp-tabs">
+      <button class="cp-tab on" onclick="tsTab('progress', this)">📊 Прогресс</button>
+      <button class="cp-tab" onclick="tsTab('schedule', this)">📅 Расписание</button>
+      <button class="cp-tab" onclick="tsTab('homework', this)">📝 Домашние задания</button>
+    </div>
+  </div>
+
+  <div class="cp-body">
+
+    <!-- ПРОГРЕСС УРОКОВ -->
+    <div class="cp-section on" id="tss-progress">
+      <div class="cp-progress-bar-wrap">
+        <div class="cp-pb-info">
+          <span>Прогресс ученика</span>
+          <span id="ts-pb-text">0 из 0 уроков</span>
+        </div>
+        <div class="cp-pb-track"><div class="cp-pb-fill" id="ts-pb-fill" style="width:0%"></div></div>
+      </div>
+      <div id="ts-lessons-list"></div>
+    </div>
+
+    <!-- РАСПИСАНИЕ -->
+    <div class="cp-section" id="tss-schedule">
+      <div class="d-card" style="padding:1.5rem;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:800;margin-bottom:1rem">📅 Добавить занятие</div>
+        <div id="ts-sched-slots">
+          <div class="ts-sched-slot" id="ts-slot-0">
+            <div class="field-row">
+              <div class="field">
+                <label>День недели</label>
+                <select class="ts-day" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+                  <option value="Пн">Понедельник</option><option value="Вт">Вторник</option>
+                  <option value="Ср">Среда</option><option value="Чт">Четверг</option>
+                  <option value="Пт">Пятница</option><option value="Сб">Суббота</option>
+                  <option value="Вс">Воскресенье</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Время начала</label>
+                <input type="time" class="ts-from" value="09:00" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+              </div>
+              <div class="field">
+                <label>Время конца</label>
+                <input type="time" class="ts-to" value="10:00" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Платформа</label>
+                <select class="ts-plat" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+                  <option value="zoom">🎥 Zoom</option><option value="meet">📹 Google Meet</option>
+                  <option value="tg">✈️ Telegram</option><option value="teams">💼 MS Teams</option>
+                  <option value="sk">💬 Skype</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Ссылка на занятие</label>
+                <input type="url" class="ts-link" placeholder="https://zoom.us/j/..." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <button class="btn-sm ghost" onclick="addSchedSlot()">+ Добавить день</button>
+          <button class="btn-sm solid" onclick="saveSchedule()">💾 Сохранить расписание</button>
+        </div>
+      </div>
+      <!-- Current schedule -->
+      <div id="ts-sched-current"></div>
+    </div>
+
+    <!-- ДОМАШНИЕ ЗАДАНИЯ -->
+    <div class="cp-section" id="tss-homework">
+      <!-- Add HW form -->
+      <div class="d-card" style="padding:1.5rem;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:800;margin-bottom:1rem">📝 Добавить задание</div>
+        <div class="field"><label>Название задания</label><input type="text" id="ts-hw-title" placeholder="Напр: Решить задачи 1-5 из учебника"></div>
+        <div class="field"><label>Описание</label><textarea id="ts-hw-desc" rows="3" placeholder="Подробное описание задания..."></textarea></div>
+        <div class="field-row">
+          <div class="field"><label>Срок сдачи</label><input type="date" id="ts-hw-due"></div>
+          <div class="field"><label>Урок (необязательно)</label>
+            <select id="ts-hw-lesson" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+              <option value="">— Общее задание —</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-sm solid" onclick="addHomework()" style="width:100%;height:42px">✅ Отправить задание ученику</button>
+      </div>
+      <!-- HW list -->
+      <div id="ts-hw-list"></div>
+
+      <!-- Comment modal -->
+      <div class="hw-modal" id="ts-comment-modal">
+        <div class="hw-modal-box">
+          <div class="hw-modal-hdr">
+            <div class="hw-modal-title">💬 Проверить задание</div>
+            <button onclick="closeTsComment()" class="chat-close-btn">✕</button>
+          </div>
+          <div class="hw-modal-desc" id="ts-student-answer" style="background:var(--gl2);border-left:3px solid var(--g)"></div>
+          <textarea class="hw-modal-ta" id="ts-comment-text" placeholder="Напишите комментарий ученику..." rows="4"></textarea>
+          <button class="btn-full green" onclick="saveHwComment()">💾 Отправить комментарий</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /page-teacher-student -->
+
 <!-- ═══ TEACHER DASH ═══ -->
 <div class="page" id="page-teacher-dash">
 <!-- Mobile header -->
