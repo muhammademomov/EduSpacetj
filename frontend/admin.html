@@ -105,6 +105,24 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg)}
 .loading{text-align:center;padding:3rem;color:var(--text3)}
 .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--g);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ADMIN MOBILE ── */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .admin-body{flex-direction:column}
+  .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);padding:.75rem;display:flex;flex-wrap:wrap;gap:4px}
+  .sb-section{margin-bottom:0;display:contents}
+  .sb-label{display:none}
+  .sb-item{padding:7px 12px;font-size:12px;flex:none}
+}
+@media(max-width:640px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .admin-main{padding:1rem}
+  .admin-nav{padding:0 1rem}
+  table{font-size:12px}
+  th,td{padding:8px 10px}
+  .sec-hdr{flex-direction:column;align-items:flex-start;gap:8px}
+}
 </style>
 </head>
 <body>
