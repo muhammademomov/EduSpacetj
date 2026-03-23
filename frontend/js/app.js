@@ -863,6 +863,21 @@ async function loadTeacherStudents() {
 
 async function saveTeacherProfile() {
     try {
+        // Upload video first if selected
+        var videoInput = document.getElementById('tp-video-input');
+        if (videoInput && videoInput.files && videoInput.files[0]) {
+            var btn = document.getElementById('tp-video-btn');
+            if (btn) { btn.textContent = 'Загрузка видео...'; btn.disabled = true; }
+            try {
+                var fd = new FormData();
+                fd.append('video', videoInput.files[0]);
+                var vResult = await upload('/teachers/profile/video', fd);
+                currentUser.videoUrl = vResult.videoUrl;
+            } catch(ve) {
+                console.log('Video upload error:', ve.message);
+            }
+        }
+
         await put('/teachers/profile/update', {
             firstName: document.getElementById('tp-fname').value,
             lastName: document.getElementById('tp-lname').value,
@@ -870,7 +885,7 @@ async function saveTeacherProfile() {
             bio: document.getElementById('tp-bio').value,
             price: parseFloat(document.getElementById('tp-price').value) || 0,
         });
-        // Video is uploaded separately via uploadTeacherVideo()
+        // video handled above
         const fresh = await get('/auth/me');
         currentUser = { ...currentUser, ...fresh };
         localStorage.setItem('user', JSON.stringify(currentUser));
