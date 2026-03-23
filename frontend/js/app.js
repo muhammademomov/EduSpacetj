@@ -968,6 +968,7 @@ function setQuickTopup(amt) { topupAmt = amt; sdShow('payment-flow'); selAmt(nul
 var teacherPollInterval = null;
 function startTeacherChatPoll() {
     if (teacherPollInterval) clearInterval(teacherPollInterval);
+    var _lastTeacherChatUnread = -1;
     teacherPollInterval = setInterval(async function() {
         if (!currentUser || currentUser.role !== 'teacher') { clearInterval(teacherPollInterval); return; }
         try {
@@ -975,11 +976,14 @@ function startTeacherChatPoll() {
             var unread = chats.reduce(function(sum, c) { return sum + (parseInt(c.unread)||0); }, 0);
             var badge = document.getElementById('td-chat-cnt');
             if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
-            // If chat panel is open, refresh it
-            var chatPanel = document.getElementById('tdp-t-chats');
-            if (chatPanel && chatPanel.classList.contains('on')) loadTeacherChats();
+            // Перерисовываем список только если изменилось количество непрочитанных
+            if (unread !== _lastTeacherChatUnread) {
+                _lastTeacherChatUnread = unread;
+                var chatPanel = document.getElementById('tdp-t-chats');
+                if (chatPanel && chatPanel.classList.contains('on')) loadTeacherChats();
+            }
         } catch(e) {}
-    }, 10000); // every 10 seconds
+    }, 10000);
 }
 
 async function loadTeacherDash() {
@@ -1140,7 +1144,10 @@ async function saveTeacherProfile() {
 async function loadStudentChats() {
     const el = document.getElementById('sd-chats-list');
     if (!el) return;
-    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
+    // Показываем загрузку только если список пустой (первый раз)
+    if (!el.querySelector('.chat-list-item')) {
+        el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
+    }
     try {
         const chats = await get('/users/chats');
 
@@ -1192,6 +1199,7 @@ async function loadStudentChats() {
 var studentChatPollInterval = null;
 function startStudentChatPoll() {
     if (studentChatPollInterval) clearInterval(studentChatPollInterval);
+    var _lastStudentChatUnread = -1;
     studentChatPollInterval = setInterval(async function() {
         if (!currentUser || currentUser.role !== 'student') { clearInterval(studentChatPollInterval); return; }
         try {
@@ -1199,9 +1207,12 @@ function startStudentChatPoll() {
             var unread = chats.reduce(function(sum, c) { return sum + (parseInt(c.unread)||0); }, 0);
             var badge = document.getElementById('sb-chat-cnt');
             if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
-            // If panel is open - refresh it
-            var panel = document.getElementById('sdp-chats');
-            if (panel && panel.classList.contains('on')) loadStudentChats();
+            // Перерисовываем список только если изменилось количество непрочитанных
+            if (unread !== _lastStudentChatUnread) {
+                _lastStudentChatUnread = unread;
+                var panel = document.getElementById('sdp-chats');
+                if (panel && panel.classList.contains('on')) loadStudentChats();
+            }
         } catch(e) {}
     }, 10000);
 }
@@ -1212,8 +1223,10 @@ function startStudentChatPoll() {
 async function loadTeacherChats() {
     const el = document.getElementById('td-chats-list');
     if (!el) return;
-    // Show loading
-    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
+    // Показываем загрузку только если список пустой (первый раз)
+    if (!el.querySelector('.chat-list-item')) {
+        el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
+    }
     try {
         const chats = await get('/users/chats');
         if (!chats.length) {
