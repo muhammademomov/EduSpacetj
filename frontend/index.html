@@ -522,7 +522,7 @@
     <button class="mob-nav-item on" id="mni-overview" onclick="sdShow('overview');setMobNav('overview','sd')"><span class="mob-nav-icon">📊</span>Обзор</button>
     <button class="mob-nav-item" id="mni-my-courses" onclick="sdShow('my-courses');setMobNav('my-courses','sd')"><span class="mob-nav-icon">📚</span>Курсы</button>
     <button class="mob-nav-item" id="mni-balance" onclick="sdShow('balance');setMobNav('balance','sd')"><span class="mob-nav-icon">💳</span>Баланс</button>
-    <button class="mob-nav-item" id="mni-favorites" onclick="sdShow('favorites');setMobNav('favorites','sd')"><span class="mob-nav-icon">♡</span>Избранное</button>
+    <button class="mob-nav-item" id="mni-chats" onclick="sdShow('chats');setMobNav('chats','sd')"><span class="mob-nav-icon">💬</span>Чаты</button>
     <button class="mob-nav-item" id="mni-settings" onclick="sdShow('settings');loadSettingsPage();setMobNav('settings','sd')"><span class="mob-nav-icon">⚙️</span>Настройки</button>
   </nav>
   <aside class="sidebar">
@@ -537,6 +537,7 @@
     <div class="sb-item" onclick="sdShow('my-courses')"><span class="sb-ico">📚</span>Мои курсы<span class="sb-badge" id="sb-courses-cnt">0</span></div>
     <div class="sb-item" onclick="go('catalog')"><span class="sb-ico">🔍</span>Найти преподавателя</div>
     <div class="sb-item" onclick="sdShow('favorites')"><span class="sb-ico">♡</span>Избранное<span class="sb-badge red" id="sb-fav-cnt" style="display:none">0</span></div>
+    <div class="sb-item" onclick="sdShow('chats')"><span class="sb-ico">💬</span>Сообщения<span class="sb-badge red" id="sb-chat-cnt" style="display:none">0</span></div>
     <div class="sb-lbl">Финансы</div>
     <div class="sb-item" onclick="sdShow('balance')"><span class="sb-ico">💳</span>Баланс<span class="sb-badge" id="sb-bal-badge" style="background:#0F7A4D">0</span></div>
     <div class="sb-item" onclick="sdShow('payment-flow')"><span class="sb-ico">💰</span>Оплата</div>
@@ -714,6 +715,19 @@
         <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Уведомлений нет</div>
       </div>
     </div>
+    <!-- CHATS -->
+    <div class="dpanel" id="sdp-chats">
+      <div class="dp-hdr">
+        <div class="dp-title">💬 Сообщения</div>
+        <button class="btn-sm solid" onclick="go('catalog')">+ Найти учителя</button>
+      </div>
+      <div class="d-card" style="padding:0;overflow:hidden">
+        <div id="sd-chats-list" style="min-height:220px;padding:8px">
+          <div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>
+        </div>
+      </div>
+    </div>
+    <!-- NOTIFICATIONS -->
     <!-- SETTINGS -->
     <div class="dpanel" id="sdp-settings">
       <div class="dp-hdr"><div class="dp-title">Настройки</div></div>
