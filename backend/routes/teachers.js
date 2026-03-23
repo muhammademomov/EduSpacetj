@@ -379,10 +379,12 @@ router.post('/materials/upload', auth, teacherOnly, uploadMaterial.single('file'
         if (!tp.length) return res.status(403).json({ error: 'Нет профиля' });
 
         // Detect file type
-        const fileUrl  = req.file.path || req.file.secure_url;
-        const fileName = req.file.originalname || '';
-        const ext      = fileName.split('.').pop().toLowerCase();
-        const fileSize = req.file.size || 0;
+        // Cloudinary returns different fields depending on resource_type
+        const fileUrl  = req.file.secure_url || req.file.path || '';
+        const fileName = req.file.originalname || req.file.public_id || '';
+        const ext      = fileName.split('.').pop().toLowerCase().split('?')[0];
+        const fileSize = req.file.size || req.file.bytes || 0;
+        console.log('Material uploaded:', { fileUrl, fileName, ext, fileSize });
 
         await db.query(
             `INSERT INTO course_materials (id, course_id, lesson_id, teacher_id, title, description, file_url, file_type, file_size)
