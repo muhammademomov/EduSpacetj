@@ -3,7 +3,7 @@ const router = express.Router();
 const db      = require('../db');
 const { auth, teacherOnly } = require('../middleware/auth');
 const { randomUUID } = require('crypto');
-const { uploadPhoto, uploadDoc } = require('../cloudinary');
+const { uploadPhoto, uploadDoc, uploadMaterial } = require('../cloudinary');
 
 const safeJson = (v, d=[]) => { if (!v) return d; try { return JSON.parse(v); } catch { return d; } };
 
@@ -288,6 +288,18 @@ router.get('/student/:studentId/course/:courseId', auth, teacherOnly, async (req
             schedule = s;
         } catch(e) {}
 
+        // Materials
+        let materials = [];
+        try {
+            const [mats] = await db.query(
+                `SELECT m.*, cl.title as lesson_title FROM course_materials m
+                  LEFT JOIN course_lessons cl ON cl.id = m.lesson_id
+                  WHERE m.course_id=? ORDER BY m.created_at DESC`,
+                [courseId]
+            );
+            materials = mats;
+        } catch(e) {}
+
         res.json({
             student: { id: student.id, firstName: student.first_name, lastName: student.last_name,
                        initials: student.initials, color: student.color, avatarUrl: student.avatar_url,
@@ -308,6 +320,9 @@ router.get('/student/:studentId/course/:courseId', auth, teacherOnly, async (req
             schedule: schedule.map(s => ({ id: s.id, dayOfWeek: s.day_of_week,
                           timeFrom: s.time_from, timeTo: s.time_to,
                           platform: s.platform, link: s.link, notes: s.notes })),
+            materials: materials.map(m => ({ id: m.id, title: m.title, description: m.description,
+                          fileUrl: m.file_url, fileType: m.file_type, fileSize: m.file_size,
+                          lessonTitle: m.lesson_title, createdAt: m.created_at })),
         });
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
@@ -347,6 +362,59 @@ router.put('/homework/:hwId/comment', auth, teacherOnly, async (req, res) => {
             [comment, 'reviewed', req.params.hwId]
         );
         res.json({ message: 'Комментарий добавлен' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+
+// ─── POST /api/teachers/materials/upload ─────────────────────────
+// Учитель загружает файл-материал для курса
+router.post('/materials/upload', auth, teacherOnly, uploadMaterial.single('file'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'Файл не выбран' });
+        const { courseId, lessonId, title, description } = req.body;
+        if (!courseId || !title) return res.status(400).json({ error: 'courseId и title обязательны' });
+
+        const { randomUUID } = require('crypto');
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(403).json({ error: 'Нет профиля' });
+
+        // Detect file type
+        const fileUrl  = req.file.path || req.file.secure_url;
+        const fileName = req.file.originalname || '';
+        const ext      = fileName.split('.').pop().toLowerCase();
+        const fileSize = req.file.size || 0;
+
+        await db.query(
+            `INSERT INTO course_materials (id, course_id, lesson_id, teacher_id, title, description, file_url, file_type, file_size)
+             VALUES (?,?,?,?,?,?,?,?,?)`,
+            [randomUUID(), courseId, lessonId||null, tp[0].id,
+             title, description||null, fileUrl, ext, fileSize]
+        );
+
+        // Notify all students of this course
+        try {
+            const [enrolls] = await db.query(
+                'SELECT student_id FROM enrollments WHERE course_id=? AND status=\'active\'',
+                [courseId]
+            );
+            for (const e of enrolls) {
+                await db.query(
+                    'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                    [randomUUID(), e.student_id, 'new_material',
+                     '📎 Новый материал к курсу', title]
+                );
+            }
+        } catch(e) {}
+
+        res.json({ message: 'Материал загружен', fileUrl, fileType: ext });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка загрузки: ' + err.message }); }
+});
+
+// ─── DELETE /api/teachers/materials/:id ──────────────────────────
+router.delete('/materials/:id', auth, teacherOnly, async (req, res) => {
+    try {
+        await db.query('DELETE FROM course_materials WHERE id=?', [req.params.id]);
+        res.json({ message: 'Материал удалён' });
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
