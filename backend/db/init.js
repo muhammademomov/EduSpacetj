@@ -188,6 +188,12 @@ async function init() {
     } catch(e) {
         console.log('✅ Колонка video_url уже существует');
     }
+    try {
+        await conn.query('ALTER TABLE teacher_profiles ADD COLUMN conditions TEXT DEFAULT NULL');
+        console.log('✅ Колонка conditions добавлена');
+    } catch(e) {
+        console.log('✅ Колонка conditions уже существует');
+    }
 
     // Admin user
     const hash = await bcrypt.hash('admin123', 10);
