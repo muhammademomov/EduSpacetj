@@ -169,4 +169,184 @@ router.post('/:id/review', auth, studentOnly, [
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// ═══════════════════════════════════════════════════════
+// СТРАНИЦА КУРСА — полные данные для ученика
+// ═══════════════════════════════════════════════════════
+
+// GET /api/courses/:id/my — данные курса для записавшегося ученика
+router.get('/:id/my', auth, async (req, res) => {
+    try {
+        const courseId   = req.params.id;
+        const studentId  = req.user.id;
+
+        // Проверяем запись
+        const [enroll] = await db.query(
+            `SELECT e.*, tp.work_days, tp.work_hours, tp.platforms, tp.conditions
+             FROM enrollments e
+             JOIN teacher_profiles tp ON tp.id = e.teacher_id
+             WHERE e.course_id = ? AND e.student_id = ?`, [courseId, studentId]
+        );
+        if (!enroll.length) return res.status(403).json({ error: 'Вы не записаны на этот курс' });
+        const enrollment = enroll[0];
+
+        // Курс + уроки
+        const [courseRows] = await db.query(
+            `SELECT c.*, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.id as teacher_user_id
+             FROM courses c
+             JOIN teacher_profiles tp ON tp.id = c.teacher_id
+             JOIN users u ON u.id = tp.user_id
+             WHERE c.id = ?`, [courseId]
+        );
+        if (!courseRows.length) return res.status(404).json({ error: 'Курс не найден' });
+        const course = courseRows[0];
+
+        const [lessons] = await db.query(
+            'SELECT id, title, order_num FROM course_lessons WHERE course_id = ? ORDER BY order_num',
+            [courseId]
+        );
+
+        // Прогресс уроков
+        const [progress] = await db.query(
+            'SELECT lesson_id, is_done, done_at FROM lesson_progress WHERE student_id = ? AND course_id = ?',
+            [studentId, courseId]
+        );
+        const progressMap = {};
+        progress.forEach(p => { progressMap[p.lesson_id] = { isDone: !!p.is_done, doneAt: p.done_at }; });
+
+        // Домашние задания
+        const [hw] = await db.query(
+            `SELECT h.*, cl.title as lesson_title
+             FROM homework h
+             LEFT JOIN course_lessons cl ON cl.id = h.lesson_id
+             WHERE h.course_id = ? AND (h.student_id = ? OR h.student_id IS NULL)
+             ORDER BY h.created_at DESC`,
+            [courseId, studentId]
+        );
+
+        // Материалы
+        const [materials] = await db.query(
+            `SELECT m.*, cl.title as lesson_title
+             FROM course_materials m
+             LEFT JOIN course_lessons cl ON cl.id = m.lesson_id
+             WHERE m.course_id = ?
+             ORDER BY m.created_at DESC`,
+            [courseId]
+        );
+
+        // Расписание
+        const [sched] = await db.query(
+            'SELECT * FROM schedule WHERE enrollment_id = ?',
+            [enrollment.id]
+        );
+
+        const safeJson = (v, d) => { if (!v) return d; try { return JSON.parse(v); } catch { return d; } };
+        const doneLessons = lessons.filter(l => progressMap[l.id]?.isDone).length;
+
+        res.json({
+            course: {
+                id: course.id, title: course.title, description: course.description,
+                category: course.category, level: course.level, price: parseFloat(course.price),
+                emoji: course.emoji,
+                teacher: {
+                    id: course.teacher_user_id, firstName: course.first_name, lastName: course.last_name,
+                    initials: course.initials, color: course.color, avatarUrl: course.avatar_url,
+                },
+            },
+            enrollment: {
+                id: enrollment.id, enrolledAt: enrollment.enrolled_at, status: enrollment.status,
+                pricePaid: parseFloat(enrollment.price_paid),
+            },
+            teacher: {
+                workDays: safeJson(enrollment.work_days, []),
+                workHours: enrollment.work_hours,
+                platforms: safeJson(enrollment.platforms, []),
+                conditions: safeJson(enrollment.conditions, {}),
+            },
+            lessons: lessons.map(l => ({
+                id: l.id, title: l.title, order: l.order_num,
+                isDone: !!(progressMap[l.id]?.isDone),
+                doneAt: progressMap[l.id]?.doneAt || null,
+            })),
+            progress: {
+                total: lessons.length,
+                done: doneLessons,
+                percent: lessons.length > 0 ? Math.round((doneLessons / lessons.length) * 100) : 0,
+            },
+            homework: hw.map(h => ({
+                id: h.id, title: h.title, description: h.description,
+                lessonTitle: h.lesson_title, dueDate: h.due_date, fileUrl: h.file_url,
+                status: h.status, studentAnswer: h.student_answer, teacherComment: h.teacher_comment,
+                createdAt: h.created_at,
+            })),
+            materials: materials.map(m => ({
+                id: m.id, title: m.title, description: m.description,
+                fileUrl: m.file_url, fileType: m.file_type, fileSize: m.file_size,
+                lessonTitle: m.lesson_title, createdAt: m.created_at,
+            })),
+            schedule: sched.map(s => ({
+                id: s.id, dayOfWeek: s.day_of_week, timeFrom: s.time_from, timeTo: s.time_to,
+                platform: s.platform, link: s.link, notes: s.notes,
+            })),
+        });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// POST /api/courses/:id/progress — отметить урок выполненным
+router.post('/:id/progress', auth, async (req, res) => {
+    const { lessonId, isDone } = req.body;
+    if (!lessonId) return res.status(400).json({ error: 'lessonId обязателен' });
+    try {
+        const { randomUUID } = require('crypto');
+        await db.query(
+            `INSERT INTO lesson_progress (id, student_id, lesson_id, course_id, is_done, done_at)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE is_done=?, done_at=?`,
+            [randomUUID(), req.user.id, lessonId, req.params.id,
+             isDone ? 1 : 0, isDone ? new Date() : null,
+             isDone ? 1 : 0, isDone ? new Date() : null]
+        );
+        // Recalculate progress
+        const [total]  = await db.query('SELECT COUNT(*) as cnt FROM course_lessons WHERE course_id=?', [req.params.id]);
+        const [done]   = await db.query('SELECT COUNT(*) as cnt FROM lesson_progress WHERE student_id=? AND course_id=? AND is_done=1', [req.user.id, req.params.id]);
+        const percent  = total[0].cnt > 0 ? Math.round((done[0].cnt / total[0].cnt) * 100) : 0;
+        res.json({ lessonId, isDone, done: done[0].cnt, total: total[0].cnt, percent });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// POST /api/courses/:id/homework/submit — ученик сдаёт ДЗ
+router.post('/:id/homework/:hwId/submit', auth, async (req, res) => {
+    const { answer } = req.body;
+    if (!answer) return res.status(400).json({ error: 'Ответ обязателен' });
+    try {
+        await db.query(
+            'UPDATE homework SET student_answer=?, status=?, updated_at=NOW() WHERE id=? AND course_id=?',
+            [answer, 'submitted', req.params.hwId, req.params.id]
+        );
+        res.json({ message: 'Домашнее задание сдано' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// POST /api/courses/:id/schedule — сохранить расписание (учитель)
+router.post('/:id/schedule', auth, async (req, res) => {
+    const { enrollmentId, studentId, days } = req.body;
+    if (!enrollmentId || !days) return res.status(400).json({ error: 'Неверные данные' });
+    try {
+        const { randomUUID } = require('crypto');
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(403).json({ error: 'Только для преподавателей' });
+        // Delete old schedule for this enrollment
+        await db.query('DELETE FROM schedule WHERE enrollment_id=?', [enrollmentId]);
+        // Insert new
+        for (const d of days) {
+            await db.query(
+                'INSERT INTO schedule (id, enrollment_id, course_id, student_id, teacher_id, day_of_week, time_from, time_to, platform, link, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                [randomUUID(), enrollmentId, req.params.id, studentId, tp[0].id,
+                 d.dayOfWeek, d.timeFrom, d.timeTo, d.platform||'', d.link||'', d.notes||'']
+            );
+        }
+        res.json({ message: 'Расписание сохранено' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 module.exports = router;
