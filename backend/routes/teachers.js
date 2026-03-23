@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
             SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.created_at,
                    tp.id AS profile_id, tp.subject, tp.bio, tp.tags, tp.price,
                    tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated,
-                   tp.rating, tp.review_count, tp.student_count
+                   tp.rating, tp.review_count, tp.student_count, tp.video_url
             FROM users u
             JOIN teacher_profiles tp ON tp.user_id = u.id
             WHERE u.role = 'teacher' AND u.is_active = 1 AND tp.is_moderated = 1`;
@@ -39,7 +39,7 @@ router.get('/:id', async (req, res) => {
             `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.created_at,
                     tp.id AS profile_id, tp.subject, tp.bio, tp.tags, tp.price,
                     tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated,
-                    tp.rating, tp.review_count, tp.student_count, tp.teacher_type
+                    tp.rating, tp.review_count, tp.student_count, tp.teacher_type, tp.video_url
              FROM users u JOIN teacher_profiles tp ON tp.user_id = u.id
              WHERE u.id = ? AND u.is_active = 1`, [req.params.id]
         );
