@@ -926,6 +926,7 @@
       <button class="cp-tab on" onclick="tsTab('progress', this)">📊 Прогресс</button>
       <button class="cp-tab" onclick="tsTab('schedule', this)">📅 Расписание</button>
       <button class="cp-tab" onclick="tsTab('homework', this)">📝 Домашние задания</button>
+      <button class="cp-tab" onclick="tsTab('materials', this)">📎 Материалы</button>
     </div>
   </div>
 
@@ -1025,6 +1026,42 @@
           <button class="btn-full green" onclick="saveHwComment()">💾 Отправить комментарий</button>
         </div>
       </div>
+    </div>
+
+
+    <!-- МАТЕРИАЛЫ -->
+    <div class="cp-section" id="tss-materials">
+      <!-- Upload form -->
+      <div class="d-card" style="padding:1.5rem;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:800;margin-bottom:1rem">📎 Добавить материал</div>
+        <div class="field">
+          <label>Название</label>
+          <input type="text" id="ts-mat-title" placeholder="Напр: Конспект урока 3, Задачник PDF...">
+        </div>
+        <div class="field">
+          <label>Описание (необязательно)</label>
+          <input type="text" id="ts-mat-desc" placeholder="Краткое описание файла">
+        </div>
+        <div class="field">
+          <label>Урок (необязательно)</label>
+          <select id="ts-mat-lesson" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit">
+            <option value="">— Общий материал —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Файл (PDF, DOC, PPT, картинки, видео — до 50 МБ)</label>
+          <label id="ts-mat-label" style="display:flex;align-items:center;gap:10px;height:48px;background:var(--bg);border:2px dashed var(--border);border-radius:10px;padding:0 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);transition:all .2s" onmouseover="this.style.borderColor='var(--g)'" onmouseout="this.style.borderColor='var(--border)'">
+            <span style="font-size:20px">📁</span>
+            <span id="ts-mat-fname">Выберите файл для загрузки</span>
+            <input type="file" id="ts-mat-file" style="display:none" onchange="previewMatFile(this)" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mp3,.zip,.rar,.txt">
+          </label>
+        </div>
+        <button class="btn-sm solid" id="ts-mat-btn" onclick="uploadMaterial()" style="width:100%;height:44px;margin-top:4px">
+          ⬆️ Загрузить материал
+        </button>
+      </div>
+      <!-- Materials list -->
+      <div id="ts-mat-list"></div>
     </div>
 
   </div>
