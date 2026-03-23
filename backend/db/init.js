@@ -195,6 +195,20 @@ async function init() {
         console.log('✅ Колонка conditions уже существует');
     }
 
+    // Chat messages table
+    await conn.query(`CREATE TABLE IF NOT EXISTS chat_messages (
+        id VARCHAR(36) PRIMARY KEY,
+        sender_id VARCHAR(36) NOT NULL,
+        receiver_id VARCHAR(36) NOT NULL,
+        text TEXT NOT NULL,
+        is_read TINYINT(1) DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_chat (sender_id, receiver_id),
+        FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+    console.log('✅ Таблица chat_messages готова');
+
     // Admin user
     const hash = await bcrypt.hash('admin123', 10);
     await conn.execute(
