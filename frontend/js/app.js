@@ -128,15 +128,32 @@ function go(p, skipHistory) {
 // Handle browser back/forward buttons
 window.addEventListener('popstate', function(e) {
     var page = (e.state && e.state.page) ? e.state.page : 'home';
-    // Only go to public pages via back button (not dash internals)
-    var publicPages = ['home', 'catalog', 'about', 'login', 'register', 'profile'];
-    if (publicPages.includes(page)) {
-        go(page, true);
-    } else if (page === 'student-dash' || page === 'teacher-dash') {
-        goDash();
-    } else {
+    
+    if (page === 'home') {
         go('home', true);
+        return;
     }
+    if (page === 'catalog') { go('catalog', true); return; }
+    if (page === 'about')   { go('about', true); return; }
+    if (page === 'login')   { go('login', true); return; }
+    if (page === 'register'){ go('register', true); return; }
+    if (page === 'profile') { go('profile', true); return; }
+
+    // Authenticated pages — need to be logged in
+    if (!currentUser) { go('home', true); return; }
+
+    if (page === 'student-dash') { go('student-dash', true); loadStudentDash(); return; }
+    if (page === 'teacher-dash') { go('teacher-dash', true); loadTeacherDash(); return; }
+    if (page === 'course' && currentCourseId) {
+        go('course', true); loadCourseData(); return;
+    }
+    if (page === 'teacher-student' && currentStudentId && currentCourseId) {
+        go('teacher-student', true); loadStudentPageData(); return;
+    }
+    if (page === 'setup') { go('setup', true); return; }
+
+    // Fallback — go to dash
+    goDash();
 });
 
 // Restore page on refresh
@@ -285,6 +302,8 @@ function togChip(btn) {
             (group.querySelector('[data-val="all"]') || group.querySelector('.chip:first-child')).classList.add('on');
         }
     }
+    // Auto-apply filters immediately — no need to click button
+    applyFilters();
 }
 function resetFlt() {
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
