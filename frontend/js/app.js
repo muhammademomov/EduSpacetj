@@ -85,24 +85,38 @@ async function init() {
 
     // Default: if logged in go to dash, else home
     if (currentUser) {
+        currentPage = currentUser.role === 'teacher' ? 'teacher-dash' : 'student-dash';
+        prevPage = 'home';
         goDash();
     } else {
+        currentPage = 'home';
         go('home', true);
         loadHomeStats();
     }
 }
 
 
-// ── Навигация инициализируется ниже в go() ──
-var _pageHistory = [];
+// ── Навигация ──
+var prevPage    = 'home';
+var currentPage = 'home';
 
 function goBack() {
-    if (_pageHistory.length > 1) {
-        _pageHistory.pop();
-        var prev = _pageHistory[_pageHistory.length - 1];
-        go(prev, true);
+    if (prevPage && prevPage !== currentPage) {
+        var target = prevPage;
+        prevPage = currentPage;
+        currentPage = target;
+        go(target, true);
     }
 }
+
+// Браузерная кнопка ← вызывает goBack()
+history.pushState(null, '', window.location.href);
+window.addEventListener('popstate', function() {
+    history.pushState(null, '', window.location.href);
+    goBack();
+});
+
+
 
 // ═══════════════════════════════════════════════════════
 // ROUTING
@@ -142,26 +156,6 @@ function go(p, skipHistory) {
 
 
 
-// ── Браузерные кнопки Назад / Вперёд ──
-window.addEventListener('popstate', function() {
-    if (_pageHistory.length > 1) {
-        _pageHistory.pop();
-        var prev = _pageHistory[_pageHistory.length - 1];
-        go(prev, true);
-    } else {
-        var stay = currentUser
-            ? (currentUser.role === 'teacher' ? 'teacher-dash' : 'student-dash')
-            : 'home';
-        go(stay, true);
-        if (currentUser) {
-            if (currentUser.role === 'teacher') loadTeacherDash();
-            else loadStudentDash();
-        } else {
-            loadHomeStats();
-        }
-        history.pushState({ page: stay }, '', stay === 'home' ? '/' : '#' + stay);
-    }
-});
 
 
 // Restore page on refresh
