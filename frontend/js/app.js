@@ -718,8 +718,10 @@ async function loadStudentDash() {
     try {
         const notifs = await get('/users/notifications');
         const unread = notifs.filter(n => !n.is_read).length;
-        if (unread > 0) { document.getElementById('sb-notif-cnt').textContent = unread; document.getElementById('sb-notif-cnt').style.display = ''; }
-        document.getElementById('dm-notifs').textContent = unread;
+        const badge  = document.getElementById('sb-notif-cnt');
+        if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+        const dmEl = document.getElementById('dm-notifs');
+        if (dmEl) dmEl.textContent = unread;
     } catch(e) {}
 }
 
@@ -794,12 +796,42 @@ async function loadBalance() {
 async function loadNotifications() {
     try {
         const notifs = await get('/users/notifications');
-        await put('/users/notifications/read');
         const el = document.getElementById('notif-list');
-        if (!notifs.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Уведомлений нет</div>'; return; }
-        el.innerHTML = notifs.map(n =>
-            `<div class="notif-item"><div class="n-dot${n.is_read?' read':''}"></div><div class="n-text"><strong>${n.title}</strong><br>${n.body||''}</div><div class="n-time">${new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</div></div>`
-        ).join('');
+        if (!notifs.length) {
+            el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Уведомлений нет</div>';
+            return;
+        }
+
+        // Show unread ones first, then read
+        const sorted = [...notifs].sort((a,b) => (a.is_read - b.is_read));
+
+        el.innerHTML = sorted.map(n => {
+            var ico = '🔔';
+            if (n.type === 'new_message')  ico = '💬';
+            if (n.type === 'homework')     ico = '📝';
+            if (n.type === 'new_material') ico = '📎';
+            if (n.type === 'topup')        ico = '💳';
+            if (n.type === 'welcome')      ico = '🎉';
+            var timeStr = new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'});
+            return '<div class="notif-item' + (n.is_read ? '' : ' notif-unread') + '">' +
+                '<div class="n-dot' + (n.is_read ? ' read' : '') + '"></div>' +
+                '<div style="font-size:18px;flex-shrink:0">' + ico + '</div>' +
+                '<div class="n-text"><strong>' + n.title + '</strong>' +
+                (n.body ? '<br><span style="font-size:12px;color:var(--text2)">' + n.body + '</span>' : '') +
+                '</div>' +
+                '<div class="n-time">' + timeStr + '</div>' +
+            '</div>';
+        }).join('');
+
+        // Mark as read AFTER showing
+        await put('/users/notifications/read');
+
+        // Reset badge
+        const badge = document.getElementById('sb-notif-cnt');
+        if (badge) { badge.textContent = '0'; badge.style.display = 'none'; }
+        const dmNotifs = document.getElementById('dm-notifs');
+        if (dmNotifs) dmNotifs.textContent = '0';
+
     } catch(e) { console.error(e); }
 }
 
@@ -1047,6 +1079,14 @@ async function loadTeacherDash() {
                 previewEl.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-icon">📚</div><div class="empty-title">Курсов пока нет</div><button class="btn-sm solid" onclick="tdShow(\'t-add-course\')">Добавить курс</button></div>';
             }
         }
+        // Load notification badge for teacher
+        try {
+            const tNotifs = await get('/users/notifications');
+            const tUnread = tNotifs.filter(n => !n.is_read).length;
+            const tBadge = document.getElementById('td-notifs-cnt');
+            if (tBadge) { tBadge.textContent = tUnread; tBadge.style.display = tUnread > 0 ? '' : 'none'; }
+        } catch(e) {}
+
         // Load chats badge for teacher
         try {
             const chats = await get('/users/chats');
