@@ -67,6 +67,10 @@ async function init() {
 // ROUTING
 // ═══════════════════════════════════════════════════════
 function go(p) {
+    // Stop course chat polling when leaving course/teacher-student pages
+    if (p !== 'course' && p !== 'teacher-student') {
+        stopCourseChatPoll();
+    }
     document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
     document.getElementById('page-' + p)?.classList.add('active');
     ['home','catalog','about'].forEach(x => {
@@ -104,6 +108,7 @@ function logout() {
     if (typeof studentChatPollInterval !== 'undefined' && studentChatPollInterval) {
         clearInterval(studentChatPollInterval); studentChatPollInterval = null;
     }
+    stopCourseChatPoll();
     if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
     document.getElementById('nav-guest').style.display = '';
     document.getElementById('nav-user').style.display = 'none';
@@ -1130,6 +1135,7 @@ function tdShow(panel) {
     if (panel === 't-students') loadTeacherStudents();
     if (panel === 't-chats')    loadTeacherChats();
     if (panel === 't-profile')  loadTeacherDocs();
+    if (panel === 't-notifs')   loadTeacherNotifications();
     setMobNav(panel, 'td');
 }
 
@@ -1333,6 +1339,51 @@ function openChatWithStudent(studentId, name, initials, color) {
     loadMessages();
     if (chatInterval) clearInterval(chatInterval);
     chatInterval = setInterval(loadMessages, 4000);
+}
+
+
+// ═══════════════════════════════════════════════════════
+// TEACHER NOTIFICATIONS
+// ═══════════════════════════════════════════════════════
+async function loadTeacherNotifications() {
+    const el = document.getElementById('td-notif-list');
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text3)">⏳ Загрузка...</div>';
+    try {
+        const notifs = await get('/users/notifications');
+
+        if (!notifs.length) {
+            el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Уведомлений нет</div>';
+            return;
+        }
+
+        const sorted = [...notifs].sort((a, b) => a.is_read - b.is_read);
+        const ICONS  = { new_message:'💬', homework:'📝', new_material:'📎',
+                         topup:'💳', welcome:'🎉', new_teacher:'👤', new_course:'📚' };
+
+        el.innerHTML = sorted.map(function(n) {
+            var ico     = ICONS[n.type] || '🔔';
+            var time    = new Date(n.created_at).toLocaleDateString('ru', {day:'numeric', month:'short'});
+            var unread  = !n.is_read;
+            return '<div class="notif-item' + (unread ? ' notif-unread' : '') + '">' +
+                '<div class="n-dot' + (unread ? '' : ' read') + '"></div>' +
+                '<div style="font-size:18px;flex-shrink:0">' + ico + '</div>' +
+                '<div class="n-text">' +
+                    '<strong>' + n.title + '</strong>' +
+                    (n.body ? '<br><span style="font-size:12px;color:var(--text2)">' + n.body + '</span>' : '') +
+                '</div>' +
+                '<div class="n-time">' + time + '</div>' +
+            '</div>';
+        }).join('');
+
+        // Mark as read
+        await put('/users/notifications/read');
+
+        // Reset badge
+        const badge = document.getElementById('td-notifs-cnt');
+        if (badge) { badge.style.display = 'none'; }
+
+    } catch(e) { console.error('loadTeacherNotifications:', e); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1741,11 +1792,21 @@ async function openStudentPage(studentId, courseId) {
     currentCourseId  = courseId;
     go('teacher-student');
     await loadStudentPageData();
+    // Start polling for new messages from this student
+    startCourseChatPoll(studentId, 'ts-chat-notify-btn');
 }
 
 function openChatWithStudentFromPage() {
     if (!currentStudentData) return;
     const s = currentStudentData.student;
+    // Clear badge
+    var btn = document.getElementById('ts-chat-notify-btn');
+    if (btn) {
+        var b = btn.querySelector('.chat-page-badge');
+        if (b) b.remove();
+        btn.style.borderColor = '';
+        btn.style.color = '';
+    }
     openChatWithStudent(s.id, s.firstName + ' ' + s.lastName, s.initials, s.color || '#18A96A');
 }
 
@@ -2105,6 +2166,62 @@ async function saveHwComment() {
     } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// POLLING УВЕДОМЛЕНИЙ НА СТРАНИЦЕ КУРСА
+// ═══════════════════════════════════════════════════════
+var courseChatPollInterval = null;
+
+function startCourseChatPoll(otherUserId, btnId) {
+    stopCourseChatPoll();
+    // Check immediately
+    checkCourseChat(otherUserId, btnId);
+    // Then every 5 seconds
+    courseChatPollInterval = setInterval(function() {
+        checkCourseChat(otherUserId, btnId);
+    }, 5000);
+}
+
+function stopCourseChatPoll() {
+    if (courseChatPollInterval) {
+        clearInterval(courseChatPollInterval);
+        courseChatPollInterval = null;
+    }
+}
+
+async function checkCourseChat(otherUserId, btnId) {
+    if (!currentUser || !otherUserId) return;
+    try {
+        var chats = await get('/users/chats');
+        var chat  = chats.find(function(c) { return c.id === otherUserId; });
+        var unread = chat ? (parseInt(chat.unread) || 0) : 0;
+        var btn   = document.getElementById(btnId);
+        if (!btn) return;
+
+        // Remove old badge if exists
+        var oldBadge = btn.querySelector('.chat-page-badge');
+        if (oldBadge) oldBadge.remove();
+
+        if (unread > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'chat-page-badge';
+            badge.textContent = unread;
+            badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
+                'background:#EF4444;color:#fff;border-radius:50%;' +
+                'width:18px;height:18px;font-size:11px;font-weight:800;' +
+                'margin-left:6px;animation:pulse 1.5s infinite;';
+            btn.appendChild(badge);
+
+            // Update button text to show unread
+            btn.style.borderColor = '#EF4444';
+            btn.style.color       = '#EF4444';
+        } else {
+            btn.style.borderColor = '';
+            btn.style.color       = '';
+        }
+    } catch(e) {}
+}
+
 // ═══════════════════════════════════════════════════════
 // СТРАНИЦА КУРСА
 // ═══════════════════════════════════════════════════════
@@ -2117,6 +2234,11 @@ async function openCourse(courseId) {
     currentCourseId = courseId;
     go('course');
     await loadCourseData();
+    // Start polling for new messages from teacher
+    // teacherId is set after loadCourseData in currentCourseData
+    if (currentCourseData && currentCourseData.course && currentCourseData.course.teacher) {
+        startCourseChatPoll(currentCourseData.course.teacher.id, 'cp-chat-btn');
+    }
 }
 
 function openChatFromCourse() {
@@ -2124,6 +2246,14 @@ function openChatFromCourse() {
     const teacherId = currentCourseData.course.teacher.id;
     const teacher   = currentCourseData.course.teacher;
     chatTeacherId   = teacherId;
+    // Clear badge immediately
+    var btn = document.getElementById('cp-chat-btn');
+    if (btn) {
+        var b = btn.querySelector('.chat-page-badge');
+        if (b) b.remove();
+        btn.style.borderColor = '';
+        btn.style.color = '';
+    }
     const nameEl = document.getElementById('chat-name');
     const avEl   = document.getElementById('chat-av');
     if (nameEl) nameEl.textContent = teacher.firstName + ' ' + teacher.lastName;
@@ -2137,13 +2267,31 @@ function openChatFromCourse() {
 }
 
 async function loadCourseData() {
+    // Show skeleton while loading
+    const body = document.querySelector('#page-course .cp-body');
+    if (body && !currentCourseData) {
+        body.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3)"><div style="font-size:36px;margin-bottom:12px">⏳</div><div style="font-weight:700">Загрузка курса...</div></div>';
+    }
     try {
         const data = await get('/courses/' + currentCourseId + '/my');
         currentCourseData = data;
+        // Restore body sections
+        if (body) {
+            body.innerHTML = document.querySelector('#page-course .cp-body-template')?.innerHTML || '';
+        }
         renderCoursePage(data);
+        // Start/restart polling with correct teacher id
+        if (data.course && data.course.teacher) {
+            startCourseChatPoll(data.course.teacher.id, 'cp-chat-btn');
+        }
     } catch(e) {
         console.error('loadCourseData:', e);
-        showToast('Ошибка загрузки курса: ' + (e.message || ''), 'error');
+        if (e.status === 403) {
+            showToast('Вы не записаны на этот курс', 'error');
+            go('student-dash'); loadStudentDash(); sdShow('my-courses');
+        } else {
+            showToast('Ошибка загрузки курса: ' + (e.message || ''), 'error');
+        }
     }
 }
 
@@ -2363,9 +2511,10 @@ function renderMaterials(materials) {
 }
 
 function cpTab(tab, btn) {
-    document.querySelectorAll('.cp-tab').forEach(function(t){ t.classList.remove('on'); });
+    // Scope to page-course only (don't affect teacher-student page tabs)
+    document.querySelectorAll('#page-course .cp-tab').forEach(function(t){ t.classList.remove('on'); });
     if (btn) btn.classList.add('on');
-    document.querySelectorAll('.cp-section').forEach(function(s){ s.classList.remove('on'); });
+    document.querySelectorAll('#page-course .cp-section').forEach(function(s){ s.classList.remove('on'); });
     var sec = document.getElementById('cps-' + tab);
     if (sec) sec.classList.add('on');
 }
