@@ -2267,20 +2267,11 @@ function openChatFromCourse() {
 }
 
 async function loadCourseData() {
-    // Show skeleton while loading
-    const body = document.querySelector('#page-course .cp-body');
-    if (body && !currentCourseData) {
-        body.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3)"><div style="font-size:36px;margin-bottom:12px">⏳</div><div style="font-weight:700">Загрузка курса...</div></div>';
-    }
     try {
         const data = await get('/courses/' + currentCourseId + '/my');
         currentCourseData = data;
-        // Restore body sections
-        if (body) {
-            body.innerHTML = document.querySelector('#page-course .cp-body-template')?.innerHTML || '';
-        }
         renderCoursePage(data);
-        // Start/restart polling with correct teacher id
+        // Start polling for new messages from teacher
         if (data.course && data.course.teacher) {
             startCourseChatPoll(data.course.teacher.id, 'cp-chat-btn');
         }
@@ -2307,11 +2298,13 @@ function renderCoursePage(data) {
 
     // Teacher avatar
     const avEl = document.getElementById('cp-teacher-av');
-    if (course.teacher.avatarUrl) {
-        avEl.innerHTML = '<img src="' + course.teacher.avatarUrl + '" style="width:100%;height:100%;object-fit:cover">';
-    } else {
-        avEl.textContent = course.teacher.initials || '?';
-        avEl.style.background = course.teacher.color || '#18A96A';
+    if (avEl) {
+        if (course.teacher.avatarUrl) {
+            avEl.innerHTML = '<img src="' + course.teacher.avatarUrl + '" style="width:100%;height:100%;object-fit:cover">';
+        } else {
+            avEl.textContent = course.teacher.initials || '?';
+            avEl.style.background = course.teacher.color || '#18A96A';
+        }
     }
     document.getElementById('cp-teacher-name').textContent = course.teacher.firstName + ' ' + course.teacher.lastName;
 
@@ -2324,8 +2317,10 @@ function renderCoursePage(data) {
     document.getElementById('cp-pct').textContent = pct + '%';
 
     // Progress bar
-    document.getElementById('cp-pb-fill').style.width = pct + '%';
-    document.getElementById('cp-pb-text').textContent = progress.done + ' из ' + progress.total + ' уроков';
+    const pbFill = document.getElementById('cp-pb-fill');
+    const pbText = document.getElementById('cp-pb-text');
+    if (pbFill) pbFill.style.width = pct + '%';
+    if (pbText) pbText.textContent = progress.done + ' из ' + progress.total + ' уроков';
 
     // Render lessons
     renderLessons(lessons);
