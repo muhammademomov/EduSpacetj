@@ -113,17 +113,67 @@ function go(p, skipHistory) {
     window.scrollTo(0, 0);
     closeMobileMenu();
 
-    // Save page in URL hash so refresh works (replaceState = no extra history entries)
+    // Save page in URL hash
     if (!skipHistory) {
         var hash = p === 'home' ? '' : '#' + p;
-        history.replaceState({ page: p }, '', hash || window.location.pathname);
+        // pushState for deep pages so back button works
+        // replaceState for top-level pages to avoid bloating history
+        var deepPages = ['course', 'teacher-student', 'profile', 'setup'];
+        if (deepPages.includes(p)) {
+            history.pushState({ page: p }, '', hash);
+        } else {
+            history.replaceState({ page: p }, '', hash || window.location.pathname);
+        }
     }
 
     if (p === 'catalog') loadCatalog();
     if (p === 'home') loadHomeStats();
 }
 
-// Навигация через URL hash (replaceState — без лишней истории браузера)
+// Навигация: браузерная кнопка "Назад" для глубоких страниц
+window.addEventListener('popstate', function(e) {
+    var page = (e.state && e.state.page) ? e.state.page : 'home';
+
+    if (!currentUser) {
+        go('home', true);
+        return;
+    }
+
+    if (page === 'course') {
+        // Back from course → student my-courses
+        go('student-dash', true);
+        loadStudentDash();
+        sdShow('my-courses');
+        return;
+    }
+
+    if (page === 'teacher-student') {
+        // Back from teacher-student → teacher students list
+        go('teacher-dash', true);
+        loadTeacherDash();
+        tdShow('t-students');
+        return;
+    }
+
+    if (page === 'profile') {
+        go('catalog', true);
+        return;
+    }
+
+    if (page === 'setup') {
+        go('teacher-dash', true);
+        loadTeacherDash();
+        return;
+    }
+
+    // For all other pages — go to dash
+    if (page === 'student-dash' || page === 'teacher-dash') {
+        goDash();
+        return;
+    }
+
+    go(page, true);
+});
 
 // Restore page on refresh
 function restorePageFromHash() {
