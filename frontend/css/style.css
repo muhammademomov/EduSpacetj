@@ -964,7 +964,10 @@ input,select,textarea{font-family:inherit}
   .cp-emoji{font-size:40px}
   .cp-title{font-size:20px}
   .cp-progress-wrap{order:-1;margin-left:auto}
-  .cp-tabs{padding:0 .75rem}
+  .cp-tabs{padding:0 .5rem;-webkit-overflow-scrolling:touch}
+  .cp-tab{padding:10px 10px;font-size:11px;gap:3px}
+  .cp-tabs-wrap::after{content:'';position:absolute;right:0;top:0;bottom:0;width:24px;background:linear-gradient(to right,transparent,white);pointer-events:none}
+  .cp-tabs-wrap{position:relative}
   .cp-body{padding:1rem 1rem 5rem}
   .cp-sched-grid{grid-template-columns:1fr 1fr}
 }
@@ -973,3 +976,19 @@ input,select,textarea{font-family:inherit}
 .notif-unread{background:var(--gl2);border-radius:9px;padding:4px 8px;margin:-4px -8px}
 .notif-item{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--border2);align-items:flex-start}
 .notif-item:last-child{border-bottom:none}
+
+/* Hide scrollbar on tabs */
+.cp-tabs::-webkit-scrollbar{display:none}
+.cp-tabs{-ms-overflow-style:none;scrollbar-width:none}
+
+/* ── Tab responsive labels ── */
+.tab-short{display:none}
+.tab-full{display:inline}
+
+@media(max-width:480px){
+  .tab-short{display:inline;font-size:18px}
+  .tab-full{display:none}
+  .cp-tab{padding:10px 14px;font-size:18px}
+  .cp-tabs{padding:0 8px;gap:0;justify-content:space-around}
+  .cp-tabs-wrap::after{display:none}
+}
