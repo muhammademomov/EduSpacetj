@@ -384,7 +384,12 @@ router.post('/materials/upload', auth, teacherOnly, uploadMaterial.single('file'
         const fileName = req.file.originalname || req.file.public_id || '';
         const ext      = fileName.split('.').pop().toLowerCase().split('?')[0];
         const fileSize = req.file.size || req.file.bytes || 0;
-        console.log('Material uploaded:', { fileUrl, fileName, ext, fileSize });
+        console.log('Material uploaded:', { 
+            fileUrl, fileName, ext, fileSize,
+            reqFile: JSON.stringify(Object.keys(req.file))
+        });
+        // For raw files, Cloudinary URL might need /fl_attachment/ for download
+        // But direct URL should work for display
 
         await db.query(
             `INSERT INTO course_materials (id, course_id, lesson_id, teacher_id, title, description, file_url, file_type, file_size)

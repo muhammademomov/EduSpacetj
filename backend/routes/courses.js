@@ -310,7 +310,8 @@ router.get('/:id/my', auth, async (req, res) => {
         let materials = [];
         try {
             const [matRows] = await db.query(
-                `SELECT m.*, cl.title as lesson_title
+                `SELECT m.id, m.title, m.description, m.file_url, m.file_type, m.file_size,
+                        m.created_at, cl.title as lesson_title
                  FROM course_materials m
                  LEFT JOIN course_lessons cl ON cl.id = m.lesson_id
                  WHERE m.course_id = ?
@@ -318,7 +319,8 @@ router.get('/:id/my', auth, async (req, res) => {
                 [courseId]
             );
             materials = matRows;
-        } catch(e) { console.log('materials query skipped:', e.message); }
+            console.log('Materials found:', matRows.length, 'for course:', courseId);
+        } catch(e) { console.log('materials query error:', e.message); }
 
         // Расписание
         const [sched] = await db.query(
