@@ -85,11 +85,8 @@ async function init() {
 
     // Default: if logged in go to dash, else home
     if (currentUser) {
-        currentPage = currentUser.role === 'teacher' ? 'teacher-dash' : 'student-dash';
-        prevPage = 'home';
         goDash();
     } else {
-        currentPage = 'home';
         go('home', true);
         loadHomeStats();
     }
@@ -97,25 +94,14 @@ async function init() {
 
 
 // ── Навигация ──
-var prevPage    = 'home';
+var prevPage    = null;
 var currentPage = 'home';
 
 function goBack() {
-    if (prevPage && prevPage !== currentPage) {
-        var target = prevPage;
-        prevPage = currentPage;
-        currentPage = target;
-        go(target, true);
-    }
+    if (prevPage) go(prevPage);
+    else if (currentUser) goDash();
+    else go('home');
 }
-
-// Браузерная кнопка ← вызывает goBack()
-history.pushState(null, '', window.location.href);
-window.addEventListener('popstate', function() {
-    history.pushState(null, '', window.location.href);
-    goBack();
-});
-
 
 
 // ═══════════════════════════════════════════════════════
@@ -139,16 +125,11 @@ function go(p, skipHistory) {
     window.scrollTo(0, 0);
     closeMobileMenu();
 
-    // Save page in URL hash and in our history stack
-    if (!skipHistory) {
-        var hash = p === 'home' ? '' : '#' + p;
-        history.replaceState({ page: p }, '', hash || window.location.pathname);
-        // Track in our own history
-        if (_pageHistory.length === 0 || _pageHistory[_pageHistory.length - 1] !== p) {
-            _pageHistory.push(p);
-            if (_pageHistory.length > 20) _pageHistory.shift(); // limit size
-        }
+    // Запоминаем предыдущую страницу для goBack()
+    if (!skipHistory && typeof currentPage !== 'undefined' && currentPage !== p) {
+        prevPage = currentPage;
     }
+    currentPage = p;
 
     if (p === 'catalog') loadCatalog();
     if (p === 'home') loadHomeStats();
