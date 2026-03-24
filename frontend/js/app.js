@@ -59,14 +59,43 @@ async function init() {
             currentUser = null;
         }
     }
-    go('home');
-    loadHomeStats();
+
+    // Restore page from URL hash
+    var hash = window.location.hash.replace('#', '');
+
+    if (hash && hash !== 'home') {
+        // Authenticated pages
+        if (['student-dash','teacher-dash','course','teacher-student'].includes(hash)) {
+            if (currentUser) {
+                if (hash === 'student-dash') { go('student-dash', true); loadStudentDash(); return; }
+                if (hash === 'teacher-dash') { go('teacher-dash', true); loadTeacherDash(); return; }
+            }
+            // Not logged in — go home
+            go('home', true);
+            loadHomeStats();
+            return;
+        }
+        // Public pages
+        var publicPages = ['catalog','about','login','register'];
+        if (publicPages.includes(hash)) {
+            go(hash, true);
+            return;
+        }
+    }
+
+    // Default: if logged in go to dash, else home
+    if (currentUser) {
+        goDash();
+    } else {
+        go('home', true);
+        loadHomeStats();
+    }
 }
 
 // ═══════════════════════════════════════════════════════
 // ROUTING
 // ═══════════════════════════════════════════════════════
-function go(p) {
+function go(p, skipHistory) {
     // Stop course chat polling when leaving course/teacher-student pages
     if (p !== 'course' && p !== 'teacher-student') {
         stopCourseChatPoll();
@@ -83,8 +112,40 @@ function go(p) {
     }
     window.scrollTo(0, 0);
     closeMobileMenu();
+
+    // Save page in URL so refresh/back button works
+    if (!skipHistory) {
+        var hash = p === 'home' ? '' : '#' + p;
+        if (window.location.hash !== hash) {
+            history.pushState({ page: p }, '', hash || window.location.pathname);
+        }
+    }
+
     if (p === 'catalog') loadCatalog();
     if (p === 'home') loadHomeStats();
+}
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(e) {
+    var page = (e.state && e.state.page) ? e.state.page : 'home';
+    // Only go to public pages via back button (not dash internals)
+    var publicPages = ['home', 'catalog', 'about', 'login', 'register', 'profile'];
+    if (publicPages.includes(page)) {
+        go(page, true);
+    } else if (page === 'student-dash' || page === 'teacher-dash') {
+        goDash();
+    } else {
+        go('home', true);
+    }
+});
+
+// Restore page on refresh
+function restorePageFromHash() {
+    var hash = window.location.hash.replace('#', '');
+    if (!hash || hash === 'home') return null;
+    var publicPages = ['catalog', 'about', 'login', 'register'];
+    if (publicPages.includes(hash)) return hash;
+    return null; // protected pages need auth check
 }
 
 function goDash() {
@@ -117,7 +178,9 @@ function logout() {
     if (gEl) gEl.style.display = '';
     if (uEl) uEl.style.display = 'none';
     closeMobileMenu();
-    go('home');
+    history.replaceState({page:'home'}, '', window.location.pathname);
+    go('home', true);
+    loadHomeStats();
 }
 
 function showLoggedIn() {
@@ -225,24 +288,28 @@ function togChip(btn) {
 }
 function resetFlt() {
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-    document.querySelectorAll('.flt-grp .chip:first-child').forEach(c => c.classList.add('on'));
-    document.getElementById('cat-search-inp') && (document.getElementById('cat-search-inp').value = '');
+    document.querySelectorAll('.flt-grp [data-val="all"]').forEach(c => c.classList.add('on'));
+    const searchEl = document.getElementById('cat-search-inp');
+    if (searchEl) searchEl.value = '';
+    document.querySelector('.sort-sel') && (document.querySelector('.sort-sel').value = 'new');
     loadCatalog();
 }
 
 function applyFilters() {
-    const subjectChips = [...document.querySelectorAll('#flt-subject .chip.on')].map(c => c.dataset.val).filter(v => v && v !== 'all');
-    const priceChips   = [...document.querySelectorAll('#flt-price .chip.on')].map(c => c.dataset.val).filter(v => v && v !== 'all');
-    const sortEl = document.querySelector('.sort-sel');
-    const sort   = sortEl ? sortEl.value : '';
+    const subjectChips  = [...document.querySelectorAll('#flt-subject .chip.on')].map(c => c.dataset.val).filter(v => v && v !== 'all');
+    const levelChips    = [...document.querySelectorAll('#flt-level .chip.on')].map(c => c.dataset.val).filter(v => v && v !== 'all');
+    const platformChips = [...document.querySelectorAll('#flt-platform .chip.on')].map(c => c.dataset.val).filter(v => v && v !== 'all');
+    const sortEl   = document.querySelector('.sort-sel');
+    const sort     = sortEl ? sortEl.value : '';
     const searchEl = document.getElementById('cat-search-inp');
     const search   = searchEl ? searchEl.value.trim() : '';
 
     let params = [];
-    if (search)          params.push('search=' + encodeURIComponent(search));
-    if (sort)            params.push('sort=' + sort);
-    if (subjectChips.length) params.push('subject=' + encodeURIComponent(subjectChips.join(',')));
-    if (priceChips.length)   params.push('price=' + encodeURIComponent(priceChips.join(',')));
+    if (search)              params.push('search='   + encodeURIComponent(search));
+    if (sort)                params.push('sort='     + sort);
+    if (subjectChips.length) params.push('subject='  + encodeURIComponent(subjectChips.join(',')));
+    if (levelChips.length)   params.push('level='    + encodeURIComponent(levelChips.join(',')));
+    if (platformChips.length)params.push('platform=' + encodeURIComponent(platformChips[0]));
 
     const qs = params.length ? '?' + params.join('&') : '';
     loadCatalogWithParams(qs);
