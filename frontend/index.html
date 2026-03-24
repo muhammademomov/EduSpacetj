@@ -197,7 +197,7 @@
 <!-- ═══ PROFILE ═══ -->
 <div class="page" id="page-profile">
   <div class="pp-bar">
-    <button class="pp-back" onclick="go('catalog')">← Каталог</button>
+    <button class="pp-back" onclick="goBack()">← Каталог</button>
     <div class="pp-bc">Каталог › <span id="pp-bc-name">Преподаватель</span></div>
     <div class="pp-bar-right">
       <button class="btn-sm ghost" id="pp-top-fav" onclick="toggleFavTeacher()">♡ Сохранить</button>
@@ -513,7 +513,7 @@
 <div class="page" id="page-student-dash">
 <!-- Mobile header -->
 <div class="mob-dash-header" id="sd-mob-header">
-  <button class="mob-back-btn" onclick="go('home')">← На главную</button>
+  <button class="mob-back-btn" onclick="goBack()">← На главную</button>
   <span class="mob-panel-title" id="sd-mob-title">Обзор</span>
 </div>
 <div class="dash-layout">
@@ -770,7 +770,7 @@
 <div class="page" id="page-course">
   <!-- Top bar -->
   <div class="pp-bar">
-    <button class="pp-back" onclick="go('student-dash');loadStudentDash();sdShow('my-courses')">← Мои курсы</button>
+    <button class="pp-back" onclick="goBack()">← Мои курсы</button>
     <div class="pp-bc"><span id="cp-bc-title">Курс</span></div>
     <div class="pp-bar-right">
       <button class="btn-sm ghost" id="cp-chat-btn" onclick="openChatFromCourse()">💬 Написать учителю</button>
@@ -886,7 +886,7 @@
 <div class="page" id="page-teacher-student">
   <!-- Top bar -->
   <div class="pp-bar">
-    <button class="pp-back" onclick="go('teacher-dash');loadTeacherDash();tdShow('t-students')">← Мои ученики</button>
+    <button class="pp-back" onclick="goBack()">← Мои ученики</button>
     <div class="pp-bc"><span id="ts-bc-name">Ученик</span></div>
     <div class="pp-bar-right">
       <button class="btn-sm ghost" id="ts-chat-notify-btn" onclick="openChatWithStudentFromPage()">💬 Написать</button>
@@ -1071,7 +1071,7 @@
 <div class="page" id="page-teacher-dash">
 <!-- Mobile header -->
 <div class="mob-dash-header" id="td-mob-header">
-  <button class="mob-back-btn" onclick="go('home')">← На главную</button>
+  <button class="mob-back-btn" onclick="goBack()">← На главную</button>
   <span class="mob-panel-title" id="td-mob-title">Обзор</span>
 </div>
 <div class="dash-layout">
