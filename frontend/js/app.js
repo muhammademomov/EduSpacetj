@@ -92,6 +92,69 @@ async function init() {
     }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// УНИВЕРСАЛЬНАЯ НАВИГАЦИЯ — работает везде для всех
+// ═══════════════════════════════════════════════════════
+var _pageHistory  = [];   // стек страниц назад
+var _pageForward  = [];   // стек страниц вперёд
+
+// Перейти назад
+function goBack() {
+    if (_pageHistory.length > 1) {
+        var current = _pageHistory.pop();
+        _pageForward.push(current);
+        var prev = _pageHistory[_pageHistory.length - 1];
+        _navigateTo(prev);
+    }
+}
+
+// Перейти вперёд
+function goForward() {
+    if (_pageForward.length > 0) {
+        var next = _pageForward.pop();
+        _pageHistory.push(next);
+        _navigateTo(next);
+    }
+}
+
+// Внутренний переход без записи в историю
+function _navigateTo(p) {
+    if (!p) return;
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+    document.getElementById('page-' + p)?.classList.add('active');
+    ['home','catalog','about'].forEach(x => {
+        document.getElementById('nl-'+x)?.classList.remove('active');
+        document.getElementById('mnl-'+x)?.classList.remove('active');
+    });
+    if (['home','catalog','about'].includes(p)) {
+        document.getElementById('nl-'+p)?.classList.add('active');
+        document.getElementById('mnl-'+p)?.classList.add('active');
+    }
+    window.scrollTo(0, 0);
+    closeMobileMenu();
+    history.replaceState({ page: p }, '', p === 'home' ? window.location.pathname : '#' + p);
+
+    // Загружаем данные страницы
+    if (p === 'catalog')        loadCatalog();
+    if (p === 'home')           loadHomeStats();
+    if (p === 'student-dash')   { loadStudentDash(); }
+    if (p === 'teacher-dash')   { loadTeacherDash(); }
+    if (p === 'course')         { if (currentCourseId) loadCourseData(); }
+    if (p === 'teacher-student'){ if (currentStudentId) loadStudentPageData(); }
+    if (p === 'profile')        { if (currentProfileId) openProfile(currentProfileId); }
+}
+
+// Браузерная кнопка назад/вперёд
+window.addEventListener('popstate', function(e) {
+    goBack();
+    // Prevent actual browser exit by always keeping one entry
+    history.pushState({}, '', window.location.href);
+});
+
+// Не выходить с сайта — всегда держим одну запись впереди
+history.pushState({}, '', window.location.href);
+
 // ═══════════════════════════════════════════════════════
 // ROUTING
 // ═══════════════════════════════════════════════════════
@@ -113,16 +176,14 @@ function go(p, skipHistory) {
     window.scrollTo(0, 0);
     closeMobileMenu();
 
-    // Save page in URL hash
+    // Save page in URL hash and in our history stack
     if (!skipHistory) {
         var hash = p === 'home' ? '' : '#' + p;
-        // pushState for deep pages so back button works
-        // replaceState for top-level pages to avoid bloating history
-        var deepPages = ['course', 'teacher-student', 'profile', 'setup'];
-        if (deepPages.includes(p)) {
-            history.pushState({ page: p }, '', hash);
-        } else {
-            history.replaceState({ page: p }, '', hash || window.location.pathname);
+        history.replaceState({ page: p }, '', hash || window.location.pathname);
+        // Track in our own history
+        if (_pageHistory.length === 0 || _pageHistory[_pageHistory.length - 1] !== p) {
+            _pageHistory.push(p);
+            if (_pageHistory.length > 20) _pageHistory.shift(); // limit size
         }
     }
 
@@ -130,50 +191,28 @@ function go(p, skipHistory) {
     if (p === 'home') loadHomeStats();
 }
 
-// Навигация: браузерная кнопка "Назад" для глубоких страниц
+// Браузерная кнопка "Назад" — используем нашу историю
 window.addEventListener('popstate', function(e) {
-    var page = (e.state && e.state.page) ? e.state.page : 'home';
-
-    if (!currentUser) {
-        go('home', true);
-        return;
+    if (_pageHistory.length > 1) {
+        _pageHistory.pop(); // убираем текущую страницу
+        var prev = _pageHistory[_pageHistory.length - 1];
+        if (!prev || prev === 'home') {
+            if (currentUser) { goDash(); } else { go('home', true); loadHomeStats(); }
+            return;
+        }
+        if (prev === 'student-dash') { go('student-dash', true); loadStudentDash(); sdShow('my-courses'); return; }
+        if (prev === 'teacher-dash') { go('teacher-dash', true); loadTeacherDash(); tdShow('t-students'); return; }
+        if (prev === 'catalog')      { go('catalog', true); return; }
+        go(prev, true);
+    } else {
+        // No history — stay on site at dash or home
+        if (currentUser) { goDash(); } else { go('home', true); loadHomeStats(); }
+        history.pushState({}, '', window.location.href); // prevent actual exit
     }
-
-    if (page === 'course') {
-        // Back from course → student my-courses
-        go('student-dash', true);
-        loadStudentDash();
-        sdShow('my-courses');
-        return;
-    }
-
-    if (page === 'teacher-student') {
-        // Back from teacher-student → teacher students list
-        go('teacher-dash', true);
-        loadTeacherDash();
-        tdShow('t-students');
-        return;
-    }
-
-    if (page === 'profile') {
-        go('catalog', true);
-        return;
-    }
-
-    if (page === 'setup') {
-        go('teacher-dash', true);
-        loadTeacherDash();
-        return;
-    }
-
-    // For all other pages — go to dash
-    if (page === 'student-dash' || page === 'teacher-dash') {
-        goDash();
-        return;
-    }
-
-    go(page, true);
 });
+
+// Prevent accidental exit — push initial entry
+history.pushState({}, '', window.location.href);
 
 // Restore page on refresh
 function restorePageFromHash() {
