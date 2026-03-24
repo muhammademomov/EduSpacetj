@@ -113,48 +113,17 @@ function go(p, skipHistory) {
     window.scrollTo(0, 0);
     closeMobileMenu();
 
-    // Save page in URL so refresh/back button works
+    // Save page in URL hash so refresh works (replaceState = no extra history entries)
     if (!skipHistory) {
         var hash = p === 'home' ? '' : '#' + p;
-        if (window.location.hash !== hash) {
-            history.pushState({ page: p }, '', hash || window.location.pathname);
-        }
+        history.replaceState({ page: p }, '', hash || window.location.pathname);
     }
 
     if (p === 'catalog') loadCatalog();
     if (p === 'home') loadHomeStats();
 }
 
-// Handle browser back/forward buttons
-window.addEventListener('popstate', function(e) {
-    var page = (e.state && e.state.page) ? e.state.page : 'home';
-    
-    if (page === 'home') {
-        go('home', true);
-        return;
-    }
-    if (page === 'catalog') { go('catalog', true); return; }
-    if (page === 'about')   { go('about', true); return; }
-    if (page === 'login')   { go('login', true); return; }
-    if (page === 'register'){ go('register', true); return; }
-    if (page === 'profile') { go('profile', true); return; }
-
-    // Authenticated pages — need to be logged in
-    if (!currentUser) { go('home', true); return; }
-
-    if (page === 'student-dash') { go('student-dash', true); loadStudentDash(); return; }
-    if (page === 'teacher-dash') { go('teacher-dash', true); loadTeacherDash(); return; }
-    if (page === 'course' && currentCourseId) {
-        go('course', true); loadCourseData(); return;
-    }
-    if (page === 'teacher-student' && currentStudentId && currentCourseId) {
-        go('teacher-student', true); loadStudentPageData(); return;
-    }
-    if (page === 'setup') { go('setup', true); return; }
-
-    // Fallback — go to dash
-    goDash();
-});
+// Навигация через URL hash (replaceState — без лишней истории браузера)
 
 // Restore page on refresh
 function restorePageFromHash() {
