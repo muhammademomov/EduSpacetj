@@ -93,67 +93,16 @@ async function init() {
 }
 
 
-// ═══════════════════════════════════════════════════════
-// УНИВЕРСАЛЬНАЯ НАВИГАЦИЯ — работает везде для всех
-// ═══════════════════════════════════════════════════════
-var _pageHistory  = [];   // стек страниц назад
-var _pageForward  = [];   // стек страниц вперёд
+// ── Навигация инициализируется ниже в go() ──
+var _pageHistory = [];
 
-// Перейти назад
 function goBack() {
     if (_pageHistory.length > 1) {
-        var current = _pageHistory.pop();
-        _pageForward.push(current);
+        _pageHistory.pop();
         var prev = _pageHistory[_pageHistory.length - 1];
-        _navigateTo(prev);
+        go(prev, true);
     }
 }
-
-// Перейти вперёд
-function goForward() {
-    if (_pageForward.length > 0) {
-        var next = _pageForward.pop();
-        _pageHistory.push(next);
-        _navigateTo(next);
-    }
-}
-
-// Внутренний переход без записи в историю
-function _navigateTo(p) {
-    if (!p) return;
-    document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-    document.getElementById('page-' + p)?.classList.add('active');
-    ['home','catalog','about'].forEach(x => {
-        document.getElementById('nl-'+x)?.classList.remove('active');
-        document.getElementById('mnl-'+x)?.classList.remove('active');
-    });
-    if (['home','catalog','about'].includes(p)) {
-        document.getElementById('nl-'+p)?.classList.add('active');
-        document.getElementById('mnl-'+p)?.classList.add('active');
-    }
-    window.scrollTo(0, 0);
-    closeMobileMenu();
-    history.replaceState({ page: p }, '', p === 'home' ? window.location.pathname : '#' + p);
-
-    // Загружаем данные страницы
-    if (p === 'catalog')        loadCatalog();
-    if (p === 'home')           loadHomeStats();
-    if (p === 'student-dash')   { loadStudentDash(); }
-    if (p === 'teacher-dash')   { loadTeacherDash(); }
-    if (p === 'course')         { if (currentCourseId) loadCourseData(); }
-    if (p === 'teacher-student'){ if (currentStudentId) loadStudentPageData(); }
-    if (p === 'profile')        { if (currentProfileId) openProfile(currentProfileId); }
-}
-
-// Браузерная кнопка назад/вперёд
-window.addEventListener('popstate', function(e) {
-    goBack();
-    // Prevent actual browser exit by always keeping one entry
-    history.pushState({}, '', window.location.href);
-});
-
-// Не выходить с сайта — всегда держим одну запись впереди
-history.pushState({}, '', window.location.href);
 
 // ═══════════════════════════════════════════════════════
 // ROUTING
@@ -191,28 +140,29 @@ function go(p, skipHistory) {
     if (p === 'home') loadHomeStats();
 }
 
-// Браузерная кнопка "Назад" — используем нашу историю
-window.addEventListener('popstate', function(e) {
+
+
+// ── Браузерные кнопки Назад / Вперёд ──
+window.addEventListener('popstate', function() {
     if (_pageHistory.length > 1) {
-        _pageHistory.pop(); // убираем текущую страницу
+        _pageHistory.pop();
         var prev = _pageHistory[_pageHistory.length - 1];
-        if (!prev || prev === 'home') {
-            if (currentUser) { goDash(); } else { go('home', true); loadHomeStats(); }
-            return;
-        }
-        if (prev === 'student-dash') { go('student-dash', true); loadStudentDash(); sdShow('my-courses'); return; }
-        if (prev === 'teacher-dash') { go('teacher-dash', true); loadTeacherDash(); tdShow('t-students'); return; }
-        if (prev === 'catalog')      { go('catalog', true); return; }
         go(prev, true);
     } else {
-        // No history — stay on site at dash or home
-        if (currentUser) { goDash(); } else { go('home', true); loadHomeStats(); }
-        history.pushState({}, '', window.location.href); // prevent actual exit
+        var stay = currentUser
+            ? (currentUser.role === 'teacher' ? 'teacher-dash' : 'student-dash')
+            : 'home';
+        go(stay, true);
+        if (currentUser) {
+            if (currentUser.role === 'teacher') loadTeacherDash();
+            else loadStudentDash();
+        } else {
+            loadHomeStats();
+        }
+        history.pushState({ page: stay }, '', stay === 'home' ? '/' : '#' + stay);
     }
 });
 
-// Prevent accidental exit — push initial entry
-history.pushState({}, '', window.location.href);
 
 // Restore page on refresh
 function restorePageFromHash() {
