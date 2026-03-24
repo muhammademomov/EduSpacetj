@@ -10,7 +10,7 @@ const safeJson = (v, d=[]) => { if (!v) return d; try { return JSON.parse(v); } 
 // ─── GET /api/teachers ─────────────────────────────────────────────
 router.get('/', async (req, res) => {
     try {
-        const { search, sort = 'new' } = req.query;
+        const { search, sort = 'new', subject, level, platform } = req.query;
         let sql = `
             SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.created_at,
                    tp.id AS profile_id, tp.subject, tp.bio, tp.tags, tp.price,
@@ -24,6 +24,20 @@ router.get('/', async (req, res) => {
             sql += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR tp.subject LIKE ? OR tp.bio LIKE ?)';
             const q = `%${search}%`;
             params.push(q, q, q, q);
+        }
+        if (subject) {
+            const subjects = subject.split(',').map(s => s.trim()).filter(Boolean);
+            if (subjects.length === 1) {
+                sql += ' AND tp.subject LIKE ?';
+                params.push('%' + subjects[0] + '%');
+            } else if (subjects.length > 1) {
+                sql += ' AND (' + subjects.map(() => 'tp.subject LIKE ?').join(' OR ') + ')';
+                subjects.forEach(s => params.push('%' + s + '%'));
+            }
+        }
+        if (platform) {
+            sql += ' AND tp.platforms LIKE ?';
+            params.push('%' + platform + '%');
         }
         const sortMap = { new:'u.created_at DESC', rating:'tp.rating DESC', 'price-asc':'tp.price ASC', 'price-desc':'tp.price DESC', reviews:'tp.review_count DESC' };
         sql += ` ORDER BY ${sortMap[sort] || 'u.created_at DESC'}`;
@@ -384,18 +398,20 @@ router.post('/materials/upload', auth, teacherOnly, uploadMaterial.single('file'
         const fileName = req.file.originalname || req.file.public_id || '';
         const ext      = fileName.split('.').pop().toLowerCase().split('?')[0];
         const fileSize = req.file.size || req.file.bytes || 0;
-        console.log('Material uploaded:', { 
-            fileUrl, fileName, ext, fileSize,
-            reqFile: JSON.stringify(Object.keys(req.file))
-        });
-        // For raw files, Cloudinary URL might need /fl_attachment/ for download
-        // But direct URL should work for display
+        
+        // For Cloudinary raw files, append original filename for proper download
+        let downloadUrl = fileUrl;
+        if (fileUrl && ext && !fileUrl.endsWith('.' + ext)) {
+            // Add fl_attachment flag for raw files so browser downloads with proper name
+            downloadUrl = fileUrl.replace('/upload/', '/upload/fl_attachment:' + fileName.replace(/[^a-zA-Z0-9._-]/g, '_') + '/');
+        }
+        console.log('Material uploaded:', { fileUrl, downloadUrl, fileName, ext, fileSize });
 
         await db.query(
             `INSERT INTO course_materials (id, course_id, lesson_id, teacher_id, title, description, file_url, file_type, file_size)
              VALUES (?,?,?,?,?,?,?,?,?)`,
             [randomUUID(), courseId, lessonId||null, tp[0].id,
-             title, description||null, fileUrl, ext, fileSize]
+             title, description||null, downloadUrl || fileUrl, ext, fileSize]
         );
 
         // Notify all students of this course
