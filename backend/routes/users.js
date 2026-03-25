@@ -214,16 +214,35 @@ router.post('/reviews', auth, async (req, res) => {
         if (!tp.length) return res.status(404).json({ error: 'Учитель не найден' });
         
         const { randomUUID } = require('crypto');
-        // courseId может быть null если ученик ещё не записан на курс
-        const safeCourseId = courseId || null;
-        
+
+        // Если courseId не передан — ищем любой курс этого учителя у студента
+        let safeCourseId = courseId || null;
+        if (!safeCourseId) {
+            const [enroll] = await db.query(
+                'SELECT course_id FROM enrollments WHERE student_id=? AND teacher_id=? LIMIT 1',
+                [req.user.id, tp[0].id]
+            );
+            if (enroll.length) safeCourseId = enroll[0].course_id;
+        }
+        // Если совсем нет курса — берём любой курс этого учителя
+        if (!safeCourseId) {
+            const [anyCourse] = await db.query(
+                'SELECT id FROM courses WHERE teacher_id=? AND status=\'active\' LIMIT 1',
+                [tp[0].id]
+            );
+            if (anyCourse.length) safeCourseId = anyCourse[0].id;
+        }
+        // Если курсов нет вообще — возвращаем ошибку
+        if (!safeCourseId) {
+            return res.status(400).json({ error: 'У преподавателя нет курсов для отзыва' });
+        }
+
         // Проверяем есть ли уже отзыв от этого студента этому учителю
         const [existing] = await db.query(
             'SELECT id FROM reviews WHERE student_id=? AND teacher_id=?',
             [req.user.id, tp[0].id]
         );
         if (existing.length) {
-            // Обновляем существующий отзыв
             await db.query(
                 'UPDATE reviews SET stars=?, text=?, created_at=NOW() WHERE student_id=? AND teacher_id=?',
                 [stars, text.trim(), req.user.id, tp[0].id]
