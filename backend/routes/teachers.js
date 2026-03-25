@@ -71,10 +71,11 @@ router.get('/:id', async (req, res) => {
         );
         const [reviews] = await db.query(
             `SELECT r.id, r.stars, r.text, r.tags, r.created_at,
+                    r.teacher_reply, r.replied_at,
                     u.first_name, u.last_name, u.initials, u.color, c.title AS course_title
              FROM reviews r
              JOIN users u ON u.id = r.student_id
-             JOIN courses c ON c.id = r.course_id
+             LEFT JOIN courses c ON c.id = r.course_id
              WHERE r.teacher_id = ? ORDER BY r.created_at DESC`, [t.profile_id]
         );
 
@@ -85,6 +86,7 @@ router.get('/:id', async (req, res) => {
             reviews: reviews.map(r => ({
                 id:r.id, stars:r.stars, text:r.text, tags:safeJson(r.tags,[]),
                 date:r.created_at, courseTitle:r.course_title,
+                teacherReply:r.teacher_reply||null, repliedAt:r.replied_at||null,
                 student:{ name:`${r.first_name} ${r.last_name}`, initials:r.initials, color:r.color },
             })),
         });
@@ -438,6 +440,93 @@ router.delete('/materials/:id', auth, teacherOnly, async (req, res) => {
     try {
         await db.query('DELETE FROM course_materials WHERE id=?', [req.params.id]);
         res.json({ message: 'Материал удалён' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+
+// ─── GET /api/teachers/my/reviews ─────────────────────────────────
+// Учитель получает все свои отзывы
+router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
+    try {
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.json([]);
+        const teacherProfileId = tp[0].id;
+
+        const [rows] = await db.query(`
+            SELECT r.id, r.stars, r.text, r.created_at, r.teacher_reply, r.replied_at,
+                   u.first_name, u.last_name, u.avatar_color,
+                   c.title as course_title
+            FROM reviews r
+            JOIN users u ON u.id = r.student_id
+            LEFT JOIN courses c ON c.id = r.course_id
+            WHERE r.teacher_id = ?
+            ORDER BY r.created_at DESC
+        `, [teacherProfileId]);
+
+        res.json(rows.map(r => ({
+            id: r.id,
+            stars: r.stars,
+            text: r.text,
+            date: r.created_at,
+            teacherReply: r.teacher_reply || null,
+            repliedAt: r.replied_at || null,
+            courseTitle: r.course_title || null,
+            student: {
+                name: r.first_name + ' ' + r.last_name,
+                initials: (r.first_name[0]||'') + (r.last_name[0]||''),
+                color: r.avatar_color || '#18A96A'
+            }
+        })));
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+
+// ─── POST /api/teachers/reviews/:reviewId/reply ───────────────────
+// Учитель отвечает на отзыв
+router.post('/reviews/:reviewId/reply', auth, teacherOnly, async (req, res) => {
+    const { reply } = req.body;
+    if (!reply || !reply.trim()) return res.status(400).json({ error: 'Текст ответа обязателен' });
+    try {
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(403).json({ error: 'Нет профиля' });
+
+        // Проверяем что отзыв принадлежит этому учителю
+        const [rev] = await db.query(
+            'SELECT id FROM reviews WHERE id=? AND teacher_id=?',
+            [req.params.reviewId, tp[0].id]
+        );
+        if (!rev.length) return res.status(404).json({ error: 'Отзыв не найден' });
+
+        await db.query(
+            'UPDATE reviews SET teacher_reply=?, replied_at=NOW() WHERE id=?',
+            [reply.trim(), req.params.reviewId]
+        );
+        res.json({ message: 'Ответ добавлен' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+
+// ─── PUT /api/teachers/reviews/:reviewId/reply ────────────────────
+// Учитель отвечает на отзыв
+router.put('/reviews/:reviewId/reply', auth, teacherOnly, async (req, res) => {
+    const { reply } = req.body;
+    if (!reply || !reply.trim()) return res.status(400).json({ error: 'Ответ не может быть пустым' });
+    try {
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(403).json({ error: 'Нет профиля' });
+
+        // Проверяем что отзыв принадлежит этому учителю
+        const [review] = await db.query(
+            'SELECT id FROM reviews WHERE id=? AND teacher_id=?',
+            [req.params.reviewId, tp[0].id]
+        );
+        if (!review.length) return res.status(404).json({ error: 'Отзыв не найден' });
+
+        await db.query(
+            'UPDATE reviews SET teacher_reply=?, replied_at=NOW() WHERE id=?',
+            [reply.trim(), req.params.reviewId]
+        );
+        res.json({ message: 'Ответ сохранён' });
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
