@@ -366,7 +366,8 @@ function renderProfile(t) {
         if (t.avatarUrl) {
             av.style.padding = '0';
             av.style.fontSize = '0';
-            av.innerHTML = '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block">';
+            av.style.overflow = 'hidden';
+            av.innerHTML = '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit">';
         } else {
             av.textContent = t.initials || '?';
             av.style.background = t.color || '#18A96A';
@@ -517,7 +518,7 @@ function buildReviewCard(r, isTeacher) {
     var placeholder = isTeacher ? 'Ответить ученику...' : 'Написать комментарий...';
     return '<div class="ri-card" id="rev-card-' + r.id + '">' +
         '<div class="ri-top">' +
-            '<div class="ri-av" style="background:' + (r.student?.color||'#18A96A') + '">' + (r.student?.initials||'?') + '</div>' +
+            '<div class="ri-av" style="background:' + (r.student?.color||'#18A96A') + ';overflow:hidden;padding:0">' + avHtml(r.student) + '</div>' +
             '<div class="ri-meta"><div class="ri-name">' + (r.student?.name||'Ученик') + '</div>' +
             '<div class="ri-sub">' + new Date(r.date).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'}) + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div></div>' +
             '<div class="ri-stars">' + '★'.repeat(r.stars) + '</div>' +
@@ -844,7 +845,7 @@ async function loadMyCourses() {
               <div class="ccard-body">
                 <div class="ccard-cat">${e.category}</div>
                 <div class="ccard-title">${e.title}</div>
-                <div class="ccard-teacher"><div class="t-dot" style="background:${e.color}">${e.initials}</div>${e.first_name} ${e.last_name}</div>
+                <div class="ccard-teacher"><div class="t-dot" style="background:${e.color};overflow:hidden;padding:0">${e.avatar_url ? '<img src="'+e.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">' : e.initials}</div>${e.first_name} ${e.last_name}</div>
               </div>
               <div class="ccard-foot">
                 <div class="ccard-price">${parseFloat(e.price).toLocaleString('ru')} смн</div>
@@ -1435,8 +1436,8 @@ async function loadStudentChats() {
             var safeName   = (c.first_name + ' ' + c.last_name).replace(/'/g, "\'");
             var safeColor  = c.color || '#18A96A';
 
-            return '<div class="chat-list-item" onclick="openChatWithStudent(\'' + c.id + '\', \'' + safeName + '\', \'' + initials + '\', \'' + safeColor + '\')">' +
-                '<div class="cli-av" style="background:' + safeColor + '">' +
+            return '<div class="chat-list-item" onclick="openChatWithStudent(\'' + c.id + '\', \'' + safeName + '\', \'' + initials + '\', \'' + safeColor + '\', \'' + (c.avatar_url||'') + '\')">' +
+                '<div class="cli-av" style="background:' + safeColor + ';overflow:hidden">' +
                     (c.avatar_url
                         ? '<img src="' + c.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
                         : (initials || '?')) +
@@ -1526,8 +1527,10 @@ async function loadTeacherChats() {
             var lastMsg = c.last_msg || c.last_message || '';
             var shortMsg = lastMsg ? lastMsg.substring(0,45) + (lastMsg.length > 45 ? '…' : '') : 'Нет сообщений';
             var unreadNum = parseInt(c.unread) || 0;
-            return '<div class="chat-list-item" onclick="openChatWithStudent(\'' + c.id + '\', \'' + (c.first_name + ' ' + c.last_name).replace(/'/g,"\\'" ) + '\', \'' + initials + '\', \'' + (c.color||'#18A96A') + '\')">' +
-                '<div class="cli-av" style="background:' + (c.color||'#18A96A') + '">' + (initials || '?') + '</div>' +
+            return '<div class="chat-list-item" onclick="openChatWithStudent(\'' + c.id + '\', \'' + (c.first_name + ' ' + c.last_name).replace(/'/g,"\\'" ) + '\', \'' + initials + '\', \'' + (c.color||'#18A96A') + '\', \'' + (c.avatar_url||'') + '\')">' +
+                '<div class="cli-av" style="background:' + (c.color||'#18A96A') + ';overflow:hidden">' +
+                (c.avatar_url ? '<img src="' + c.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">' : (initials || '?')) +
+                '</div>' +
                 '<div class="cli-info">' +
                 '<div class="cli-name">' + c.first_name + ' ' + c.last_name + '</div>' +
                 '<div class="cli-last">' + shortMsg + '</div>' +
@@ -1538,12 +1541,20 @@ async function loadTeacherChats() {
     } catch(e) { console.error('loadTeacherChats:', e); }
 }
 
-function openChatWithStudent(studentId, name, initials, color) {
+function openChatWithStudent(studentId, name, initials, color, avatarUrl) {
     chatTeacherId = studentId;
     var nameEl = document.getElementById('chat-name');
     var avEl   = document.getElementById('chat-av');
     if (nameEl) nameEl.textContent = name;
-    if (avEl)   { avEl.textContent = initials; avEl.style.background = color; }
+    if (avEl) {
+        avEl.style.background = color;
+        avEl.style.overflow = 'hidden';
+        if (avatarUrl) {
+            avEl.innerHTML = '<img src="' + avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+        } else {
+            avEl.textContent = initials;
+        }
+    }
     var modal = document.getElementById('chat-modal');
     if (modal) modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -1639,8 +1650,8 @@ function catEmoji(cat) {
 
 function buildTccard(t) {
     var av = t.avatarUrl
-        ? '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block">'
-        : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#fff;background:' + (t.color||'#18A96A') + '">' + (t.initials||'?') + '</div>';
+        ? '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit">'
+        : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;background:' + (t.color||'#18A96A') + '">' + (t.initials||'?') + '</div>';
     var stars = '';
     if (t.rating > 0) {
         var r = Math.round(parseFloat(t.rating));
@@ -1683,7 +1694,7 @@ function buildCcard(c) {
         <div class="ccard" onclick="openProfile('${c.teacher?.id||''}')">
             <div class="ccard-img">${c.emoji||'📖'}</div>
             <div class="ccard-body"><div class="ccard-cat">${c.category}</div><div class="ccard-title">${c.title}</div>
-            <div class="ccard-teacher"><div class="t-dot" style="background:${c.teacher?.color||'#18A96A'}">${c.teacher?.initials||'?'}</div>${c.teacher?.firstName||''} ${c.teacher?.lastName||''}</div>
+            <div class="ccard-teacher"><div class="t-dot" style="background:${c.teacher?.color||'#18A96A'};overflow:hidden;padding:0">${c.teacher?.avatarUrl ? '<img src="'+c.teacher.avatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">' : (c.teacher?.initials||'?')}</div>${c.teacher?.firstName||''} ${c.teacher?.lastName||''}</div>
             <div class="ccard-meta"><span class="stars">★</span><span style="font-weight:700">${c.rating > 0 ? c.rating.toFixed(1) : '—'}</span></div></div>
             <div class="ccard-foot"><div class="ccard-price">${c.price} смн</div><button class="ccard-enroll" onclick="event.stopPropagation();startEnroll('${c.id}')">Записаться</button></div>
         </div>`;
@@ -1712,6 +1723,33 @@ function setAvatar(el, user) {
         el.style.padding = '';
         el.style.overflow = '';
     }
+}
+
+// Универсальная функция — возвращает innerHTML для аватарки
+// person = { avatarUrl, initials, color }
+function avHtml(person) {
+    if (person && person.avatarUrl) {
+        return '<img src="' + person.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit" loading="lazy">';
+    }
+    return person ? (person.initials || '?') : '?';
+}
+
+// Загрузка фото студента
+async function uploadStudentPhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    var fd = new FormData();
+    fd.append('photo', input.files[0]);
+    try {
+        showToast('⏳ Загружаем фото...');
+        var result = await upload('/users/profile/photo', fd);
+        currentUser.avatarUrl = result.avatarUrl;
+        // Обновляем все аватарки текущего пользователя
+        setAvatar(document.getElementById('settings-av'), currentUser);
+        setAvatar(document.getElementById('nav-av'), currentUser);
+        setAvatar(document.getElementById('sd-av'), currentUser);
+        showToast('✅ Фото обновлено!');
+        input.value = '';
+    } catch(e) { showToast('Ошибка загрузки: ' + (e.message||''), 'error'); }
 }
 
 
@@ -1962,7 +2000,7 @@ function openChatWithStudentFromPage() {
         btn.style.borderColor = '';
         btn.style.color = '';
     }
-    openChatWithStudent(s.id, s.firstName + ' ' + s.lastName, s.initials, s.color || '#18A96A');
+    openChatWithStudent(s.id, s.firstName + ' ' + s.lastName, s.initials, s.color || '#18A96A', s.avatarUrl || null);
 }
 
 async function loadStudentPageData() {
@@ -2418,7 +2456,7 @@ async function loadTeacherReviews() {
                 var cardHighlight = hasNewComments ? 'border-left:3px solid var(--g);padding-left:.75rem;' : '';
                 return '<div style="padding-bottom:1.2rem;border-bottom:1px solid var(--border2);' + cardHighlight + '" id="rev-card-' + r.id + '">' +
                     '<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">' +
-                        '<div style="width:38px;height:38px;border-radius:50%;background:' + (r.student.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0">' + r.student.initials + '</div>' +
+                        '<div style="width:38px;height:38px;border-radius:50%;background:' + (r.student.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;overflow:hidden">' + avHtml(r.student) + '</div>' +
                         '<div style="flex:1"><div style="font-size:13px;font-weight:700">' + r.student.name + '</div>' +
                         '<div style="font-size:11px;color:var(--text3)">' + date + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div></div>' +
                         '<div style="color:#f59e0b;font-size:16px">' + stars + '</div>' +
@@ -2455,9 +2493,7 @@ async function loadRevThread(reviewId) {
                 var isMe = currentUser && c.author && false; // just show all
                 var isTeacherComment = c.role === 'teacher';
                 var date = new Date(c.date).toLocaleDateString('ru', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
-                var av = c.author.avatarUrl
-                    ? '<img src="' + c.author.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
-                    : c.author.initials;
+                var av = avHtml(c.author);
                 return '<div class="rev-comment' + (isTeacherComment ? ' rev-comment--teacher' : '') + '" id="rev-cmt-' + c.id + '">' +
                     '<div class="rev-cmt-av" style="background:' + (c.author.color||'#18A96A') + '">' + av + '</div>' +
                     '<div class="rev-cmt-body">' +
@@ -2640,7 +2676,13 @@ function openChatFromCourse() {
     const nameEl = document.getElementById('chat-name');
     const avEl   = document.getElementById('chat-av');
     if (nameEl) nameEl.textContent = teacher.firstName + ' ' + teacher.lastName;
-    if (avEl)   { avEl.textContent = teacher.initials; avEl.style.background = teacher.color; }
+    if (avEl) {
+        avEl.style.background = teacher.color;
+        avEl.style.overflow = 'hidden';
+        if (teacher.avatarUrl) {
+            avEl.innerHTML = '<img src="' + teacher.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+        } else { avEl.textContent = teacher.initials; }
+    }
     const modal = document.getElementById('chat-modal');
     if (modal) modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
