@@ -775,6 +775,7 @@ async function finishSetup() {
 async function loadStudentDash() {
     if (!currentUser) return;
     startStudentChatPoll();
+    startStudentNotifPoll();
     setAvatar(document.getElementById('sd-av'), currentUser);
     document.getElementById('sd-uname').textContent = currentUser.firstName + ' ' + currentUser.lastName;
     document.getElementById('sd-greet').textContent = currentUser.firstName + '!';
@@ -1181,6 +1182,43 @@ function startTeacherChatPoll() {
     }, 10000);
 }
 
+// Polling уведомлений (review_comment + общие) для учителя — каждые 15 сек
+var teacherNotifPollInterval = null;
+function startTeacherNotifPoll() {
+    if (teacherNotifPollInterval) clearInterval(teacherNotifPollInterval);
+    var _lastUnread = -1;
+    var _lastRevUnread = -1;
+    teacherNotifPollInterval = setInterval(async function() {
+        if (!currentUser || currentUser.role !== 'teacher') { clearInterval(teacherNotifPollInterval); return; }
+        try {
+            var notifs = await get('/users/notifications');
+            var unread = notifs.filter(function(n){ return !n.is_read; }).length;
+            var revUnread = notifs.filter(function(n){ return !n.is_read && n.type === 'review_comment'; }).length;
+
+            // Обновляем бейдж уведомлений
+            var nb = document.getElementById('td-notifs-cnt');
+            if (nb) { nb.textContent = unread; nb.style.display = unread > 0 ? '' : 'none'; }
+
+            // Обновляем бейдж отзывов
+            var rb = document.getElementById('td-reviews-cnt');
+            if (rb) { rb.textContent = revUnread; rb.style.display = revUnread > 0 ? '' : 'none'; }
+
+            // Если открыт раздел Отзывы и появились новые — обновляем список
+            if (revUnread !== _lastRevUnread && _lastRevUnread !== -1) {
+                var revPanel = document.getElementById('tdp-t-reviews');
+                if (revPanel && revPanel.classList.contains('on')) loadTeacherReviews();
+            }
+            // Если открыта панель уведомлений — обновляем
+            if (unread !== _lastUnread && _lastUnread !== -1) {
+                var notifPanel = document.getElementById('tdp-t-notifs');
+                if (notifPanel && notifPanel.classList.contains('on')) loadTeacherNotifications();
+            }
+            _lastUnread = unread;
+            _lastRevUnread = revUnread;
+        } catch(e) {}
+    }, 15000);
+}
+
 async function loadTeacherDash() {
     if (!currentUser) return;
     setAvatar(document.getElementById('td-av'), currentUser);
@@ -1266,6 +1304,7 @@ async function loadTeacherDash() {
     }
     // Start background chat polling
     startTeacherChatPoll();
+    startTeacherNotifPoll();
 
     // Load conditions checkboxes
     var cond = currentUser.conditions || {};
@@ -1417,6 +1456,31 @@ async function loadStudentChats() {
         console.error('loadStudentChats:', e);
         el.innerHTML = '<div style="text-align:center;padding:2rem;color:#EF4444">Ошибка загрузки. Попробуйте снова.</div>';
     }
+}
+
+// Student notifications polling — каждые 15 сек (review_comment и другие)
+var studentNotifPollInterval = null;
+function startStudentNotifPoll() {
+    if (studentNotifPollInterval) clearInterval(studentNotifPollInterval);
+    var _lastUnread = -1;
+    studentNotifPollInterval = setInterval(async function() {
+        if (!currentUser || currentUser.role !== 'student') { clearInterval(studentNotifPollInterval); return; }
+        try {
+            var notifs = await get('/users/notifications');
+            var unread = notifs.filter(function(n){ return !n.is_read; }).length;
+            // Обновляем бейдж
+            var badge = document.getElementById('sb-notif-cnt');
+            if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+            var dmBadge = document.getElementById('dm-notifs');
+            if (dmBadge) dmBadge.textContent = unread;
+            // Если открыта панель уведомлений — обновляем
+            if (unread !== _lastUnread && _lastUnread !== -1) {
+                var sdpNotif = document.getElementById('sdp-notifications');
+                if (sdpNotif && sdpNotif.classList.contains('on')) loadNotifications();
+            }
+            _lastUnread = unread;
+        } catch(e) {}
+    }, 15000);
 }
 
 // Student chat polling — check for new messages every 10s
