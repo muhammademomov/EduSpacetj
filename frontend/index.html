@@ -271,6 +271,26 @@
             <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Отзывов пока нет</div>
           </div>
 
+          <!-- ФОРМА ОТЗЫВА -->
+          <div id="pp-rev-form" style="display:none;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border2)">
+            <div style="font-size:15px;font-weight:800;margin-bottom:1rem">✍️ Написать отзыв</div>
+            <div style="margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">Ваша оценка:</div>
+              <div id="pp-stars" style="display:flex;gap:6px">
+                <span class="star-btn" data-v="1" onclick="setStars(1)" style="font-size:28px;cursor:pointer;opacity:.3">★</span>
+                <span class="star-btn" data-v="2" onclick="setStars(2)" style="font-size:28px;cursor:pointer;opacity:.3">★</span>
+                <span class="star-btn" data-v="3" onclick="setStars(3)" style="font-size:28px;cursor:pointer;opacity:.3">★</span>
+                <span class="star-btn" data-v="4" onclick="setStars(4)" style="font-size:28px;cursor:pointer;opacity:.3">★</span>
+                <span class="star-btn" data-v="5" onclick="setStars(5)" style="font-size:28px;cursor:pointer;opacity:.3">★</span>
+              </div>
+            </div>
+            <textarea id="pp-rev-text" rows="3" placeholder="Расскажите об опыте обучения..." style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;resize:vertical;outline:none"></textarea>
+            <button onclick="submitReview()" style="margin-top:10px;height:42px;padding:0 24px;background:var(--g);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer">Отправить отзыв</button>
+          </div>
+          <div id="pp-rev-login-hint" style="display:none;margin-top:1rem;padding:12px 16px;background:var(--gl2);border-radius:9px;font-size:13px;color:var(--g2);font-weight:600">
+            💬 <a onclick="go('login')" style="cursor:pointer;text-decoration:underline">Войдите</a>, чтобы оставить отзыв
+          </div>
+
         </div>
       </div>
       <div id="pp-docs" style="display:none">
@@ -766,8 +786,8 @@
         <div class="cp-cat" id="cp-cat">Категория</div>
         <h1 class="cp-title" id="cp-title">Название курса</h1>
         <div class="cp-teacher-row">
-          <div class="cp-teacher-av" id="cp-teacher-av">?</div>
-          <span id="cp-teacher-name">Преподаватель</span>
+          <div class="cp-teacher-av" id="cp-teacher-av" onclick="openTeacherFromCourse()" style="cursor:pointer;transition:opacity .2s" title="Открыть профиль учителя">?</div>
+          <span id="cp-teacher-name" onclick="openTeacherFromCourse()" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px">Преподаватель</span>
           <span class="cp-level" id="cp-level">Начинающий</span>
         </div>
       </div>
