@@ -1737,16 +1737,29 @@ function avHtml(person) {
 // Загрузка фото студента
 async function uploadStudentPhoto(input) {
     if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) { showToast('Файл слишком большой. Максимум 5 МБ', 'error'); return; }
+
+    // Сразу показываем preview
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var avEl = document.getElementById('settings-av');
+        if (avEl) {
+            avEl.style.padding = '0';
+            avEl.style.overflow = 'hidden';
+            avEl.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+        }
+    };
+    reader.readAsDataURL(file);
+
     var fd = new FormData();
-    fd.append('photo', input.files[0]);
+    fd.append('photo', file);
     try {
         showToast('⏳ Загружаем фото...');
         var result = await upload('/users/profile/photo', fd);
         currentUser.avatarUrl = result.avatarUrl;
-        // Сохраняем в localStorage чтобы фото не пропало после перезагрузки
         localStorage.setItem('user', JSON.stringify(currentUser));
-        // Обновляем все аватарки текущего пользователя везде на странице
-        document.querySelectorAll('[data-user-av]').forEach(function(el){ setAvatar(el, currentUser); });
+        // Обновляем все аватарки
         setAvatar(document.getElementById('settings-av'), currentUser);
         setAvatar(document.getElementById('nav-av'), currentUser);
         setAvatar(document.getElementById('sd-av'), currentUser);
