@@ -520,7 +520,10 @@ function loadAllTeachers() {
             return;
         }
         var rows = all.map(function(t) {
-            return '<tr><td><div class="user-cell"><div class="user-av" style="background:' + (t.color || '#18A96A') + '">' + (t.initials || '?') + '</div><div class="user-name">' + t.firstName + ' ' + t.lastName + '</div></div></td>' +
+            var avContent = t.avatarUrl
+    ? '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
+    : (t.initials || '?');
+return '<tr><td><div class="user-cell"><div class="user-av" style="background:' + (t.color || '#18A96A') + ';overflow:hidden;padding:' + (t.avatarUrl?'0':'') + '">' + avContent + '</div><div class="user-name">' + t.firstName + ' ' + t.lastName + '</div></div></td>' +
                 '<td>' + (t.subject || '—') + '</td>' +
                 '<td>' + (t.rating > 0 ? '★ ' + parseFloat(t.rating).toFixed(1) : '—') + '</td>' +
                 '<td>' + (t.studentCount || 0) + '</td>' +
