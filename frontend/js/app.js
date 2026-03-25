@@ -1222,6 +1222,7 @@ function tdShow(panel) {
     if (panel === 't-chats')    loadTeacherChats();
     if (panel === 't-profile')  loadTeacherDocs();
     if (panel === 't-notifs')   loadTeacherNotifications();
+    if (panel === 't-reviews')  loadTeacherReviews();
     setMobNav(panel, 'td');
 }
 
@@ -2248,6 +2249,53 @@ async function checkCourseChat(otherUserId, btnId) {
 
 
 
+// ─── Отзывы учителя (дашборд) ────────────────────────
+async function loadTeacherReviews() {
+    var el = document.getElementById('td-reviews-list');
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
+    try {
+        var reviews = await get('/teachers/my/reviews');
+        if (!reviews.length) {
+            el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3)"><div style="font-size:2rem;margin-bottom:.5rem">⭐</div><div style="font-weight:700">Отзывов пока нет</div><div style="font-size:13px;margin-top:.4rem">Ученики оставят отзывы после занятий</div></div>';
+            return;
+        }
+        el.innerHTML = '<div class="d-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:1rem">' +
+            reviews.map(function(r) {
+                var stars = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+                var date = new Date(r.date).toLocaleDateString('ru', {day:'numeric', month:'long', year:'numeric'});
+                var replyBlock = '';
+                if (r.teacherReply) {
+                    var rDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('ru',{day:'numeric',month:'short'}) : '';
+                    replyBlock = '<div class="ri-reply" style="margin-top:.75rem">' +
+                        '<div class="ri-reply-hdr">💬 Ваш ответ' + (rDate ? ' · ' + rDate : '') + '</div>' +
+                        '<div class="ri-reply-text" id="reply-text-' + r.id + '">' + r.teacherReply + '</div>' +
+                        '<button class="ri-reply-edit" onclick="openReplyModal(\'' + r.id + '\')">✏️ Изменить</button>' +
+                    '</div>';
+                } else {
+                    replyBlock = '<button class="ri-reply-btn" style="margin-top:.6rem" onclick="openReplyModal(\'' + r.id + '\')">💬 Ответить на отзыв</button>';
+                }
+                return '<div style="padding-bottom:1rem;border-bottom:1px solid var(--border2)">' +
+                    '<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">' +
+                        '<div style="width:38px;height:38px;border-radius:50%;background:' + (r.student.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0">' + r.student.initials + '</div>' +
+                        '<div style="flex:1">' +
+                            '<div style="font-size:13px;font-weight:700">' + r.student.name + '</div>' +
+                            '<div style="font-size:11px;color:var(--text3)">' + date + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div>' +
+                        '</div>' +
+                        '<div style="color:#f59e0b;font-size:16px;letter-spacing:1px">' + stars + '</div>' +
+                    '</div>' +
+                    '<div style="font-size:13px;color:var(--text2);line-height:1.5">' + (r.text||'') + '</div>' +
+                    replyBlock +
+                '</div>';
+            }).join('') +
+        '</div>';
+    } catch(e) {
+        console.error(e);
+        el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Ошибка загрузки отзывов</div>';
+    }
+}
+
+// После ответа на отзыв — перезагружаем список если мы в дашборде
 // ─── Ответ учителя на отзыв ───────────────────────────
 var _replyingReviewId = null;
 
@@ -2273,8 +2321,13 @@ async function submitReply() {
         await put('/teachers/reviews/' + _replyingReviewId + '/reply', { reply: text });
         closeReplyModal();
         showToast('✅ Ответ опубликован!');
-        // Обновляем список отзывов
-        if (typeof loadTeacherReviews === 'function') loadTeacherReviews();
+        // Обновляем оба возможных списка отзывов
+        var tdPanel = document.getElementById('tdp-t-reviews');
+        if (tdPanel && tdPanel.classList.contains('on')) {
+            loadTeacherReviews();
+        } else if (currentProfileId) {
+            openProfile(currentProfileId);
+        }
     } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
 }
 
