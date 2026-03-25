@@ -262,7 +262,21 @@ router.post('/reviews', auth, async (req, res) => {
             'UPDATE teacher_profiles SET rating=?, review_count=? WHERE id=?',
             [parseFloat(ratingRes[0].avg||0).toFixed(2), ratingRes[0].cnt, tp[0].id]
         );
-        
+
+        // Уведомление учителю о новом/обновлённом отзыве
+        try {
+            const [studentInfo] = await db.query('SELECT first_name, last_name FROM users WHERE id=?', [req.user.id]);
+            const sName = studentInfo.length ? studentInfo[0].first_name + ' ' + studentInfo[0].last_name : 'Ученик';
+            const isUpdate = existing.length > 0;
+            await db.query(
+                'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?,?,?,?,?,?)',
+                [randomUUID(), teacherId, 'review_comment',
+                 isUpdate ? '⭐ Ученик обновил отзыв' : '⭐ Новый отзыв!',
+                 `${sName} оставил${isUpdate ? ' обновлённый' : ''} отзыв — ${stars} ${stars === 1 ? 'звезда' : stars < 5 ? 'звезды' : 'звёзд'}`,
+                 req.user.id]
+            );
+        } catch(notifErr) { console.error('notif error:', notifErr.message); }
+
         res.json({ message: 'Отзыв добавлен' });
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
