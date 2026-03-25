@@ -1033,3 +1033,16 @@ input,select,textarea{font-family:inherit}
 .rev-comment-ta:focus { border-color:var(--g); }
 .rev-comment-send { height:36px; padding:0 1rem; background:var(--g); color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; transition:opacity .2s; }
 .rev-comment-send:hover { opacity:.85; }
+@media(max-width:480px){
+  /* Баланс — компактная карточка */
+  .bal-card{padding:14px 16px !important}
+  .bal-amount{font-size:20px !important}
+  .bal-label{font-size:10px !important;letter-spacing:.3px}
+  .bal-sub{font-size:11px !important}
+  .btn-topup{height:36px !important;padding:0 14px !important;font-size:12px !important;width:100%;justify-content:center}
+  .bal-quick{gap:6px !important;margin-top:10px !important}
+  .bal-qa{font-size:11px !important;padding:4px 8px !important;border-radius:6px !important}
+  /* Summary card (Итого) — убираем лишние отступы */
+  .bal-layout > div > .card{padding:12px !important}
+  .bal-layout > div > .card > div{font-size:12px !important}
+}
