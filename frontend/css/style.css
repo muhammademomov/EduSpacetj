@@ -739,8 +739,6 @@ input,select,textarea{font-family:inherit}
   .bal-card{padding:16px}
   .bal-amount{font-size:24px}
   .bal-quick{flex-wrap:wrap}
-  .bal-qa{font-size:12px;padding:6px 10px}
-  .btn-topup{font-size:13px;height:38px}
   
   /* Payment */
   .payment-wrap{padding:0}
@@ -999,13 +997,6 @@ input,select,textarea{font-family:inherit}
   .cp-tabs{padding:0 8px;gap:0;justify-content:space-around}
   .cp-tabs-wrap::after{display:none}
 
-  /* Balance summary card — мобайл */
-  .bal-card{padding:14px 16px}
-  .bal-amount{font-size:22px}
-  .bal-label{font-size:10px}
-  .bal-sub{font-size:11px}
-  .btn-topup{height:36px;font-size:13px}
-  .bal-qa{font-size:11px;padding:5px 10px}
 }
 
 /* ── Ответ учителя на отзыв ── */
@@ -1033,16 +1024,22 @@ input,select,textarea{font-family:inherit}
 .rev-comment-ta:focus { border-color:var(--g); }
 .rev-comment-send { height:36px; padding:0 1rem; background:var(--g); color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; transition:opacity .2s; }
 .rev-comment-send:hover { opacity:.85; }
-@media(max-width:480px){
-  /* Баланс — компактная карточка */
-  .bal-card{padding:14px 16px !important}
-  .bal-amount{font-size:20px !important}
-  .bal-label{font-size:10px !important;letter-spacing:.3px}
-  .bal-sub{font-size:11px !important}
-  .btn-topup{height:36px !important;padding:0 14px !important;font-size:12px !important;width:100%;justify-content:center}
-  .bal-quick{gap:6px !important;margin-top:10px !important}
-  .bal-qa{font-size:11px !important;padding:4px 8px !important;border-radius:6px !important}
-  /* Summary card (Итого) — убираем лишние отступы */
-  .bal-layout > div > .card{padding:12px !important}
-  .bal-layout > div > .card > div{font-size:12px !important}
+/* ── Баланс — мобайл ─────────────────────────────── */
+@media(max-width:600px){
+  /* Главная карточка баланса */
+  .bal-card{padding:14px 16px}
+  .bal-label{font-size:10px;letter-spacing:.3px}
+  .bal-amount{font-size:20px}
+  .bal-amount span{font-size:12px}
+  .bal-sub{font-size:11px}
+  .btn-topup{height:36px;padding:0 14px;font-size:12px;width:100%;box-sizing:border-box;justify-content:center}
+  .bal-quick{gap:6px;margin-top:8px}
+  .bal-qa{font-size:11px;padding:4px 10px}
+
+  /* Блок "Сумма пополнения / Баланс после" */
+  .topup-card{padding:14px}
+  #topup-preview, #bal-after-disp{font-size:15px !important}
+
+  /* Кнопка пополнить */
+  #topup-btn-main{font-size:13px}
 }
