@@ -602,7 +602,7 @@
               <div class="bal-qa" onclick="setQuickTopup(2000)">+2 000</div>
             </div>
           </div>
-          <div class="card" style="padding:16px;margin-top:12px">
+          <div class="card" id="bal-summary-card" style="padding:16px;margin-top:12px">
             <div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Итого</div>
             <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px"><span style="color:var(--text2)">Потрачено</span><span style="font-weight:700" id="bal-spent">0 смн</span></div>
             <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px"><span style="color:var(--text2)">Пополнено</span><span style="font-weight:700;color:var(--g2)" id="bal-added">0 смн</span></div>
@@ -734,8 +734,16 @@
         <div class="set-card">
           <div class="set-title">👤 Профиль</div>
           <div class="upload-row">
-            <div class="upload-av" id="settings-av" style="background:var(--g)">?</div>
-            <div><p style="font-size:13.5px;font-weight:700" id="settings-name">Пользователь</p><small style="font-size:12px;color:var(--text3)">JPG, PNG · до 5 МБ</small><div><button class="btn-upload-sm">Загрузить фото</button></div></div>
+            <div style="position:relative;cursor:pointer" onclick="document.getElementById('student-photo-input').click()">
+              <div class="upload-av" id="settings-av" style="background:var(--g);overflow:hidden">?</div>
+              <div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--g);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff">📷</div>
+            </div>
+            <input type="file" id="student-photo-input" accept="image/*" style="display:none" onchange="uploadStudentPhoto(this)">
+            <div>
+              <p style="font-size:13.5px;font-weight:700;margin-bottom:4px" id="settings-name">Пользователь</p>
+              <small style="font-size:12px;color:var(--text3);display:block;margin-bottom:8px">JPG, PNG · до 5 МБ</small>
+              <button type="button" onclick="document.getElementById('student-photo-input').click()" style="height:34px;padding:0 16px;background:none;border:1.5px solid var(--g);color:var(--g2);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.background='var(--gl2)'" onmouseout="this.style.background='none'">📷 Загрузить фото</button>
+            </div>
           </div>
           <div class="field"><label>Имя</label><input type="text" id="sett-name" placeholder="Ваше имя"></div>
           <div class="field"><label>Email</label><input type="email" id="sett-email" placeholder="email@mail.com"></div>
