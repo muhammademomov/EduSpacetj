@@ -6,7 +6,7 @@ const API = 'https://eduspacetj-production.up.railway.app/api';
 
 // ─── HTTP helpers ─────────────────────────────────────
 async function req(method, url, data = null) {
-    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    const opts = { method, headers: { 'Content-Type': 'application/json' }, cache: 'no-store' };
     const token = localStorage.getItem('token');
     if (token) opts.headers['Authorization'] = 'Bearer ' + token;
     if (data) opts.body = JSON.stringify(data);
@@ -1763,6 +1763,15 @@ async function uploadStudentPhoto(input) {
         setAvatar(document.getElementById('settings-av'), currentUser);
         setAvatar(document.getElementById('nav-av'), currentUser);
         setAvatar(document.getElementById('sd-av'), currentUser);
+        // Если открыт профиль учителя — обновить отзывы чтобы показалось новое фото
+        if (currentProfileId) {
+            get('/teachers/' + currentProfileId).then(function(t) {
+                var revEl = document.getElementById('pp-rev-list');
+                if (revEl && revEl.closest('#page-profile')) {
+                    renderRevList(t.reviews || [], 0);
+                }
+            }).catch(function(){});
+        }
         showToast('✅ Фото обновлено!');
         input.value = '';
     } catch(e) { showToast('Ошибка загрузки: ' + (e.message||''), 'error'); }
