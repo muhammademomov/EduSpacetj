@@ -103,6 +103,12 @@ const db_module = require('../db');
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
         console.log('✅ Таблица review_comments готова');
 
+        // Колонка link для уведомлений (переход к контексту)
+        try {
+            await db_module.query('ALTER TABLE notifications ADD COLUMN link VARCHAR(100) DEFAULT NULL');
+            console.log('✅ Колонка notifications.link добавлена');
+        } catch(e) { console.log('✅ Колонка notifications.link уже существует'); }
+
     } catch(e) {
         console.error('⚠️  Авто-миграция:', e.message);
     }

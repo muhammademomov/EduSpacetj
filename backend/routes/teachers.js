@@ -79,7 +79,7 @@ router.get('/:id', async (req, res) => {
             const hasReplyCol = cols.length > 0;
             const replySelect = hasReplyCol ? ', r.teacher_reply, r.replied_at' : ', NULL AS teacher_reply, NULL AS replied_at';
             const [rows] = await db.query(
-                `SELECT r.id, r.stars, r.text, r.tags, r.created_at${replySelect},
+                `SELECT r.id, r.stars, r.text, r.tags, r.created_at, r.student_id${replySelect},
                         u.first_name, u.last_name, u.initials, u.color, c.title AS course_title
                  FROM reviews r
                  JOIN users u ON u.id = r.student_id
@@ -100,6 +100,7 @@ router.get('/:id', async (req, res) => {
                 id:r.id, stars:r.stars, text:r.text, tags:safeJson(r.tags,[]),
                 date:r.created_at, courseTitle:r.course_title,
                 teacherReply:r.teacher_reply||null, repliedAt:r.replied_at||null,
+                studentId:r.student_id,
                 student:{ name:`${r.first_name} ${r.last_name}`, initials:r.initials, color:r.color },
             })),
         });
@@ -473,7 +474,7 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
         const replySelect = hasReplyCol ? ', r.teacher_reply, r.replied_at' : ', NULL AS teacher_reply, NULL AS replied_at';
 
         const [rows] = await db.query(`
-            SELECT r.id, r.stars, r.text, r.created_at${replySelect},
+            SELECT r.id, r.stars, r.text, r.created_at, r.student_id${replySelect},
                    u.first_name, u.last_name, u.color,
                    c.title as course_title
             FROM reviews r
@@ -491,6 +492,7 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
             teacherReply: r.teacher_reply || null,
             repliedAt: r.replied_at || null,
             courseTitle: r.course_title || null,
+            studentId: r.student_id,
             student: {
                 name: r.first_name + ' ' + r.last_name,
                 initials: (r.first_name[0]||'') + (r.last_name[0]||''),
@@ -562,20 +564,22 @@ router.post('/reviews/:reviewId/comments', auth, async (req, res) => {
 
         // Уведомление другой стороне
         if (isTeacher) {
-            // Учитель ответил → уведомить студента
+            // Учитель ответил → уведомить студента (link = teacher user_id для перехода к профилю)
             await db.query(
-                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?,?,?,?,?,?)',
                 [randomUUID(), rev.student_id, 'review_comment',
                  '💬 Новый ответ на ваш отзыв',
-                 `${rev.t_fname} ${rev.t_lname} ответил на ваш отзыв`]
+                 `${rev.t_fname} ${rev.t_lname} ответил на ваш отзыв`,
+                 rev.teacher_user_id]
             );
         } else {
-            // Студент ответил → уведомить учителя
+            // Студент ответил → уведомить учителя (link = student_id)
             await db.query(
-                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?,?,?,?,?,?)',
                 [randomUUID(), rev.teacher_user_id, 'review_comment',
                  '💬 Ответ ученика на ваш комментарий',
-                 `${rev.s_fname} ${rev.s_lname} ответил в обсуждении отзыва`]
+                 `${rev.s_fname} ${rev.s_lname} ответил в обсуждении отзыва`,
+                 rev.student_id]
             );
         }
 
