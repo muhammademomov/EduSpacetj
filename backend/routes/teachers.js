@@ -501,6 +501,101 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
 });
 
 
+// ─── GET /api/teachers/reviews/:reviewId/comments ──────────────────
+// Получить все комментарии к отзыву
+router.get('/reviews/:reviewId/comments', async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT rc.id, rc.text, rc.author_role, rc.created_at,
+                   u.first_name, u.last_name, u.initials, u.color, u.avatar_url
+            FROM review_comments rc
+            JOIN users u ON u.id = rc.author_id
+            WHERE rc.review_id = ?
+            ORDER BY rc.created_at ASC
+        `, [req.params.reviewId]);
+        res.json(rows.map(r => ({
+            id: r.id,
+            text: r.text,
+            role: r.author_role,
+            date: r.created_at,
+            author: {
+                name: r.first_name + ' ' + r.last_name,
+                initials: r.initials || (r.first_name[0]||'') + (r.last_name[0]||''),
+                color: r.color || '#18A96A',
+                avatarUrl: r.avatar_url || null
+            }
+        })));
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /api/teachers/reviews/:reviewId/comments ──────────────────
+// Добавить комментарий к отзыву (учитель или ученик)
+router.post('/reviews/:reviewId/comments', auth, async (req, res) => {
+    const { text } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Текст обязателен' });
+    try {
+        // Проверяем что отзыв существует и получаем участников
+        const [revRows] = await db.query(`
+            SELECT r.id, r.student_id, tp.user_id AS teacher_user_id,
+                   u_s.first_name AS s_fname, u_s.last_name AS s_lname,
+                   u_t.first_name AS t_fname, u_t.last_name AS t_lname
+            FROM reviews r
+            JOIN teacher_profiles tp ON tp.id = r.teacher_id
+            JOIN users u_s ON u_s.id = r.student_id
+            JOIN users u_t ON u_t.id = tp.user_id
+            WHERE r.id = ?
+        `, [req.params.reviewId]);
+        if (!revRows.length) return res.status(404).json({ error: 'Отзыв не найден' });
+        const rev = revRows[0];
+
+        // Только студент-автор или учитель могут комментировать
+        const isStudent = req.user.id === rev.student_id;
+        const isTeacher = req.user.id === rev.teacher_user_id;
+        if (!isStudent && !isTeacher) return res.status(403).json({ error: 'Нет доступа' });
+
+        const role = isTeacher ? 'teacher' : 'student';
+        const commentId = randomUUID();
+        await db.query(
+            'INSERT INTO review_comments (id, review_id, author_id, author_role, text) VALUES (?,?,?,?,?)',
+            [commentId, req.params.reviewId, req.user.id, role, text.trim()]
+        );
+
+        // Уведомление другой стороне
+        if (isTeacher) {
+            // Учитель ответил → уведомить студента
+            await db.query(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), rev.student_id, 'review_comment',
+                 '💬 Новый ответ на ваш отзыв',
+                 `${rev.t_fname} ${rev.t_lname} ответил на ваш отзыв`]
+            );
+        } else {
+            // Студент ответил → уведомить учителя
+            await db.query(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), rev.teacher_user_id, 'review_comment',
+                 '💬 Ответ ученика на ваш комментарий',
+                 `${rev.s_fname} ${rev.s_lname} ответил в обсуждении отзыва`]
+            );
+        }
+
+        res.json({ id: commentId, message: 'Комментарий добавлен' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── DELETE /api/teachers/reviews/:reviewId/comments/:commentId ─────
+// Удалить свой комментарий
+router.delete('/reviews/:reviewId/comments/:commentId', auth, async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT author_id FROM review_comments WHERE id=?', [req.params.commentId]);
+        if (!rows.length) return res.status(404).json({ error: 'Не найдено' });
+        if (rows[0].author_id !== req.user.id) return res.status(403).json({ error: 'Нет доступа' });
+        await db.query('DELETE FROM review_comments WHERE id=?', [req.params.commentId]);
+        res.json({ message: 'Удалено' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+
 // ─── POST /api/teachers/reviews/:reviewId/reply ───────────────────
 // Учитель отвечает на отзыв
 router.post('/reviews/:reviewId/reply', auth, teacherOnly, async (req, res) => {

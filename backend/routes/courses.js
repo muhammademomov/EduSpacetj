@@ -89,6 +89,20 @@ const db_module = require('../db');
             console.log('✅ Колонка replied_at добавлена');
         } catch(e) { console.log('✅ Колонка replied_at уже существует'); }
 
+        // Таблица комментариев к отзывам (цепочка учитель ↔ ученик)
+        await db_module.query(`CREATE TABLE IF NOT EXISTS review_comments (
+            id          VARCHAR(36)  PRIMARY KEY,
+            review_id   VARCHAR(36)  NOT NULL,
+            author_id   VARCHAR(36)  NOT NULL,
+            author_role ENUM('teacher','student') NOT NULL,
+            text        TEXT         NOT NULL,
+            created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_review (review_id),
+            FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+            FOREIGN KEY (author_id) REFERENCES users(id)   ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+        console.log('✅ Таблица review_comments готова');
+
     } catch(e) {
         console.error('⚠️  Авто-миграция:', e.message);
     }

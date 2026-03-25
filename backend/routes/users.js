@@ -268,6 +268,29 @@ router.post('/reviews', auth, async (req, res) => {
 });
 
 
+// GET /api/users/reviews/:reviewId/comments — получить комментарии (студент)
+router.get('/reviews/:reviewId/comments', auth, async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT rc.id, rc.text, rc.author_role, rc.created_at,
+                   u.first_name, u.last_name, u.initials, u.color, u.avatar_url
+            FROM review_comments rc
+            JOIN users u ON u.id = rc.author_id
+            WHERE rc.review_id = ?
+            ORDER BY rc.created_at ASC
+        `, [req.params.reviewId]);
+        res.json(rows.map(r => ({
+            id: r.id, text: r.text, role: r.author_role, date: r.created_at,
+            author: {
+                name: r.first_name + ' ' + r.last_name,
+                initials: r.initials || (r.first_name[0]||'') + (r.last_name[0]||''),
+                color: r.color || '#18A96A',
+                avatarUrl: r.avatar_url || null
+            }
+        })));
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 // GET /api/users/chat/:teacherId — получить сообщения
 router.get('/chat/:teacherId', auth, async (req, res) => {
     try {
