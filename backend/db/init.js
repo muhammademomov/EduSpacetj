@@ -194,6 +194,18 @@ async function init() {
     } catch(e) {
         console.log('✅ Колонка conditions уже существует');
     }
+    try {
+        await conn.query('ALTER TABLE reviews ADD COLUMN teacher_reply TEXT DEFAULT NULL');
+        console.log('✅ Колонка teacher_reply добавлена');
+    } catch(e) {
+        console.log('✅ Колонка teacher_reply уже существует');
+    }
+    try {
+        await conn.query('ALTER TABLE reviews ADD COLUMN replied_at DATETIME DEFAULT NULL');
+        console.log('✅ Колонка replied_at добавлена');
+    } catch(e) {
+        console.log('✅ Колонка replied_at уже существует');
+    }
 
     // Chat messages table
     await conn.query(`CREATE TABLE IF NOT EXISTS chat_messages (
