@@ -1026,20 +1026,45 @@ input,select,textarea{font-family:inherit}
 .rev-comment-send:hover { opacity:.85; }
 /* ── Баланс — мобайл ─────────────────────────────── */
 @media(max-width:600px){
-  /* Главная карточка баланса */
-  .bal-card{padding:14px 16px}
-  .bal-label{font-size:10px;letter-spacing:.3px}
-  .bal-amount{font-size:20px}
-  .bal-amount span{font-size:12px}
-  .bal-sub{font-size:11px}
-  .btn-topup{height:36px;padding:0 14px;font-size:12px;width:100%;box-sizing:border-box;justify-content:center}
-  .bal-quick{gap:6px;margin-top:8px}
-  .bal-qa{font-size:11px;padding:4px 10px}
+  /* Весь раздел баланса — отступы по бокам */
+  #sdp-balance{ padding:0 12px; box-sizing:border-box; }
 
-  /* Блок "Сумма пополнения / Баланс после" */
-  .topup-card{padding:14px}
-  #topup-preview, #bal-after-disp{font-size:15px !important}
+  /* Все вложенные блоки не выходят за контейнер */
+  #sdp-balance .bal-layout,
+  #sdp-balance .bal-layout > div{
+    width:100%; max-width:100%; box-sizing:border-box;
+  }
 
-  /* Кнопка пополнить */
-  #topup-btn-main{font-size:13px}
+  /* Тёмная карточка ТЕКУЩИЙ БАЛАНС */
+  .bal-card{
+    width:100%; max-width:100%;
+    box-sizing:border-box;
+    padding:16px 18px;
+  }
+
+  /* Белая карточка ИТОГО */
+  #bal-summary-card{
+    width:100%; max-width:100%;
+    box-sizing:border-box;
+    padding:12px 14px !important;
+    margin-top:10px !important;
+  }
+  #bal-summary-card > div{
+    display:flex; justify-content:space-between; align-items:center;
+  }
+
+  /* Кнопка Пополнить */
+  .btn-topup{ width:100%; box-sizing:border-box; height:38px; font-size:13px; justify-content:center; }
+
+  /* +500 +1000 +2000 */
+  .bal-quick{ gap:6px; margin-top:8px; flex-wrap:nowrap; }
+  .bal-qa{ font-size:11px; padding:4px 10px; flex:1; text-align:center; }
+
+  /* История операций */
+  .tx-card{ width:100%; box-sizing:border-box; overflow:hidden; }
+
+  /* Сумма пополнения / Баланс после */
+  .topup-card{ padding:12px; box-sizing:border-box; width:100%; }
+  #topup-preview,#bal-after-disp{ font-size:15px !important; }
+  #topup-btn-main{ font-size:13px; width:100%; box-sizing:border-box; }
 }
