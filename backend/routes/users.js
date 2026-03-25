@@ -3,13 +3,24 @@ const router  = express.Router();
 const db = require('../db');
 const { auth, adminOnly } = require('../middleware/auth');
 const { randomUUID } = require('crypto');
+const { uploadPhoto } = require('../cloudinary');
 
 // ─── GET /api/users/favorites ─────────────────────────────────────
+// POST /api/users/profile/photo — загрузить аватарку студента
+router.post('/profile/photo', auth, uploadPhoto.single('photo'), async (req, res) => {
+    try {
+        if (!req.file || !req.file.path) return res.status(400).json({ error: 'Файл не загружен' });
+        const url = req.file.path;
+        await db.query('UPDATE users SET avatar_url = ? WHERE id = ?', [url, req.user.id]);
+        res.json({ avatarUrl: url });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка загрузки фото' }); }
+});
+
 router.get('/favorites', auth, async (req, res) => {
     try {
         const [rows] = await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.initials, u.color,
-                    tp.subject, tp.rating, tp.review_count, tp.price
+            `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url,
+                    tp.subject, tp.rating, tp.review_count, tp.price, tp.student_count, tp.is_moderated
              FROM favorites f
              JOIN teacher_profiles tp ON tp.id = f.teacher_id
              JOIN users u ON u.id = tp.user_id

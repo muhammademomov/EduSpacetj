@@ -160,7 +160,7 @@ router.get('/enrollments', auth, studentOnly, async (req, res) => {
         const [rows] = await db.query(
             `SELECT e.id, e.status, e.enrolled_at, e.price_paid,
                     c.id AS course_id, c.title, c.category, c.level, c.price, c.emoji, c.rating,
-                    u.first_name, u.last_name, u.initials, u.color
+                    u.first_name, u.last_name, u.initials, u.color, u.avatar_url
              FROM enrollments e
              JOIN courses c ON c.id = e.course_id
              JOIN teacher_profiles tp ON tp.id = e.teacher_id
