@@ -537,7 +537,6 @@ function ppTab(tab, btn) {
         var el = document.getElementById(id);
         if (el) el.style.display = id === tab ? '' : 'none';
     });
-    if (tab === 'pp-reviews') showReviewForm();
 }
 
 async function toggleFavTeacher() {
@@ -1669,68 +1668,6 @@ async function addTeacherDoc() {
     btn.disabled = false;
 }
 
-
-var selectedStars = 0;
-
-function setStars(n) {
-    selectedStars = n;
-    document.querySelectorAll('.star-btn').forEach(function(s) {
-        s.style.opacity = parseInt(s.getAttribute('data-v')) <= n ? '1' : '0.3';
-        s.style.color = parseInt(s.getAttribute('data-v')) <= n ? '#F59E0B' : '';
-    });
-}
-
-async function submitReview() {
-    if (!selectedStars) return alert('Поставьте оценку от 1 до 5 звёзд');
-    var text = document.getElementById('pp-rev-text').value.trim();
-    if (!text) return alert('Напишите отзыв');
-    if (!currentProfileId) return;
-
-    // Need a course_id - get first enrolled course of this teacher
-    try {
-        var enrollments = await get('/payments/enrollments');
-        var teacherEnroll = enrollments.find(function(e) { return e.teacherId === currentProfileId || e.teacher_id === currentProfileId; });
-        if (!teacherEnroll) return showToast('Запишитесь на курс чтобы оставить отзыв', 'info');
-
-        var btn = event.target;
-        btn.textContent = 'Отправка...';
-        btn.disabled = true;
-
-        await post('/users/reviews', {
-            teacherId: currentProfileId,
-            courseId: teacherEnroll.courseId || teacherEnroll.course_id,
-            stars: selectedStars,
-            text: text
-        });
-
-        // Reset form
-        selectedStars = 0;
-        setStars(0);
-        document.getElementById('pp-rev-text').value = '';
-        document.getElementById('pp-rev-form').style.display = 'none';
-        btn.textContent = 'Отправить отзыв';
-        btn.disabled = false;
-
-        showToast('Отзыв отправлен! Спасибо');
-        openProfile(currentProfileId); // Reload profile
-    } catch(e) {
-        alert('Ошибка: ' + e.message);
-        event.target.textContent = 'Отправить отзыв';
-        event.target.disabled = false;
-    }
-}
-
-function showReviewForm() {
-    if (!currentUser) {
-        document.getElementById('pp-rev-login-hint').style.display = 'block';
-        document.getElementById('pp-rev-form').style.display = 'none';
-        return;
-    }
-    if (currentUser.role === 'student') {
-        document.getElementById('pp-rev-form').style.display = 'block';
-        document.getElementById('pp-rev-login-hint').style.display = 'none';
-    }
-}
 
 
 var chatTeacherId = null;
