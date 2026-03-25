@@ -509,8 +509,11 @@ function renderProfile(t) {
 }
 
 function buildReviewCard(r, isTeacher) {
-    var canComment = !!currentUser;
-    var commentsUrl = '/teachers/reviews/' + r.id + '/comments';
+    // Студент видит форму только под своим отзывом; учитель — под любым
+    var isMyReview = currentUser && (
+        isTeacher ||
+        (currentUser.role === 'student' && r.studentId === currentUser.id)
+    );
     var placeholder = isTeacher ? 'Ответить ученику...' : 'Написать комментарий...';
     return '<div class="ri-card" id="rev-card-' + r.id + '">' +
         '<div class="ri-top">' +
@@ -522,7 +525,7 @@ function buildReviewCard(r, isTeacher) {
         '<div class="ri-text">' + (r.text||'') + '</div>' +
         ((r.tags||[]).length ? '<div class="ri-tags">' + r.tags.map(function(tag){ return '<span class="ri-tag">' + tag + '</span>'; }).join('') + '</div>' : '') +
         '<div class="rev-thread" id="rev-thread-' + r.id + '"><div style="font-size:12px;color:var(--text3);padding:.5rem 0">⏳</div></div>' +
-        (canComment ?
+        (isMyReview ?
             '<div class="rev-comment-form">' +
                 '<textarea class="rev-comment-ta" id="rev-ta-' + r.id + '" placeholder="' + placeholder + '" rows="2"></textarea>' +
                 '<button class="rev-comment-send" onclick="submitRevComment(\'' + r.id + '\')">Отправить</button>' +
@@ -882,6 +885,20 @@ async function loadBalance() {
     } catch(e) { console.error(e); }
 }
 
+function closeNotifPanel() {
+    // Для студента - закрываем панель уведомлений, переходя на overview
+    var currentPage = document.querySelector('.page.active') || document.querySelector('[id^="page-"].active');
+    // просто убираем активную панель уведомлений если открыта
+    var sdpNotif = document.getElementById('sdp-notifications');
+    var tdpNotif = document.getElementById('tdp-t-notifs');
+    if (sdpNotif && sdpNotif.classList.contains('on')) {
+        sdShow('overview');
+    }
+    if (tdpNotif && tdpNotif.classList.contains('on')) {
+        // ничего, tdShow вызовется снаружи
+    }
+}
+
 async function loadNotifications() {
     try {
         const notifs = await get('/users/notifications');
@@ -896,13 +913,19 @@ async function loadNotifications() {
 
         el.innerHTML = sorted.map(n => {
             var ico = '🔔';
-            if (n.type === 'new_message')  ico = '💬';
-            if (n.type === 'homework')     ico = '📝';
-            if (n.type === 'new_material') ico = '📎';
-            if (n.type === 'topup')        ico = '💳';
-            if (n.type === 'welcome')      ico = '🎉';
+            if (n.type === 'new_message')    ico = '💬';
+            if (n.type === 'homework')       ico = '📝';
+            if (n.type === 'new_material')   ico = '📎';
+            if (n.type === 'topup')          ico = '💳';
+            if (n.type === 'welcome')        ico = '🎉';
+            if (n.type === 'review_comment') ico = '⭐';
             var timeStr = new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'});
-            return '<div class="notif-item' + (n.is_read ? '' : ' notif-unread') + '">' +
+            var clickHandler = '';
+            if (n.type === 'review_comment' && n.link) {
+                // Студент: переходим к профилю учителя и открываем вкладку отзывов
+                clickHandler = ' onclick="closeNotifPanel(); openProfile(\'' + n.link + '\')" style="cursor:pointer"';
+            }
+            return '<div class="notif-item' + (n.is_read ? '' : ' notif-unread') + '"' + clickHandler + '>' +
                 '<div class="n-dot' + (n.is_read ? ' read' : '') + '"></div>' +
                 '<div style="font-size:18px;flex-shrink:0">' + ico + '</div>' +
                 '<div class="n-text"><strong>' + n.title + '</strong>' +
@@ -1444,13 +1467,18 @@ async function loadTeacherNotifications() {
 
         const sorted = [...notifs].sort((a, b) => a.is_read - b.is_read);
         const ICONS  = { new_message:'💬', homework:'📝', new_material:'📎',
-                         topup:'💳', welcome:'🎉', new_teacher:'👤', new_course:'📚' };
+                         topup:'💳', welcome:'🎉', new_teacher:'👤', new_course:'📚', review_comment:'⭐' };
 
         el.innerHTML = sorted.map(function(n) {
             var ico     = ICONS[n.type] || '🔔';
             var time    = new Date(n.created_at).toLocaleDateString('ru', {day:'numeric', month:'short'});
             var unread  = !n.is_read;
-            return '<div class="notif-item' + (unread ? ' notif-unread' : '') + '">' +
+            // Клик: review_comment → открыть раздел "Отзывы"
+            var clickAttr = '';
+            if (n.type === 'review_comment') {
+                clickAttr = ' onclick="closeNotifPanel(); tdShow(\'t-reviews\');" style="cursor:pointer"';
+            }
+            return '<div class="notif-item' + (unread ? ' notif-unread' : '') + '"' + clickAttr + '>' +
                 '<div class="n-dot' + (unread ? '' : ' read') + '"></div>' +
                 '<div style="font-size:18px;flex-shrink:0">' + ico + '</div>' +
                 '<div class="n-text">' +
