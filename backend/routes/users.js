@@ -84,7 +84,7 @@ router.put('/profile', auth, async (req, res) => {
 router.get('/admin/moderation', auth, adminOnly, async (req, res) => {
     try {
         const [rows] = await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.email, u.created_at,
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.created_at, u.avatar_url, u.initials, u.color,
                     tp.id AS profile_id, tp.subject, tp.is_moderated, tp.teacher_type
              FROM users u JOIN teacher_profiles tp ON tp.user_id=u.id
              WHERE u.role='teacher' AND tp.is_moderated=0 ORDER BY u.created_at DESC`
@@ -187,7 +187,7 @@ router.get('/admin/stats', auth, adminOnly, async (req, res) => {
 router.get('/admin/rejected', auth, adminOnly, async (req, res) => {
     try {
         const [rows] = await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.email, u.created_at,
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.created_at, u.avatar_url, u.initials, u.color,
                     tp.id AS profile_id, tp.subject, tp.is_moderated, tp.teacher_type
              FROM users u JOIN teacher_profiles tp ON tp.user_id=u.id
              WHERE u.role='teacher' AND tp.is_moderated=2 ORDER BY u.created_at DESC`
