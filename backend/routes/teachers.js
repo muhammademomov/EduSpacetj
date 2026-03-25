@@ -69,21 +69,34 @@ router.get('/:id', async (req, res) => {
             `SELECT id, doc_type, doc_name, institution, year, file_url, is_verified
              FROM teacher_documents WHERE teacher_id = ?`, [t.profile_id]
         );
-        const [reviews] = await db.query(
-            `SELECT r.id, r.stars, r.text, r.tags, r.created_at,
-                    r.teacher_reply, r.replied_at,
-                    u.first_name, u.last_name, u.initials, u.color, c.title AS course_title
-             FROM reviews r
-             JOIN users u ON u.id = r.student_id
-             LEFT JOIN courses c ON c.id = r.course_id
-             WHERE r.teacher_id = ? ORDER BY r.created_at DESC`, [t.profile_id]
-        );
+        // Safely check if teacher_reply column exists before querying
+        let reviewRows = [];
+        try {
+            const [cols] = await db.query(
+                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'teacher_reply'`
+            );
+            const hasReplyCol = cols.length > 0;
+            const replySelect = hasReplyCol ? ', r.teacher_reply, r.replied_at' : ', NULL AS teacher_reply, NULL AS replied_at';
+            const [rows] = await db.query(
+                `SELECT r.id, r.stars, r.text, r.tags, r.created_at${replySelect},
+                        u.first_name, u.last_name, u.initials, u.color, c.title AS course_title
+                 FROM reviews r
+                 JOIN users u ON u.id = r.student_id
+                 LEFT JOIN courses c ON c.id = r.course_id
+                 WHERE r.teacher_id = ? ORDER BY r.created_at DESC`, [t.profile_id]
+            );
+            reviewRows = rows;
+        } catch(reviewErr) {
+            console.error('Reviews query error:', reviewErr.message);
+            reviewRows = [];
+        }
 
         res.json({
             ...fmt(t),
             courses: courses.map(c => ({ ...c, rating: parseFloat(c.rating)||0 })),
             documents: docs.map(d => ({ id:d.id, type:d.doc_type, name:d.doc_name, institution:d.institution, year:d.year, fileUrl:d.file_url, isVerified:!!d.is_verified })),
-            reviews: reviews.map(r => ({
+            reviews: reviewRows.map(r => ({
                 id:r.id, stars:r.stars, text:r.text, tags:safeJson(r.tags,[]),
                 date:r.created_at, courseTitle:r.course_title,
                 teacherReply:r.teacher_reply||null, repliedAt:r.replied_at||null,
@@ -452,8 +465,15 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
         if (!tp.length) return res.json([]);
         const teacherProfileId = tp[0].id;
 
+        const [cols] = await db.query(
+            `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'teacher_reply'`
+        );
+        const hasReplyCol = cols.length > 0;
+        const replySelect = hasReplyCol ? ', r.teacher_reply, r.replied_at' : ', NULL AS teacher_reply, NULL AS replied_at';
+
         const [rows] = await db.query(`
-            SELECT r.id, r.stars, r.text, r.created_at, r.teacher_reply, r.replied_at,
+            SELECT r.id, r.stars, r.text, r.created_at${replySelect},
                    u.first_name, u.last_name, u.color,
                    c.title as course_title
             FROM reviews r

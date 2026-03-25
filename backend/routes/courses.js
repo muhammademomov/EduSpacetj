@@ -78,6 +78,17 @@ const db_module = require('../db');
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
         console.log('✅ Таблицы lesson_progress, homework, schedule, course_materials готовы');
+
+        // Добавляем колонки ответов учителя на отзывы (если не существуют)
+        try {
+            await db_module.query('ALTER TABLE reviews ADD COLUMN teacher_reply TEXT DEFAULT NULL');
+            console.log('✅ Колонка teacher_reply добавлена');
+        } catch(e) { console.log('✅ Колонка teacher_reply уже существует'); }
+        try {
+            await db_module.query('ALTER TABLE reviews ADD COLUMN replied_at DATETIME DEFAULT NULL');
+            console.log('✅ Колонка replied_at добавлена');
+        } catch(e) { console.log('✅ Колонка replied_at уже существует'); }
+
     } catch(e) {
         console.error('⚠️  Авто-миграция:', e.message);
     }
