@@ -508,40 +508,38 @@ function renderProfile(t) {
     if (chatBtn)    chatBtn.style.display     = isOwnProfile ? 'none' : '';
 }
 
-function renderRevList(reviews, months) {
-    const now = new Date();
-    const fl = months === 0 ? reviews : reviews.filter(r => (now - new Date(r.date)) / (1000*60*60*24*30) <= months);
-    const isTeacher = currentUser && currentUser.role === 'teacher' && currentUser.id === currentProfileId;
-
-    document.getElementById('pp-rev-list').innerHTML = fl.length ?
-        fl.map(r => {
-            var replyBlock = '';
-            if (r.teacherReply) {
-                var replyDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('ru',{day:'numeric',month:'short'}) : '';
-                replyBlock = '<div class="ri-reply">' +
-                    '<div class="ri-reply-hdr">💬 Ответ преподавателя' + (replyDate ? ' · ' + replyDate : '') + '</div>' +
-                    '<div class="ri-reply-text" id="reply-text-' + r.id + '">' + r.teacherReply + '</div>' +
-                    (isTeacher ? '<button class="ri-reply-edit" onclick="openReplyModal(\'' + r.id + '\')">✏️ Изменить</button>' : '') +
-                '</div>';
-            } else if (isTeacher) {
-                replyBlock = '<button class="ri-reply-btn" onclick="openReplyModal(\'' + r.id + '\')">💬 Ответить на отзыв</button>';
-            }
-            return '<div class="ri-card">' +
-                '<div class="ri-top">' +
-                    '<div class="ri-av" style="background:' + (r.student?.color||'#18A96A') + '">' + (r.student?.initials||'?') + '</div>' +
-                    '<div class="ri-meta"><div class="ri-name">' + (r.student?.name||'Ученик') + '</div>' +
-                    '<div class="ri-sub">' + new Date(r.date).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'}) + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div></div>' +
-                    '<div class="ri-stars">' + '★'.repeat(r.stars) + '</div>' +
-                '</div>' +
-                '<div class="ri-text">' + (r.text||'') + '</div>' +
-                ((r.tags||[]).length ? '<div class="ri-tags">' + r.tags.map(function(tag){ return '<span class="ri-tag">' + tag + '</span>'; }).join('') + '</div>' : '') +
-                replyBlock +
-            '</div>';
-        }).join('') :
-        '<div style="text-align:center;padding:2rem;color:var(--text3)">Отзывов пока нет</div>';
+function buildReviewCard(r, isTeacher) {
+    var canComment = !!currentUser;
+    var commentsUrl = '/teachers/reviews/' + r.id + '/comments';
+    var placeholder = isTeacher ? 'Ответить ученику...' : 'Написать комментарий...';
+    return '<div class="ri-card" id="rev-card-' + r.id + '">' +
+        '<div class="ri-top">' +
+            '<div class="ri-av" style="background:' + (r.student?.color||'#18A96A') + '">' + (r.student?.initials||'?') + '</div>' +
+            '<div class="ri-meta"><div class="ri-name">' + (r.student?.name||'Ученик') + '</div>' +
+            '<div class="ri-sub">' + new Date(r.date).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'}) + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div></div>' +
+            '<div class="ri-stars">' + '★'.repeat(r.stars) + '</div>' +
+        '</div>' +
+        '<div class="ri-text">' + (r.text||'') + '</div>' +
+        ((r.tags||[]).length ? '<div class="ri-tags">' + r.tags.map(function(tag){ return '<span class="ri-tag">' + tag + '</span>'; }).join('') + '</div>' : '') +
+        '<div class="rev-thread" id="rev-thread-' + r.id + '"><div style="font-size:12px;color:var(--text3);padding:.5rem 0">⏳</div></div>' +
+        (canComment ?
+            '<div class="rev-comment-form">' +
+                '<textarea class="rev-comment-ta" id="rev-ta-' + r.id + '" placeholder="' + placeholder + '" rows="2"></textarea>' +
+                '<button class="rev-comment-send" onclick="submitRevComment(\'' + r.id + '\')">Отправить</button>' +
+            '</div>'
+        : '') +
+    '</div>';
 }
 
-
+function renderRevList(reviews, months) {
+    var now = new Date();
+    var fl = months === 0 ? reviews : reviews.filter(function(r){ return (now - new Date(r.date)) / (1000*60*60*24*30) <= months; });
+    var isTeacher = currentUser && currentUser.role === 'teacher' && currentUser.id === currentProfileId;
+    var el = document.getElementById('pp-rev-list');
+    if (!fl.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Отзывов пока нет</div>'; return; }
+    el.innerHTML = fl.map(function(r){ return buildReviewCard(r, isTeacher); }).join('');
+    fl.forEach(function(r){ loadRevThread(r.id); });
+}
 function fltRev(btn, m) {
     document.querySelectorAll('.rp-btn').forEach(b => b.classList.remove('on')); btn.classList.add('on');
     if (!currentProfileId) return;
@@ -2260,42 +2258,81 @@ async function loadTeacherReviews() {
             el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3)"><div style="font-size:2rem;margin-bottom:.5rem">⭐</div><div style="font-weight:700">Отзывов пока нет</div><div style="font-size:13px;margin-top:.4rem">Ученики оставят отзывы после занятий</div></div>';
             return;
         }
-        el.innerHTML = '<div class="d-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:1rem">' +
+        el.innerHTML = '<div class="d-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:1.2rem">' +
             reviews.map(function(r) {
                 var stars = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
                 var date = new Date(r.date).toLocaleDateString('ru', {day:'numeric', month:'long', year:'numeric'});
-                var replyBlock = '';
-                if (r.teacherReply) {
-                    var rDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('ru',{day:'numeric',month:'short'}) : '';
-                    replyBlock = '<div class="ri-reply" style="margin-top:.75rem">' +
-                        '<div class="ri-reply-hdr">💬 Ваш ответ' + (rDate ? ' · ' + rDate : '') + '</div>' +
-                        '<div class="ri-reply-text" id="reply-text-' + r.id + '">' + r.teacherReply + '</div>' +
-                        '<button class="ri-reply-edit" onclick="openReplyModal(\'' + r.id + '\')">✏️ Изменить</button>' +
-                    '</div>';
-                } else {
-                    replyBlock = '<button class="ri-reply-btn" style="margin-top:.6rem" onclick="openReplyModal(\'' + r.id + '\')">💬 Ответить на отзыв</button>';
-                }
-                return '<div style="padding-bottom:1rem;border-bottom:1px solid var(--border2)">' +
+                return '<div style="padding-bottom:1.2rem;border-bottom:1px solid var(--border2)" id="rev-card-' + r.id + '">' +
                     '<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">' +
                         '<div style="width:38px;height:38px;border-radius:50%;background:' + (r.student.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0">' + r.student.initials + '</div>' +
-                        '<div style="flex:1">' +
-                            '<div style="font-size:13px;font-weight:700">' + r.student.name + '</div>' +
-                            '<div style="font-size:11px;color:var(--text3)">' + date + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div>' +
-                        '</div>' +
-                        '<div style="color:#f59e0b;font-size:16px;letter-spacing:1px">' + stars + '</div>' +
+                        '<div style="flex:1"><div style="font-size:13px;font-weight:700">' + r.student.name + '</div>' +
+                        '<div style="font-size:11px;color:var(--text3)">' + date + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div></div>' +
+                        '<div style="color:#f59e0b;font-size:16px">' + stars + '</div>' +
                     '</div>' +
-                    '<div style="font-size:13px;color:var(--text2);line-height:1.5">' + (r.text||'') + '</div>' +
-                    replyBlock +
+                    '<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:.75rem">' + (r.text||'') + '</div>' +
+                    '<div class="rev-thread" id="rev-thread-' + r.id + '"><div style="font-size:12px;color:var(--text3)">⏳</div></div>' +
+                    '<div class="rev-comment-form" style="margin-top:.6rem">' +
+                        '<textarea class="rev-comment-ta" id="rev-ta-' + r.id + '" placeholder="Ответить ученику..." rows="2"></textarea>' +
+                        '<button class="rev-comment-send" onclick="submitRevComment(\'' + r.id + '\')">Отправить</button>' +
+                    '</div>' +
                 '</div>';
-            }).join('') +
-        '</div>';
+            }).join('') + '</div>';
+        reviews.forEach(function(r){ loadRevThread(r.id); });
     } catch(e) {
         console.error(e);
-        el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Ошибка загрузки отзывов</div>';
+        el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Ошибка загрузки</div>';
     }
 }
 
-// После ответа на отзыв — перезагружаем список если мы в дашборде
+
+// ─── Комментарии к отзывам (учитель ↔ ученик) ──────────────────────
+
+async function loadRevThread(reviewId) {
+    var el = document.getElementById('rev-thread-' + reviewId);
+    if (!el) return;
+    try {
+        var comments = await get('/teachers/reviews/' + reviewId + '/comments');
+        if (!comments.length) {
+            el.innerHTML = '';
+            return;
+        }
+        el.innerHTML = '<div class="rev-thread-wrap">' +
+            comments.map(function(c) {
+                var isMe = currentUser && c.author && false; // just show all
+                var isTeacherComment = c.role === 'teacher';
+                var date = new Date(c.date).toLocaleDateString('ru', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+                var av = c.author.avatarUrl
+                    ? '<img src="' + c.author.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+                    : c.author.initials;
+                return '<div class="rev-comment' + (isTeacherComment ? ' rev-comment--teacher' : '') + '" id="rev-cmt-' + c.id + '">' +
+                    '<div class="rev-cmt-av" style="background:' + (c.author.color||'#18A96A') + '">' + av + '</div>' +
+                    '<div class="rev-cmt-body">' +
+                        '<div class="rev-cmt-meta">' +
+                            '<span class="rev-cmt-name">' + c.author.name + '</span>' +
+                            (isTeacherComment ? '<span class="rev-cmt-badge">Преподаватель</span>' : '') +
+                            '<span class="rev-cmt-date">' + date + '</span>' +
+                        '</div>' +
+                        '<div class="rev-cmt-text">' + c.text + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('') +
+        '</div>';
+    } catch(e) { console.error('loadRevThread:', e); el.innerHTML = ''; }
+}
+
+async function submitRevComment(reviewId) {
+    var ta = document.getElementById('rev-ta-' + reviewId);
+    if (!ta) return;
+    var text = ta.value.trim();
+    if (!text) { showToast('Напишите комментарий', 'info'); return; }
+    try {
+        await post('/teachers/reviews/' + reviewId + '/comments', { text: text });
+        ta.value = '';
+        await loadRevThread(reviewId);
+        showToast('✅ Комментарий отправлен!');
+    } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
+}
+
 // ─── Ответ учителя на отзыв ───────────────────────────
 var _replyingReviewId = null;
 
