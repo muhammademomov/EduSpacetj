@@ -886,32 +886,39 @@ async function loadBalance() {
 }
 
 async function goToReviewTab(teacherUserId) {
-    // Закрываем уведомления, открываем профиль учителя
+    // 1. Закрываем панель уведомлений
     var sdpNotif = document.getElementById('sdp-notifications');
     if (sdpNotif && sdpNotif.classList.contains('on')) sdShow('overview');
 
-    // Открываем профиль учителя
+    // 2. Открываем профиль учителя (ждём завершения)
     await openProfile(teacherUserId);
 
-    // Ждём рендер и кликаем на вкладку "Отзывы"
+    // 3. Ждём рендер профиля, затем переключаем на вкладку "Отзывы"
     setTimeout(function() {
-        // Находим кнопку вкладки отзывов разными способами
-        var revTab = document.querySelector('#pp-tabs [data-tab="pp-reviews"]') ||
-                     document.querySelector('#pp-tabs button:nth-child(4)') ||
-                     Array.from(document.querySelectorAll('#pp-tabs button')).find(function(b){ return b.textContent.includes('Отзыв'); });
-        if (revTab) {
-            revTab.click();
-            // После загрузки отзывов — скролл к форме комментариев
+        // Ищем кнопку вкладки "Отзывы" среди .pp-tab
+        var revTabBtn = null;
+        document.querySelectorAll('.pp-tab').forEach(function(btn) {
+            if (btn.textContent.trim().includes('Отзыв')) revTabBtn = btn;
+        });
+        if (revTabBtn) {
+            // Вызываем ppTab напрямую
+            ppTab('pp-reviews', revTabBtn);
+
+            // 4. После загрузки отзывов — скролл к первой форме комментария
             setTimeout(function() {
-                var forms = document.querySelectorAll('.rev-comment-form');
-                if (forms.length) {
-                    forms[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    var ta = forms[0].querySelector('textarea');
-                    if (ta) ta.focus();
+                var firstForm = document.querySelector('#pp-reviews .rev-comment-form');
+                if (firstForm) {
+                    firstForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    var ta = firstForm.querySelector('textarea');
+                    if (ta) { ta.focus(); }
+                } else {
+                    // Если форм нет — просто скролл к секции отзывов
+                    var revSection = document.getElementById('pp-reviews');
+                    if (revSection) revSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            }, 600);
+            }, 700);
         }
-    }, 500);
+    }, 600);
 }
 
 function closeNotifPanel() {
@@ -2314,16 +2321,38 @@ async function loadTeacherReviews() {
     if (!el) return;
     el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">⏳ Загрузка...</div>';
     try {
-        var reviews = await get('/teachers/my/reviews');
+        // Загружаем отзывы и непрочитанные уведомления параллельно
+        var [reviews, allNotifs] = await Promise.all([
+            get('/teachers/my/reviews'),
+            get('/users/notifications').catch(function(){ return []; })
+        ]);
+        // ID студентов которые написали новый комментарий (непрочитанные)
+        var newCommentNotifs = allNotifs.filter(function(n){ return !n.is_read && n.type === 'review_comment'; });
+        var hasNewComments = newCommentNotifs.length > 0;
         if (!reviews.length) {
             el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3)"><div style="font-size:2rem;margin-bottom:.5rem">⭐</div><div style="font-weight:700">Отзывов пока нет</div><div style="font-size:13px;margin-top:.4rem">Ученики оставят отзывы после занятий</div></div>';
             return;
         }
-        el.innerHTML = '<div class="d-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:1.2rem">' +
+
+        // Баннер новых комментариев
+        var newBanner = '';
+        if (newCommentNotifs.length > 0) {
+            newBanner = '<div style="display:flex;align-items:center;gap:.75rem;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--g);border-radius:12px;padding:.875rem 1rem;margin-bottom:1rem">' +
+                '<div style="font-size:22px">💬</div>' +
+                '<div>' +
+                    '<div style="font-size:13px;font-weight:800;color:var(--g2)">Новые ответы в обсуждениях (' + newCommentNotifs.length + ')</div>' +
+                    '<div style="font-size:12px;color:var(--text2);margin-top:2px">Ученики ответили на ваши комментарии — посмотрите ниже</div>' +
+                '</div>' +
+            '</div>';
+        }
+
+        el.innerHTML = newBanner + '<div class="d-card" style="padding:1.2rem;display:flex;flex-direction:column;gap:1.2rem">' +
             reviews.map(function(r) {
                 var stars = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
                 var date = new Date(r.date).toLocaleDateString('ru', {day:'numeric', month:'long', year:'numeric'});
-                return '<div style="padding-bottom:1.2rem;border-bottom:1px solid var(--border2)" id="rev-card-' + r.id + '">' +
+                // Подсвечиваем все карточки если есть новые комментарии (не знаем точно к какой)
+                var cardHighlight = hasNewComments ? 'border-left:3px solid var(--g);padding-left:.75rem;' : '';
+                return '<div style="padding-bottom:1.2rem;border-bottom:1px solid var(--border2);' + cardHighlight + '" id="rev-card-' + r.id + '">' +
                     '<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">' +
                         '<div style="width:38px;height:38px;border-radius:50%;background:' + (r.student.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0">' + r.student.initials + '</div>' +
                         '<div style="flex:1"><div style="font-size:13px;font-weight:700">' + r.student.name + '</div>' +
