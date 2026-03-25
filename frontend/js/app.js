@@ -885,6 +885,35 @@ async function loadBalance() {
     } catch(e) { console.error(e); }
 }
 
+async function goToReviewTab(teacherUserId) {
+    // Закрываем уведомления, открываем профиль учителя
+    var sdpNotif = document.getElementById('sdp-notifications');
+    if (sdpNotif && sdpNotif.classList.contains('on')) sdShow('overview');
+
+    // Открываем профиль учителя
+    await openProfile(teacherUserId);
+
+    // Ждём рендер и кликаем на вкладку "Отзывы"
+    setTimeout(function() {
+        // Находим кнопку вкладки отзывов разными способами
+        var revTab = document.querySelector('#pp-tabs [data-tab="pp-reviews"]') ||
+                     document.querySelector('#pp-tabs button:nth-child(4)') ||
+                     Array.from(document.querySelectorAll('#pp-tabs button')).find(function(b){ return b.textContent.includes('Отзыв'); });
+        if (revTab) {
+            revTab.click();
+            // После загрузки отзывов — скролл к форме комментариев
+            setTimeout(function() {
+                var forms = document.querySelectorAll('.rev-comment-form');
+                if (forms.length) {
+                    forms[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    var ta = forms[0].querySelector('textarea');
+                    if (ta) ta.focus();
+                }
+            }, 600);
+        }
+    }, 500);
+}
+
 function closeNotifPanel() {
     // Для студента - закрываем панель уведомлений, переходя на overview
     var currentPage = document.querySelector('.page.active') || document.querySelector('[id^="page-"].active');
@@ -922,8 +951,8 @@ async function loadNotifications() {
             var timeStr = new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'});
             var clickHandler = '';
             if (n.type === 'review_comment' && n.link) {
-                // Студент: переходим к профилю учителя и открываем вкладку отзывов
-                clickHandler = ' onclick="closeNotifPanel(); openProfile(\'' + n.link + '\')" style="cursor:pointer"';
+                // Студент: профиль учителя → вкладка "Отзывы" → скролл к форме комментариев
+                clickHandler = ' onclick="goToReviewTab(\'' + n.link + '\')" style="cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'\'"';
             }
             return '<div class="notif-item' + (n.is_read ? '' : ' notif-unread') + '"' + clickHandler + '>' +
                 '<div class="n-dot' + (n.is_read ? ' read' : '') + '"></div>' +
@@ -1197,6 +1226,10 @@ async function loadTeacherDash() {
             const tUnread = tNotifs.filter(n => !n.is_read).length;
             const tBadge = document.getElementById('td-notifs-cnt');
             if (tBadge) { tBadge.textContent = tUnread; tBadge.style.display = tUnread > 0 ? '' : 'none'; }
+            // Reviews badge — непрочитанные review_comment
+            const tRevUnread = tNotifs.filter(n => !n.is_read && n.type === 'review_comment').length;
+            const tRevBadge = document.getElementById('td-reviews-cnt');
+            if (tRevBadge) { tRevBadge.textContent = tRevUnread; tRevBadge.style.display = tRevUnread > 0 ? '' : 'none'; }
         } catch(e) {}
 
         // Load chats badge for teacher
