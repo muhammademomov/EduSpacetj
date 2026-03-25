@@ -454,7 +454,7 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
 
         const [rows] = await db.query(`
             SELECT r.id, r.stars, r.text, r.created_at, r.teacher_reply, r.replied_at,
-                   u.first_name, u.last_name, u.avatar_color,
+                   u.first_name, u.last_name, u.color,
                    c.title as course_title
             FROM reviews r
             JOIN users u ON u.id = r.student_id
@@ -474,7 +474,7 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
             student: {
                 name: r.first_name + ' ' + r.last_name,
                 initials: (r.first_name[0]||'') + (r.last_name[0]||''),
-                color: r.avatar_color || '#18A96A'
+                color: r.color || '#18A96A'
             }
         })));
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
