@@ -511,19 +511,36 @@ function renderProfile(t) {
 function renderRevList(reviews, months) {
     const now = new Date();
     const fl = months === 0 ? reviews : reviews.filter(r => (now - new Date(r.date)) / (1000*60*60*24*30) <= months);
+    const isTeacher = currentUser && currentUser.role === 'teacher' && currentUser.id === currentProfileId;
+
     document.getElementById('pp-rev-list').innerHTML = fl.length ?
-        fl.map(r => `
-          <div class="ri-card">
-            <div class="ri-top">
-              <div class="ri-av" style="background:${r.student?.color||'#18A96A'}">${r.student?.initials||'?'}</div>
-              <div class="ri-meta"><div class="ri-name">${r.student?.name||'Ученик'}</div><div class="ri-sub">${new Date(r.date).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'})} · ${r.courseTitle||''}</div></div>
-              <div class="ri-stars">${'★'.repeat(r.stars)}</div>
-            </div>
-            <div class="ri-text">${r.text||''}</div>
-            ${(r.tags||[]).length ? '<div class="ri-tags">'+r.tags.map(tag=>`<span class="ri-tag">${tag}</span>`).join('')+'</div>' : ''}
-          </div>`).join('') :
+        fl.map(r => {
+            var replyBlock = '';
+            if (r.teacherReply) {
+                var replyDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('ru',{day:'numeric',month:'short'}) : '';
+                replyBlock = '<div class="ri-reply">' +
+                    '<div class="ri-reply-hdr">💬 Ответ преподавателя' + (replyDate ? ' · ' + replyDate : '') + '</div>' +
+                    '<div class="ri-reply-text" id="reply-text-' + r.id + '">' + r.teacherReply + '</div>' +
+                    (isTeacher ? '<button class="ri-reply-edit" onclick="openReplyModal(\'' + r.id + '\')">✏️ Изменить</button>' : '') +
+                '</div>';
+            } else if (isTeacher) {
+                replyBlock = '<button class="ri-reply-btn" onclick="openReplyModal(\'' + r.id + '\')">💬 Ответить на отзыв</button>';
+            }
+            return '<div class="ri-card">' +
+                '<div class="ri-top">' +
+                    '<div class="ri-av" style="background:' + (r.student?.color||'#18A96A') + '">' + (r.student?.initials||'?') + '</div>' +
+                    '<div class="ri-meta"><div class="ri-name">' + (r.student?.name||'Ученик') + '</div>' +
+                    '<div class="ri-sub">' + new Date(r.date).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'}) + (r.courseTitle ? ' · ' + r.courseTitle : '') + '</div></div>' +
+                    '<div class="ri-stars">' + '★'.repeat(r.stars) + '</div>' +
+                '</div>' +
+                '<div class="ri-text">' + (r.text||'') + '</div>' +
+                ((r.tags||[]).length ? '<div class="ri-tags">' + r.tags.map(function(tag){ return '<span class="ri-tag">' + tag + '</span>'; }).join('') + '</div>' : '') +
+                replyBlock +
+            '</div>';
+        }).join('') :
         '<div style="text-align:center;padding:2rem;color:var(--text3)">Отзывов пока нет</div>';
 }
+
 
 function fltRev(btn, m) {
     document.querySelectorAll('.rp-btn').forEach(b => b.classList.remove('on')); btn.classList.add('on');
@@ -2229,6 +2246,37 @@ async function checkCourseChat(otherUserId, btnId) {
     } catch(e) {}
 }
 
+
+
+// ─── Ответ учителя на отзыв ───────────────────────────
+var _replyingReviewId = null;
+
+function openReplyModal(reviewId) {
+    _replyingReviewId = reviewId;
+    var existing = document.getElementById('reply-text-' + reviewId);
+    document.getElementById('reply-modal-text').value = existing ? existing.textContent : '';
+    document.getElementById('reply-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(function(){ document.getElementById('reply-modal-text').focus(); }, 100);
+}
+
+function closeReplyModal() {
+    document.getElementById('reply-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    _replyingReviewId = null;
+}
+
+async function submitReply() {
+    var text = document.getElementById('reply-modal-text').value.trim();
+    if (!text) { showToast('Напишите ответ', 'info'); return; }
+    try {
+        await put('/teachers/reviews/' + _replyingReviewId + '/reply', { reply: text });
+        closeReplyModal();
+        showToast('✅ Ответ опубликован!');
+        // Обновляем список отзывов
+        if (typeof loadTeacherReviews === 'function') loadTeacherReviews();
+    } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
+}
 
 // ═══════════════════════════════════════════════════════
 // ОТЗЫВЫ
