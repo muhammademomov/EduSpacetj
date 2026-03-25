@@ -107,6 +107,7 @@ router.post('/login', [
             user: {
                 id: user.id, firstName: user.first_name, lastName: user.last_name,
                 email: user.email, role: user.role, initials: user.initials, color: user.color,
+                avatarUrl: user.avatar_url || null,
             },
         });
     } catch (err) {
