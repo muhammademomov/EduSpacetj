@@ -214,10 +214,26 @@ router.post('/reviews', auth, async (req, res) => {
         if (!tp.length) return res.status(404).json({ error: 'Учитель не найден' });
         
         const { randomUUID } = require('crypto');
-        await db.query(
-            'INSERT IGNORE INTO reviews (id, student_id, teacher_id, course_id, stars, text) VALUES (?,?,?,?,?,?)',
-            [randomUUID(), req.user.id, tp[0].id, courseId, stars, text.trim()]
+        // courseId может быть null если ученик ещё не записан на курс
+        const safeCourseId = courseId || null;
+        
+        // Проверяем есть ли уже отзыв от этого студента этому учителю
+        const [existing] = await db.query(
+            'SELECT id FROM reviews WHERE student_id=? AND teacher_id=?',
+            [req.user.id, tp[0].id]
         );
+        if (existing.length) {
+            // Обновляем существующий отзыв
+            await db.query(
+                'UPDATE reviews SET stars=?, text=?, created_at=NOW() WHERE student_id=? AND teacher_id=?',
+                [stars, text.trim(), req.user.id, tp[0].id]
+            );
+        } else {
+            await db.query(
+                'INSERT INTO reviews (id, student_id, teacher_id, course_id, stars, text) VALUES (?,?,?,?,?,?)',
+                [randomUUID(), req.user.id, tp[0].id, safeCourseId, stars, text.trim()]
+            );
+        }
         
         // Update teacher rating
         const [ratingRes] = await db.query(
