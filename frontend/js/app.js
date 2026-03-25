@@ -863,7 +863,7 @@ async function loadFavorites() {
         if (!favs.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">♡</div><div class="empty-title">Избранное пусто</div><div class="empty-sub">Нажмите ♡ на профиле преподавателя</div><button class="btn-lg green" onclick="go(\'catalog\')">Каталог</button></div>'; return; }
         el.innerHTML = '<div class="tc-grid">' + favs.map(t => buildTccard({
             id: t.id, firstName: t.first_name, lastName: t.last_name, fullName: t.first_name+' '+t.last_name,
-            initials: t.initials, color: t.color, subject: t.subject, rating: t.rating, reviewCount: t.review_count, price: t.price
+            initials: t.initials, color: t.color, avatarUrl: t.avatar_url||null, subject: t.subject, rating: t.rating, reviewCount: t.review_count, studentCount: t.student_count, price: t.price, isModerated: !!t.is_moderated
         })).join('') + '</div>';
     } catch(e) { console.error(e); }
 }
@@ -1743,7 +1743,10 @@ async function uploadStudentPhoto(input) {
         showToast('⏳ Загружаем фото...');
         var result = await upload('/users/profile/photo', fd);
         currentUser.avatarUrl = result.avatarUrl;
-        // Обновляем все аватарки текущего пользователя
+        // Сохраняем в localStorage чтобы фото не пропало после перезагрузки
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        // Обновляем все аватарки текущего пользователя везде на странице
+        document.querySelectorAll('[data-user-av]').forEach(function(el){ setAvatar(el, currentUser); });
         setAvatar(document.getElementById('settings-av'), currentUser);
         setAvatar(document.getElementById('nav-av'), currentUser);
         setAvatar(document.getElementById('sd-av'), currentUser);
