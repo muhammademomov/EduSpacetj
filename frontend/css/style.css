@@ -693,10 +693,15 @@ input,select,textarea{font-family:inherit}
   .tc2-price{margin-bottom:0}
   
   /* Profile */
-  .pp-bar{padding:0 1rem;gap:8px;flex-wrap:wrap}
-  .pp-bar-right{gap:5px}
+  .pp-bar{padding:0 1rem;gap:6px;flex-wrap:nowrap;height:48px}
+  .pp-bar-right{gap:4px;flex-shrink:0}
   .pp-bar-right .btn-mb{display:none}
-  .pp-cover{height:180px}
+  .pp-bc{display:none}
+  .pp-cover{height:200px}
+  /* Cover — кнопка Записаться в боковом блоке */
+  .btn-bkf{font-size:13px;height:40px;padding:0 14px}
+  /* Кнопка Записаться в сайдбаре профиля — не выходит за границы */
+  #pp-enroll-btn{width:100%;box-sizing:border-box}
   .pp-hw{padding:0 1rem}
   .pp-hcard{padding:16px;gap:14px}
   .pp-av{width:70px;height:70px}
@@ -731,9 +736,11 @@ input,select,textarea{font-family:inherit}
   
   /* Balance */
   .bal-layout{grid-template-columns:1fr}
-  .bal-card{padding:20px}
-  .bal-amount{font-size:30px}
+  .bal-card{padding:16px}
+  .bal-amount{font-size:24px}
   .bal-quick{flex-wrap:wrap}
+  .bal-qa{font-size:12px;padding:6px 10px}
+  .btn-topup{font-size:13px;height:38px}
   
   /* Payment */
   .payment-wrap{padding:0}
@@ -991,6 +998,14 @@ input,select,textarea{font-family:inherit}
   .cp-tab{padding:10px 14px;font-size:18px}
   .cp-tabs{padding:0 8px;gap:0;justify-content:space-around}
   .cp-tabs-wrap::after{display:none}
+
+  /* Balance summary card — мобайл */
+  .bal-card{padding:14px 16px}
+  .bal-amount{font-size:22px}
+  .bal-label{font-size:10px}
+  .bal-sub{font-size:11px}
+  .btn-topup{height:36px;font-size:13px}
+  .bal-qa{font-size:11px;padding:5px 10px}
 }
 
 /* ── Ответ учителя на отзыв ── */
