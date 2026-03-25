@@ -537,6 +537,7 @@ function ppTab(tab, btn) {
         var el = document.getElementById(id);
         if (el) el.style.display = id === tab ? '' : 'none';
     });
+    if (tab === 'pp-reviews') showReviewForm();
 }
 
 async function toggleFavTeacher() {
@@ -2226,6 +2227,90 @@ async function checkCourseChat(otherUserId, btnId) {
             btn.style.color       = '';
         }
     } catch(e) {}
+}
+
+
+// ═══════════════════════════════════════════════════════
+// ОТЗЫВЫ
+// ═══════════════════════════════════════════════════════
+var selectedStars = 0;
+
+function setStars(n) {
+    selectedStars = n;
+    document.querySelectorAll('.star-btn').forEach(function(s) {
+        var v = parseInt(s.getAttribute('data-v'));
+        s.style.opacity = v <= n ? '1' : '0.3';
+        s.style.color   = v <= n ? '#F59E0B' : '';
+    });
+}
+
+async function submitReview() {
+    if (!selectedStars) { showToast('Поставьте оценку от 1 до 5 звёзд', 'info'); return; }
+    var text = document.getElementById('pp-rev-text').value.trim();
+    if (!text) { showToast('Напишите отзыв', 'info'); return; }
+    if (!currentProfileId) return;
+
+    var btn = event.target;
+    btn.textContent = 'Отправка...';
+    btn.disabled = true;
+
+    try {
+        // Ищем курс этого учителя (если есть запись)
+        var courseId = null;
+        try {
+            var enrollments = await get('/payments/enrollments');
+            var match = enrollments.find(function(e) {
+                return e.teacherId === currentProfileId || e.teacher_id === currentProfileId;
+            });
+            if (match) courseId = match.courseId || match.course_id;
+        } catch(e) {}
+
+        await post('/users/reviews', {
+            teacherId: currentProfileId,
+            courseId:  courseId || null,
+            stars:     selectedStars,
+            text:      text,
+        });
+
+        selectedStars = 0;
+        setStars(0);
+        document.getElementById('pp-rev-text').value = '';
+        document.getElementById('pp-rev-form').style.display = 'none';
+        btn.textContent = 'Отправить отзыв';
+        btn.disabled = false;
+
+        showToast('✅ Спасибо за отзыв!');
+        openProfile(currentProfileId);
+    } catch(e) {
+        showToast('Ошибка: ' + (e.message || ''), 'error');
+        btn.textContent = 'Отправить отзыв';
+        btn.disabled = false;
+    }
+}
+
+function showReviewForm() {
+    if (!currentUser) {
+        var hint = document.getElementById('pp-rev-login-hint');
+        var form = document.getElementById('pp-rev-form');
+        if (hint) hint.style.display = 'block';
+        if (form) form.style.display = 'none';
+        return;
+    }
+    if (currentUser.role === 'student') {
+        var form = document.getElementById('pp-rev-form');
+        var hint = document.getElementById('pp-rev-login-hint');
+        if (form) form.style.display = 'block';
+        if (hint) hint.style.display = 'none';
+    }
+}
+
+
+function openTeacherFromCourse() {
+    if (!currentCourseData) return;
+    var teacherId = currentCourseData.course.teacher.id;
+    if (teacherId) {
+        openProfile(teacherId);
+    }
 }
 
 // ═══════════════════════════════════════════════════════
