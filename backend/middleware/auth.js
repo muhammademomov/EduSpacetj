@@ -10,7 +10,7 @@ const auth = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const [rows] = await db.query(
-            'SELECT id, email, role, first_name, last_name, initials, color FROM users WHERE id = ? AND is_active = 1',
+            'SELECT id, email, role, first_name, last_name, initials, color, avatar_url FROM users WHERE id = ? AND is_active = 1',
             [decoded.id]
         );
         if (!rows.length) return res.status(401).json({ error: 'Пользователь не найден' });
