@@ -334,12 +334,17 @@ function showAdmin() {
 function showPanel(name) {
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
     document.querySelectorAll('.sb-item').forEach(function(b) { b.classList.remove('on'); });
-    document.getElementById('panel-' + name).classList.add('on');
-    document.querySelector('[data-panel="' + name + '"]').classList.add('on');
-    if (name === 'teachers') loadPendingTeachers();
-    if (name === 'courses') loadPendingCourses();
-    if (name === 'all-teachers') loadAllTeachers();
-    if (name === 'rejected') loadRejected();
+    var panelEl = document.getElementById('panel-' + name);
+    if (!panelEl) return;
+    panelEl.classList.add('on');
+    var btnEl = document.querySelector('[data-panel="' + name + '"]');
+    if (btnEl) btnEl.classList.add('on');
+    if (name === 'teachers')          loadPendingTeachers();
+    if (name === 'courses')           loadPendingCourses();
+    if (name === 'all-teachers')      loadAllTeachers();
+    if (name === 'rejected')          loadRejected();
+    if (name === 'topup-requests')    loadTopupRequests('pending');
+    if (name === 'withdraw-requests') loadWithdrawRequests('pending');
 }
 
 function loadStats() {
