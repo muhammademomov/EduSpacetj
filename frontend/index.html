@@ -400,7 +400,7 @@
   <div class="auth-sub">EduSpace.tj</div>
   <div class="field"><label>Email</label><input type="email" id="l-em" placeholder="email@mail.com"></div>
   <div class="field"><label>Пароль</label><input type="password" id="l-pw" placeholder="Ваш пароль"><div class="err-msg" id="l-err">Неверный email или пароль</div></div>
-  <div style="text-align:right;margin-bottom:14px"><a onclick="go('forgot')" style="font-size:13px;color:var(--g);font-weight:700;cursor:pointer">Забыли пароль?</a></div>
+  <div style="text-align:right;margin-bottom:14px"><button onclick="go('forgot')" style="background:none;border:none;font-size:13px;color:var(--g);font-weight:700;cursor:pointer;padding:0">Забыли пароль?</button></div>
   <button class="btn-full green" onclick="doLogin()">Войти</button>
   <div style="display:flex;align-items:center;gap:10px;margin:14px 0;font-size:12px;color:var(--text3)"><div style="flex:1;height:1px;background:var(--border)"></div>или<div style="flex:1;height:1px;background:var(--border)"></div></div>
   <button class="btn-full outline" onclick="go('register')">Создать аккаунт</button>
@@ -418,7 +418,7 @@
       </div>
       <div class="field">
         <label>Email</label>
-        <input type="email" id="forgot-email" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+        <input type="email" id="forgot-email" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter') submitForgotPassword()">
       </div>
       <div id="forgot-msg" style="display:none;padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:12px"></div>
       <button class="btn-full green" id="forgot-btn" onclick="submitForgotPassword()" style="margin-bottom:12px">Отправить ссылку</button>
