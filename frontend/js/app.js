@@ -63,6 +63,13 @@ async function init() {
     // Restore page from URL hash
     var hash = window.location.hash.replace('#', '');
 
+    // Обработка ссылки сброса пароля: #reset-password?token=XXX
+    if (hash.startsWith('reset-password')) {
+        var params = new URLSearchParams(hash.replace('reset-password?', ''));
+        var resetTok = params.get('token');
+        if (resetTok) { openResetPage(resetTok); return; }
+    }
+
     if (hash && hash !== 'home') {
         // Authenticated pages
         if (['student-dash','teacher-dash','course','teacher-student'].includes(hash)) {
@@ -3075,6 +3082,91 @@ async function uploadTeacherPhoto(input) {
         showToast('Фото обновлено');
     } catch(e) {
         alert('Ошибка загрузки: ' + e.message);
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// СБРОС ПАРОЛЯ
+// ═══════════════════════════════════════════════════════
+
+var _resetToken = null;
+
+async function submitForgotPassword() {
+    var email = document.getElementById('forgot-email').value.trim();
+    var btn   = document.getElementById('forgot-btn');
+    var msg   = document.getElementById('forgot-msg');
+
+    if (!email) { showForgotMsg('Введите email', 'error'); return; }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Отправка...';
+    msg.style.display = 'none';
+
+    try {
+        await post('/auth/forgot-password', { email });
+        showForgotMsg('✅ Письмо отправлено! Проверьте почту (и папку «Спам»).', 'success');
+        btn.textContent = 'Отправить ещё раз';
+    } catch(e) {
+        showForgotMsg('Ошибка: ' + (e.message || 'попробуйте позже'), 'error');
+        btn.textContent = 'Отправить ссылку';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function showForgotMsg(text, type) {
+    var el = document.getElementById('forgot-msg');
+    el.textContent = text;
+    el.style.display = 'block';
+    el.style.background = type === 'success' ? '#dcfce7' : '#fee2e2';
+    el.style.color       = type === 'success' ? '#166534' : '#991b1b';
+    el.style.border      = '1px solid ' + (type === 'success' ? '#86efac' : '#fca5a5');
+}
+
+async function openResetPage(token) {
+    _resetToken = token;
+    go('reset');
+    // Проверяем валидность токена
+    try {
+        var result = await get('/auth/check-reset-token/' + token);
+        if (!result.valid) {
+            document.getElementById('reset-form').style.display = 'none';
+            document.getElementById('reset-invalid').style.display = 'block';
+        } else {
+            document.getElementById('reset-form').style.display = 'block';
+            document.getElementById('reset-invalid').style.display = 'none';
+            document.getElementById('reset-success').style.display = 'none';
+        }
+    } catch(e) {
+        document.getElementById('reset-form').style.display = 'none';
+        document.getElementById('reset-invalid').style.display = 'block';
+    }
+}
+
+async function submitResetPassword() {
+    var pw  = document.getElementById('reset-pw').value;
+    var pw2 = document.getElementById('reset-pw2').value;
+    var err = document.getElementById('reset-err');
+    var btn = document.getElementById('reset-btn');
+
+    err.style.display = 'none';
+    if (pw.length < 8) { err.textContent = 'Пароль минимум 8 символов'; err.style.display = 'block'; return; }
+    if (pw !== pw2)    { err.textContent = 'Пароли не совпадают'; err.style.display = 'block'; return; }
+    if (!_resetToken)  { err.textContent = 'Токен не найден'; err.style.display = 'block'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Сохранение...';
+
+    try {
+        await post('/auth/reset-password', { token: _resetToken, password: pw });
+        document.getElementById('reset-form').style.display = 'none';
+        document.getElementById('reset-success').style.display = 'block';
+        _resetToken = null;
+    } catch(e) {
+        err.textContent = e.message || 'Ошибка. Попробуйте запросить новую ссылку.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Сохранить пароль';
     }
 }
 
