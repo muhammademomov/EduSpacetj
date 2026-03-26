@@ -7,6 +7,25 @@ const { randomUUID } = require('crypto');
 
 const COMMISSION = 0.15;
 
+// ─── Telegram уведомление администратору ──────────────
+async function tgNotify(text) {
+    const token  = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!token || !chatId) return;
+    try {
+        await fetch(
+            `https://api.telegram.org/bot${token}/sendMessage`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+            }
+        );
+    } catch(e) { console.error('TG notify error:', e.message); }
+}
+
+
+
 // ─── GET /api/payments/balance ─────────────────────────────────────
 router.get('/balance', auth, studentOnly, async (req, res) => {
     try {
@@ -197,6 +216,20 @@ router.post('/topup-request', auth, studentOnly, [
             [randomUUID(), req.user.id, 'topup', '⏳ Заявка принята', `Пополнение на ${amount} смн отправлено на проверку`]
         );
 
+        // Telegram уведомление администратору
+        const [sInfo] = await db.query('SELECT first_name, last_name, email FROM users WHERE id=?', [req.user.id]);
+        const s = sInfo[0] || {};
+        await tgNotify(
+            `💰 <b>Новая заявка на пополнение!</b>\n\n` +
+            `👤 Студент: <b>${s.first_name} ${s.last_name}</b>\n` +
+            `📧 Email: ${s.email}\n` +
+            `💵 Сумма: <b>${amount} смн</b>\n` +
+            `📱 Способ: ${method === 'alif_mobi' ? 'Алиф Моби' : 'Банковская карта'}\n` +
+            `🔖 №транзакции: <code>${transaction_id}</code>\n` +
+            (comment ? `💬 Комментарий: ${comment}\n` : '') +
+            `\n⚡ Войди в <a href="https://eduspacetj-production.up.railway.app/admin.html">админ панель</a> чтобы одобрить`
+        );
+
         // Уведомление всем админам
         const [admins] = await db.query("SELECT id FROM users WHERE role='admin' AND is_active=1");
         for (const admin of admins) {
@@ -359,6 +392,19 @@ router.post('/teacher/withdraw', auth, async (req, res) => {
             'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
             [randomUUID(), req.user.id, 'withdraw', '⏳ Заявка на вывод принята',
              `Заявка на вывод ${amount} смн отправлена на обработку`]
+        );
+
+        // Telegram уведомление администратору
+        const [tInfo] = await db.query('SELECT first_name, last_name, email FROM users WHERE id=?', [req.user.id]);
+        const t = tInfo[0] || {};
+        await tgNotify(
+            `💸 <b>Запрос на вывод средств!</b>\n\n` +
+            `👨‍🏫 Учитель: <b>${t.first_name} ${t.last_name}</b>\n` +
+            `📧 Email: ${t.email}\n` +
+            `💵 Сумма: <b>${amount} смн</b>\n` +
+            `📱 Способ: ${method === 'alif_mobi' ? 'Алиф Моби' : 'Банковская карта'}\n` +
+            `💳 Реквизиты: <code>${card_or_phone}</code>\n` +
+            `\n⚡ Войди в <a href="https://eduspacetj-production.up.railway.app/admin.html">админ панель</a> чтобы обработать`
         );
 
         // Уведомление всем админам
