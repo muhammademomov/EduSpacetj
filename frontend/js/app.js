@@ -1331,6 +1331,7 @@ function tdShow(panel) {
     if (panel === 't-profile')  loadTeacherDocs();
     if (panel === 't-notifs')   loadTeacherNotifications();
     if (panel === 't-reviews')  loadTeacherReviews();
+    if (panel === 't-earnings') loadTeacherEarnings();
     setMobNav(panel, 'td');
 }
 
@@ -3082,6 +3083,139 @@ async function uploadTeacherPhoto(input) {
         showToast('Фото обновлено');
     } catch(e) {
         alert('Ошибка загрузки: ' + e.message);
+    }
+}
+
+
+// ═══════════════════════════════════════════════════════
+// СИСТЕМА ПОПОЛНЕНИЯ (СТУДЕНТ)
+// ═══════════════════════════════════════════════════════
+var _topupMethod = 'alif_mobi';
+
+function selectTopupMethod(method) {
+    _topupMethod = method;
+    var alif = document.getElementById('method-alif');
+    var card = document.getElementById('method-card');
+    var alifD = document.getElementById('alif-details');
+    var cardD = document.getElementById('card-details');
+    if (!alif) return;
+    if (method === 'alif_mobi') {
+        alif.style.border = '2px solid var(--g)';
+        card.style.border = '2px solid transparent';
+        alifD.style.display = 'block';
+        cardD.style.display = 'none';
+    } else {
+        card.style.border = '2px solid var(--g)';
+        alif.style.border = '2px solid transparent';
+        cardD.style.display = 'block';
+        alifD.style.display = 'none';
+    }
+}
+
+async function submitTopupRequest() {
+    var amount = document.getElementById('tr-amount')?.value;
+    var txid   = document.getElementById('tr-txid')?.value.trim();
+    var comment = document.getElementById('tr-comment')?.value.trim();
+    var errEl  = document.getElementById('tr-err');
+    var btn    = document.getElementById('tr-submit-btn');
+
+    errEl.style.display = 'none';
+    if (!amount || parseFloat(amount) < 10) { errEl.textContent = 'Минимальная сумма 10 смн'; errEl.style.display = 'block'; return; }
+    if (!txid) { errEl.textContent = 'Введите номер транзакции'; errEl.style.display = 'block'; return; }
+    if (!_topupMethod) { errEl.textContent = 'Выберите способ оплаты'; errEl.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = '⏳ Отправка...';
+    try {
+        await post('/payments/topup-request', { amount: parseFloat(amount), method: _topupMethod, transaction_id: txid, comment });
+        showToast('✅ Заявка отправлена! Ожидайте пополнения.');
+        document.getElementById('tr-amount').value = '';
+        document.getElementById('tr-txid').value = '';
+        document.getElementById('tr-comment').value = '';
+        loadTopupHistory();
+    } catch(e) {
+        errEl.textContent = e.message || 'Ошибка отправки';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false; btn.textContent = '✅ Отправить заявку';
+    }
+}
+
+async function loadTopupHistory() {
+    var el = document.getElementById('tr-history');
+    if (!el) return;
+    try {
+        var reqs = await get('/payments/topup-requests');
+        if (!reqs.length) { el.innerHTML = ''; return; }
+        var statusMap = { pending:'⏳ На проверке', approved:'✅ Зачислено', rejected:'❌ Отклонено' };
+        var colorMap  = { pending:'#D97706', approved:'#16A34A', rejected:'#DC2626' };
+        el.innerHTML = '<div class="d-card"><div class="d-card-title">История заявок</div>' +
+            reqs.map(function(r) {
+                return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2)">' +
+                    '<div><div style="font-size:13px;font-weight:700">+' + parseFloat(r.amount).toLocaleString('ru') + ' смн</div>' +
+                    '<div style="font-size:11px;color:var(--text3)">' + new Date(r.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</div>' +
+                    (r.admin_comment ? '<div style="font-size:11px;color:var(--text2);margin-top:2px">' + r.admin_comment + '</div>' : '') +
+                    '</div>' +
+                    '<span style="font-size:12px;font-weight:700;color:' + colorMap[r.status] + '">' + statusMap[r.status] + '</span>' +
+                '</div>';
+            }).join('') + '</div>';
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// СИСТЕМА ВЫВОДА (УЧИТЕЛЬ)
+// ═══════════════════════════════════════════════════════
+var _wdMethod = 'alif_mobi';
+
+function selectWdMethod(method) {
+    _wdMethod = method;
+    var alif = document.getElementById('wd-method-alif');
+    var card = document.getElementById('wd-method-card');
+    if (!alif) return;
+    alif.style.borderColor = method === 'alif_mobi' ? 'var(--g)' : 'var(--border)';
+    card.style.borderColor = method === 'card' ? 'var(--g)' : 'var(--border)';
+}
+
+async function loadTeacherEarnings() {
+    try {
+        var data = await get('/payments/teacher/balance');
+        var netEl  = document.getElementById('earn-net');
+        var wdEl   = document.getElementById('earn-withdrawn');
+        var avEl   = document.getElementById('earn-available');
+        if (netEl) netEl.textContent = parseFloat(data.totalEarned).toLocaleString('ru') + ' смн';
+        if (wdEl)  wdEl.textContent  = parseFloat(data.totalWithdrawn).toLocaleString('ru') + ' смн';
+        if (avEl)  avEl.textContent  = parseFloat(data.available).toLocaleString('ru') + ' смн';
+    } catch(e) { console.error(e); }
+
+    // История заявок на вывод
+    try {
+        // Пока показываем только статичный текст (можно добавить GET /payments/teacher/withdrawals)
+        var el = document.getElementById('td-withdraw-list');
+        if (!el) return;
+    } catch(e) {}
+}
+
+async function submitWithdraw() {
+    var amount     = document.getElementById('wd-amount')?.value;
+    var cardPhone  = document.getElementById('wd-card-phone')?.value.trim();
+    var errEl      = document.getElementById('wd-err');
+    var btn        = document.getElementById('wd-submit-btn');
+
+    errEl.style.display = 'none';
+    if (!amount || parseFloat(amount) < 50) { errEl.textContent = 'Минимальная сумма 50 смн'; errEl.style.display = 'block'; return; }
+    if (!cardPhone) { errEl.textContent = 'Укажите номер карты или телефона'; errEl.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = '⏳ Отправка...';
+    try {
+        await post('/payments/teacher/withdraw', { amount: parseFloat(amount), method: _wdMethod, card_or_phone: cardPhone });
+        showToast('✅ Заявка на вывод отправлена!');
+        document.getElementById('wd-amount').value = '';
+        document.getElementById('wd-card-phone').value = '';
+        loadTeacherEarnings();
+    } catch(e) {
+        errEl.textContent = e.message || 'Ошибка';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false; btn.textContent = 'Подать заявку на вывод';
     }
 }
 
