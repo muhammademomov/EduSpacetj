@@ -246,17 +246,11 @@ router.get('/check-reset-token/:token', async (req, res) => {
 
 // ─── Email helper ──────────────────────────────────────────────────
 async function sendResetEmail(to, firstName, resetUrl) {
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_PASS,
-        },
-    });
+    const { Resend } = require('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    await transporter.sendMail({
-        from: `"EduSpace.tj" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+        from: 'EduSpace.tj <onboarding@resend.dev>',
         to,
         subject: 'Сброс пароля — EduSpace.tj',
         html: `
