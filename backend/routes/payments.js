@@ -11,17 +11,25 @@ const COMMISSION = 0.15;
 async function tgNotify(text) {
     const token  = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
-    if (!token || !chatId) return;
-    try {
-        await fetch(
-            `https://api.telegram.org/bot${token}/sendMessage`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
-            }
-        );
-    } catch(e) { console.error('TG notify error:', e.message); }
+    if (!token || !chatId) { console.log('TG: no token/chatId'); return; }
+    return new Promise((resolve) => {
+        const https = require('https');
+        const body  = JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' });
+        const opts  = {
+            hostname: 'api.telegram.org',
+            path: `/bot${token}/sendMessage`,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+        };
+        const req = https.request(opts, (res) => {
+            let data = '';
+            res.on('data', d => data += d);
+            res.on('end', () => { console.log('TG sent:', res.statusCode); resolve(); });
+        });
+        req.on('error', e => { console.error('TG error:', e.message); resolve(); });
+        req.write(body);
+        req.end();
+    });
 }
 
 
