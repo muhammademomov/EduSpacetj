@@ -681,46 +681,59 @@
       <div class="payment-wrap">
         <div id="pf-topup">
           <div class="step-ind">
-            <div class="step-ind-item active"><div class="step-ind-circle">1</div><div class="step-ind-label">Пополнение</div></div>
+            <div class="step-ind-item active"><div class="step-ind-circle">1</div><div class="step-ind-label">Перевод</div></div>
             <div class="step-ind-line"></div>
-            <div class="step-ind-item pend"><div class="step-ind-circle">2</div><div class="step-ind-label">Оплата курса</div></div>
+            <div class="step-ind-item pend"><div class="step-ind-circle">2</div><div class="step-ind-label">Заявка</div></div>
             <div class="step-ind-line"></div>
-            <div class="step-ind-item pend"><div class="step-ind-circle">3</div><div class="step-ind-label">Готово</div></div>
+            <div class="step-ind-item pend"><div class="step-ind-circle">3</div><div class="step-ind-label">Зачислено</div></div>
           </div>
-          <div class="topup-card">
-            <div style="font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Сумма пополнения</div>
-            <div class="amt-grid">
-              <div class="amt-chip" onclick="selAmt(this,500)"><div class="amt-chip-val">500</div><div class="amt-chip-lbl">смн</div></div>
-              <div class="amt-chip on" onclick="selAmt(this,1000)"><div class="amt-chip-val">1 000</div><div class="amt-chip-lbl">смн</div></div>
-              <div class="amt-chip" onclick="selAmt(this,1500)"><div class="amt-chip-val">1 500</div><div class="amt-chip-lbl">смн</div></div>
-              <div class="amt-chip" onclick="selAmt(this,2000)"><div class="amt-chip-val">2 000</div><div class="amt-chip-lbl">смн</div></div>
-              <div class="amt-chip" onclick="selAmt(this,3000)"><div class="amt-chip-val">3 000</div><div class="amt-chip-lbl">смн</div></div>
-              <div class="amt-chip" onclick="selAmt(this,5000)"><div class="amt-chip-val">5 000</div><div class="amt-chip-lbl">смн</div></div>
-            </div>
-            <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;margin-top:14px">Или введите сумму</div>
-            <div class="custom-inp-wrap"><div class="custom-inp-pfx">смн</div><input type="number" id="custom-amt" placeholder="Введите сумму..." oninput="onCustomAmt(this.value)" min="50"></div>
-          </div>
-          <div class="topup-card">
-            <div style="font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Способ оплаты</div>
-            <div class="pay-methods">
-              <div class="pay-m on" onclick="selPayM(this)">💳 Карта</div>
-              <div class="pay-m" onclick="selPayM(this)">📱 Телефон</div>
-              <div class="pay-m" onclick="selPayM(this)">🏦 Банк</div>
-            </div>
-            <div id="card-fields" style="display:flex;flex-direction:column;gap:10px">
-              <input type="text" placeholder="1234 5678 9012 3456" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                <input type="text" placeholder="ММ/ГГ" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
-                <input type="text" placeholder="CVV" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+          <!-- Шаг 1: реквизиты для перевода -->
+          <div class="topup-card" style="background:linear-gradient(135deg,#0C1810,#112918);color:#fff;border:none">
+            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.5px;margin-bottom:10px">ШАГ 1 — ПЕРЕВЕДИТЕ ДЕНЬГИ</div>
+            <div style="display:flex;gap:12px;margin-bottom:12px">
+              <div style="flex:1;background:rgba(255,255,255,.08);border-radius:10px;padding:12px;text-align:center;cursor:pointer;border:2px solid transparent" id="method-alif" onclick="selectTopupMethod('alif_mobi')">
+                <div style="font-size:22px;margin-bottom:4px">📱</div>
+                <div style="font-size:12px;font-weight:700">Алиф Моби</div>
+              </div>
+              <div style="flex:1;background:rgba(255,255,255,.08);border-radius:10px;padding:12px;text-align:center;cursor:pointer;border:2px solid transparent" id="method-card" onclick="selectTopupMethod('card')">
+                <div style="font-size:22px;margin-bottom:4px">💳</div>
+                <div style="font-size:12px;font-weight:700">Банковская карта</div>
               </div>
             </div>
+            <div id="alif-details" style="display:none">
+              <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:6px">Переведите на номер Алиф Моби:</div>
+              <div style="font-size:22px;font-weight:800;color:#4ade80;letter-spacing:2px;margin-bottom:4px">+992 XX XXX XXXX</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.5)">Получатель: EduSpace.tj</div>
+            </div>
+            <div id="card-details" style="display:none">
+              <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:6px">Переведите на карту:</div>
+              <div style="font-size:20px;font-weight:800;color:#4ade80;letter-spacing:2px;margin-bottom:4px">8600 XXXX XXXX XXXX</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.5)">Получатель: EduSpace.tj</div>
+            </div>
           </div>
-          <div class="topup-card" style="display:flex;justify-content:space-between;align-items:center">
-            <div><div style="font-size:12px;color:var(--text3)">Сумма пополнения</div><div style="font-size:22px;font-weight:800" id="topup-preview">1 000 смн</div></div>
-            <div style="text-align:right"><div style="font-size:12px;color:var(--text3)">Баланс после</div><div style="font-size:22px;font-weight:800;color:var(--g2)" id="bal-after-disp">1 000 смн</div></div>
+
+          <!-- Шаг 2: форма заявки -->
+          <div class="topup-card">
+            <div style="font-size:11px;font-weight:800;color:var(--text3);letter-spacing:.5px;margin-bottom:12px">ШАГ 2 — ЗАПОЛНИТЕ ЗАЯВКУ</div>
+            <div class="field" style="margin-bottom:10px">
+              <label style="font-size:12px">Сумма перевода (смн)</label>
+              <input type="number" id="tr-amount" placeholder="Например: 500" min="10" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div class="field" style="margin-bottom:10px">
+              <label style="font-size:12px">Номер транзакции / чека</label>
+              <input type="text" id="tr-txid" placeholder="Скопируйте из Алиф Моби или банка" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div class="field" style="margin-bottom:14px">
+              <label style="font-size:12px">Комментарий (необязательно)</label>
+              <input type="text" id="tr-comment" placeholder="Дополнительная информация" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div id="tr-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>
+            <button class="btn-full green" id="tr-submit-btn" onclick="submitTopupRequest()">✅ Отправить заявку</button>
+            <div style="font-size:12px;color:var(--text3);text-align:center;margin-top:10px">⏱ Баланс пополняется в течение 15–30 минут</div>
           </div>
-          <button class="btn-full green" style="margin-bottom:8px" id="topup-btn-main" onclick="doTopup()">🔒 Пополнить 1 000 смн</button>
-          <div class="secure-note">🔒 SSL шифрование · Безопасная оплата</div>
+
+          <!-- История заявок -->
+          <div id="tr-history" style="margin-top:8px"></div>
         </div>
         <div id="pf-checkout" style="display:none">
           <div class="step-ind">
@@ -1262,14 +1275,35 @@
     <div class="dpanel" id="tdp-t-earnings">
       <div class="dp-hdr"><div class="dp-title">Мои доходы</div></div>
       <div class="d-metrics" style="grid-template-columns:repeat(3,1fr)">
-        <div class="d-metric"><div class="d-metric-label">Всего продаж</div><div class="d-metric-val" id="earn-gross">0 смн</div></div>
-        <div class="d-metric"><div class="d-metric-label">Комиссия (15%)</div><div class="d-metric-val" style="color:#EF4444" id="earn-comm">0 смн</div></div>
-        <div class="d-metric"><div class="d-metric-label">Ваш доход (85%)</div><div class="d-metric-val g" id="earn-net">0 смн</div></div>
+        <div class="d-metric"><div class="d-metric-label">Всего заработано</div><div class="d-metric-val g" id="earn-net">0 смн</div></div>
+        <div class="d-metric"><div class="d-metric-label">Выведено</div><div class="d-metric-val" id="earn-withdrawn">0 смн</div></div>
+        <div class="d-metric"><div class="d-metric-label">Доступно к выводу</div><div class="d-metric-val" style="color:#7C3AED" id="earn-available">0 смн</div></div>
       </div>
+
+      <!-- Форма вывода -->
+      <div class="d-card" style="margin-bottom:12px">
+        <div class="d-card-title">💸 Вывод средств</div>
+        <div style="padding:4px 0 12px">
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <div style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer" id="wd-method-alif" onclick="selectWdMethod('alif_mobi')">
+              <div style="font-size:20px">📱</div><div style="font-size:12px;font-weight:700;margin-top:4px">Алиф Моби</div>
+            </div>
+            <div style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer" id="wd-method-card" onclick="selectWdMethod('card')">
+              <div style="font-size:20px">💳</div><div style="font-size:12px;font-weight:700;margin-top:4px">Банковская карта</div>
+            </div>
+          </div>
+          <input type="number" id="wd-amount" placeholder="Сумма вывода (мин. 50 смн)" min="50" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+          <input type="text" id="wd-card-phone" placeholder="Номер карты или телефона Алиф" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px;transition:border-color .2s" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+          <div id="wd-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>
+          <button class="btn-full green" id="wd-submit-btn" onclick="submitWithdraw()">Подать заявку на вывод</button>
+          <div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px">⏱ Обработка в течение 1 рабочего дня</div>
+        </div>
+      </div>
+
       <div class="d-card">
-        <div class="d-card-title">💳 История выплат</div>
-        <div id="td-payments-list">
-          <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Выплат пока нет. Продажи появятся после записи учеников.</div>
+        <div class="d-card-title">📋 История заявок на вывод</div>
+        <div id="td-withdraw-list">
+          <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Заявок пока нет</div>
         </div>
       </div>
     </div>

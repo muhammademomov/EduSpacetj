@@ -169,6 +169,11 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg)}
         <button class="sb-item" data-panel="all-teachers"><span class="sb-ico">🏫</span> Все учителя</button>
         <button class="sb-item" data-panel="rejected"><span class="sb-ico">❌</span> Отклонённые <span class="sb-badge yellow" id="sb-rejected-cnt">0</span></button>
       </div>
+      <div class="sb-section">
+        <div class="sb-label">Финансы</div>
+        <button class="sb-item" data-panel="topup-requests"><span class="sb-ico">💰</span> Пополнения <span class="sb-badge" id="sb-topup-cnt">0</span></button>
+        <button class="sb-item" data-panel="withdraw-requests"><span class="sb-ico">💸</span> Выводы <span class="sb-badge" id="sb-withdraw-cnt">0</span></button>
+      </div>
     </aside>
     <main class="admin-main">
       <div class="panel on" id="panel-stats">
@@ -215,6 +220,29 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg)}
         </div>
         <div class="table-wrap" id="rejected-table"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
       </div>
+
+      <!-- ТОПАП ЗАЯВКИ -->
+      <div class="panel" id="panel-topup-requests">
+        <div class="sec-hdr"><h2>💰 Заявки на пополнение</h2></div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn-sm solid" onclick="loadTopupRequests('pending')">⏳ Ожидают</button>
+          <button class="btn-sm outline" onclick="loadTopupRequests('approved')">✅ Одобренные</button>
+          <button class="btn-sm outline" onclick="loadTopupRequests('rejected')">❌ Отклонённые</button>
+        </div>
+        <div id="topup-requests-table"><div style="text-align:center;padding:2rem;color:#6b7280">Загрузка...</div></div>
+      </div>
+
+      <!-- ЗАЯВКИ НА ВЫВОД -->
+      <div class="panel" id="panel-withdraw-requests">
+        <div class="sec-hdr"><h2>💸 Заявки на вывод средств</h2></div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn-sm solid" onclick="loadWithdrawRequests('pending')">⏳ Ожидают</button>
+          <button class="btn-sm outline" onclick="loadWithdrawRequests('approved')">✅ Выполненные</button>
+          <button class="btn-sm outline" onclick="loadWithdrawRequests('rejected')">❌ Отклонённые</button>
+        </div>
+        <div id="withdraw-requests-table"><div style="text-align:center;padding:2rem;color:#6b7280">Загрузка...</div></div>
+      </div>
+
     </main>
   </div>
 </div>
@@ -536,6 +564,13 @@ function loadRejected() {
     var el = document.getElementById('rejected-table');
     req('GET', '/users/admin/rejected').then(function(teachers) {
         document.getElementById('sb-rejected-cnt').textContent = teachers.length;
+        // Счётчики заявок
+        req('GET', '/payments/admin/topup-requests?status=pending').then(function(r) {
+            document.getElementById('sb-topup-cnt').textContent = r.length;
+        }).catch(function(){});
+        req('GET', '/payments/admin/withdraw-requests?status=pending').then(function(r) {
+            document.getElementById('sb-withdraw-cnt').textContent = r.length;
+        }).catch(function(){});
         if (!teachers.length) {
             el.innerHTML = '<table><tbody><tr class="empty-row"><td>Отклонённых учителей нет</td></tr></tbody></table>';
             return;
