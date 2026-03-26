@@ -171,4 +171,288 @@ router.get('/enrollments', auth, studentOnly, async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// ─── POST /api/payments/topup-request ─────────────────────────────
+// Студент создаёт заявку на пополнение баланса
+router.post('/topup-request', auth, studentOnly, [
+    body('amount').isFloat({ min: 10 }).withMessage('Минимум 10 смн'),
+    body('method').isIn(['alif_mobi','card']).withMessage('Неверный метод'),
+    body('transaction_id').trim().notEmpty().withMessage('Введите номер транзакции'),
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+
+    const { amount, method, transaction_id, comment } = req.body;
+    try {
+        const reqId = randomUUID();
+        await db.query(
+            `INSERT INTO topup_requests (id, student_id, amount, method, transaction_id, comment, status)
+             VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+            [reqId, req.user.id, parseFloat(amount), method, transaction_id.trim(), comment || null]
+        );
+
+        // Уведомление студенту
+        await db.query(
+            'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+            [randomUUID(), req.user.id, 'topup', '⏳ Заявка принята', `Пополнение на ${amount} смн отправлено на проверку`]
+        );
+
+        // Уведомление всем админам
+        const [admins] = await db.query("SELECT id FROM users WHERE role='admin' AND is_active=1");
+        for (const admin of admins) {
+            await db.query(
+                'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?,?,?,?,?,?)',
+                [randomUUID(), admin.id, 'topup_request', '💰 Новая заявка на пополнение',
+                 `Студент запросил пополнение ${amount} смн (${method === 'alif_mobi' ? 'Алиф Моби' : 'Карта'})`,
+                 reqId]
+            );
+        }
+
+        res.json({ message: 'Заявка отправлена', requestId: reqId });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── GET /api/payments/topup-requests ─────────────────────────────
+// Студент видит свои заявки
+router.get('/topup-requests', auth, studentOnly, async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT id, amount, method, transaction_id, comment, status, admin_comment, created_at, reviewed_at
+             FROM topup_requests WHERE student_id=? ORDER BY created_at DESC LIMIT 20`,
+            [req.user.id]
+        );
+        res.json(rows);
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── GET /api/payments/admin/topup-requests ───────────────────────
+// Админ видит все заявки
+router.get('/admin/topup-requests', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    try {
+        const { status = 'pending' } = req.query;
+        const [rows] = await db.query(
+            `SELECT tr.id, tr.amount, tr.method, tr.transaction_id, tr.comment, tr.status,
+                    tr.admin_comment, tr.created_at, tr.reviewed_at,
+                    u.id AS student_user_id, u.first_name, u.last_name, u.email,
+                    sp.balance AS current_balance
+             FROM topup_requests tr
+             JOIN users u ON u.id = tr.student_id
+             JOIN student_profiles sp ON sp.user_id = u.id
+             WHERE tr.status = ?
+             ORDER BY tr.created_at DESC`,
+            [status]
+        );
+        res.json(rows);
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /api/payments/admin/topup-approve/:id ───────────────────
+// Админ одобряет заявку → пополняет баланс студента
+router.post('/admin/topup-approve/:id', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    const { admin_comment } = req.body;
+    try {
+        const [reqs] = await db.query('SELECT * FROM topup_requests WHERE id=?', [req.params.id]);
+        if (!reqs.length) return res.status(404).json({ error: 'Заявка не найдена' });
+        const topupReq = reqs[0];
+        if (topupReq.status !== 'pending') return res.status(400).json({ error: 'Заявка уже обработана' });
+
+        await db.transaction(async (conn) => {
+            // 1. Пополняем баланс студента
+            await conn.execute(
+                'UPDATE student_profiles SET balance = balance + ?, total_added = total_added + ? WHERE user_id = ?',
+                [topupReq.amount, topupReq.amount, topupReq.student_id]
+            );
+            // 2. Транзакция
+            await conn.execute(
+                'INSERT INTO transactions (id, user_id, type, amount, description) VALUES (?,?,?,?,?)',
+                [randomUUID(), topupReq.student_id, 'topup', topupReq.amount,
+                 `Пополнение одобрено: ${topupReq.amount} смн (${topupReq.method === 'alif_mobi' ? 'Алиф Моби' : 'Карта'})`]
+            );
+            // 3. Обновляем статус заявки
+            await conn.execute(
+                `UPDATE topup_requests SET status='approved', admin_comment=?, reviewed_at=NOW() WHERE id=?`,
+                [admin_comment || null, req.params.id]
+            );
+            // 4. Уведомление студенту
+            await conn.execute(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), topupReq.student_id, 'topup',
+                 '✅ Баланс пополнен!',
+                 `+${topupReq.amount} смн зачислено на ваш счёт`]
+            );
+        });
+
+        const [bal] = await db.query('SELECT balance FROM student_profiles WHERE user_id=?', [topupReq.student_id]);
+        res.json({ message: 'Баланс пополнен', newBalance: parseFloat(bal[0].balance) });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /api/payments/admin/topup-reject/:id ────────────────────
+// Админ отклоняет заявку
+router.post('/admin/topup-reject/:id', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    const { admin_comment } = req.body;
+    try {
+        const [reqs] = await db.query('SELECT * FROM topup_requests WHERE id=?', [req.params.id]);
+        if (!reqs.length) return res.status(404).json({ error: 'Заявка не найдена' });
+        if (reqs[0].status !== 'pending') return res.status(400).json({ error: 'Заявка уже обработана' });
+
+        await db.query(
+            `UPDATE topup_requests SET status='rejected', admin_comment=?, reviewed_at=NOW() WHERE id=?`,
+            [admin_comment || 'Заявка отклонена', req.params.id]
+        );
+        await db.query(
+            'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+            [randomUUID(), reqs[0].student_id, 'topup',
+             '❌ Заявка отклонена',
+             admin_comment || 'Проверьте данные и попробуйте снова']
+        );
+
+        res.json({ message: 'Заявка отклонена' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── GET /api/payments/teacher/balance ────────────────────────────
+// Учитель видит свой баланс к выводу
+router.get('/teacher/balance', auth, async (req, res) => {
+    if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Нет доступа' });
+    try {
+        const [tp] = await db.query(
+            'SELECT total_earnings, withdrawn FROM teacher_profiles WHERE user_id=?', [req.user.id]
+        );
+        if (!tp.length) return res.status(404).json({ error: 'Профиль не найден' });
+        const totalEarned   = parseFloat(tp[0].total_earnings || 0);
+        const totalWithdrawn = parseFloat(tp[0].withdrawn || 0);
+        const available     = totalEarned - totalWithdrawn;
+        res.json({ totalEarned, totalWithdrawn, available });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /api/payments/teacher/withdraw ──────────────────────────
+// Учитель создаёт заявку на вывод средств
+router.post('/teacher/withdraw', auth, async (req, res) => {
+    if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Нет доступа' });
+    const { amount, method, card_or_phone } = req.body;
+    if (!amount || parseFloat(amount) < 50) return res.status(400).json({ error: 'Минимальная сумма вывода 50 смн' });
+    if (!card_or_phone) return res.status(400).json({ error: 'Укажите номер карты или телефона' });
+
+    try {
+        const [tp] = await db.query('SELECT id, total_earnings, withdrawn FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(404).json({ error: 'Профиль не найден' });
+
+        const available = parseFloat(tp[0].total_earnings || 0) - parseFloat(tp[0].withdrawn || 0);
+        if (parseFloat(amount) > available) {
+            return res.status(400).json({ error: `Недостаточно средств. Доступно: ${available.toFixed(2)} смн` });
+        }
+
+        const wdId = randomUUID();
+        await db.query(
+            `INSERT INTO withdraw_requests (id, teacher_id, amount, method, card_or_phone, status)
+             VALUES (?, ?, ?, ?, ?, 'pending')`,
+            [wdId, req.user.id, parseFloat(amount), method || 'alif_mobi', card_or_phone.trim()]
+        );
+
+        // Уведомление учителю
+        await db.query(
+            'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+            [randomUUID(), req.user.id, 'withdraw', '⏳ Заявка на вывод принята',
+             `Заявка на вывод ${amount} смн отправлена на обработку`]
+        );
+
+        // Уведомление всем админам
+        const [admins] = await db.query("SELECT id FROM users WHERE role='admin' AND is_active=1");
+        for (const admin of admins) {
+            await db.query(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), admin.id, 'withdraw_request', '💸 Запрос на вывод средств',
+                 `Учитель запросил вывод ${amount} смн на ${card_or_phone}`]
+            );
+        }
+
+        res.json({ message: 'Заявка на вывод отправлена', requestId: wdId });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── GET /api/payments/admin/withdraw-requests ────────────────────
+// Админ видит заявки на вывод
+router.get('/admin/withdraw-requests', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    try {
+        const { status = 'pending' } = req.query;
+        const [rows] = await db.query(
+            `SELECT wr.id, wr.amount, wr.method, wr.card_or_phone, wr.status,
+                    wr.admin_comment, wr.created_at, wr.reviewed_at,
+                    u.id AS teacher_user_id, u.first_name, u.last_name, u.email,
+                    tp.total_earnings, tp.withdrawn
+             FROM withdraw_requests wr
+             JOIN users u ON u.id = wr.teacher_id
+             JOIN teacher_profiles tp ON tp.user_id = u.id
+             WHERE wr.status = ?
+             ORDER BY wr.created_at DESC`,
+            [status]
+        );
+        res.json(rows);
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /api/payments/admin/withdraw-approve/:id ────────────────
+// Админ одобряет вывод → деньги переведены вручную
+router.post('/admin/withdraw-approve/:id', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    const { admin_comment } = req.body;
+    try {
+        const [wrs] = await db.query('SELECT * FROM withdraw_requests WHERE id=?', [req.params.id]);
+        if (!wrs.length) return res.status(404).json({ error: 'Заявка не найдена' });
+        const wr = wrs[0];
+        if (wr.status !== 'pending') return res.status(400).json({ error: 'Заявка уже обработана' });
+
+        await db.transaction(async (conn) => {
+            // Фиксируем вывод
+            await conn.execute(
+                'UPDATE teacher_profiles SET withdrawn = withdrawn + ? WHERE user_id=?',
+                [wr.amount, wr.teacher_id]
+            );
+            await conn.execute(
+                `UPDATE withdraw_requests SET status='approved', admin_comment=?, reviewed_at=NOW() WHERE id=?`,
+                [admin_comment || null, req.params.id]
+            );
+            // Уведомление учителю
+            await conn.execute(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), wr.teacher_id, 'withdraw',
+                 '✅ Вывод средств выполнен!',
+                 `${wr.amount} смн переведено на ${wr.card_or_phone}`]
+            );
+        });
+
+        res.json({ message: 'Вывод подтверждён' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /api/payments/admin/withdraw-reject/:id ─────────────────
+router.post('/admin/withdraw-reject/:id', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    const { admin_comment } = req.body;
+    try {
+        const [wrs] = await db.query('SELECT * FROM withdraw_requests WHERE id=?', [req.params.id]);
+        if (!wrs.length) return res.status(404).json({ error: 'Заявка не найдена' });
+        if (wrs[0].status !== 'pending') return res.status(400).json({ error: 'Заявка уже обработана' });
+
+        await db.query(
+            `UPDATE withdraw_requests SET status='rejected', admin_comment=?, reviewed_at=NOW() WHERE id=?`,
+            [admin_comment || 'Заявка отклонена', req.params.id]
+        );
+        await db.query(
+            'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+            [randomUUID(), wrs[0].teacher_id, 'withdraw',
+             '❌ Заявка на вывод отклонена',
+             admin_comment || 'Свяжитесь с поддержкой']
+        );
+
+        res.json({ message: 'Заявка отклонена' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 module.exports = router;

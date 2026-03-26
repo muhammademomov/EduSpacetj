@@ -114,6 +114,43 @@ const db_module = require('../db');
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
         console.log('✅ Таблица password_resets готова');
 
+        // Заявки на пополнение баланса (от студентов)
+        await db_module.query(`CREATE TABLE IF NOT EXISTS topup_requests (
+            id             VARCHAR(36)  PRIMARY KEY,
+            student_id     VARCHAR(36)  NOT NULL,
+            amount         DECIMAL(10,2) NOT NULL,
+            method         ENUM('alif_mobi','card') NOT NULL,
+            transaction_id VARCHAR(100) NOT NULL,
+            comment        TEXT,
+            status         ENUM('pending','approved','rejected') DEFAULT 'pending',
+            admin_comment  TEXT,
+            created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at    DATETIME,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+        console.log('✅ Таблица topup_requests готова');
+
+        // Заявки на вывод средств (от учителей)
+        await db_module.query(`CREATE TABLE IF NOT EXISTS withdraw_requests (
+            id             VARCHAR(36)  PRIMARY KEY,
+            teacher_id     VARCHAR(36)  NOT NULL,
+            amount         DECIMAL(10,2) NOT NULL,
+            method         ENUM('alif_mobi','card') NOT NULL,
+            card_or_phone  VARCHAR(50)  NOT NULL,
+            status         ENUM('pending','approved','rejected') DEFAULT 'pending',
+            admin_comment  TEXT,
+            created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at    DATETIME,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+        console.log('✅ Таблица withdraw_requests готова');
+
+        // Колонка withdrawn в teacher_profiles
+        try {
+            await db_module.query('ALTER TABLE teacher_profiles ADD COLUMN withdrawn DECIMAL(10,2) DEFAULT 0');
+            console.log('✅ Колонка withdrawn добавлена');
+        } catch(e) { console.log('✅ Колонка withdrawn уже существует'); }
+
         // Колонка link для уведомлений (переход к контексту)
         try {
             await db_module.query('ALTER TABLE notifications ADD COLUMN link VARCHAR(100) DEFAULT NULL');
