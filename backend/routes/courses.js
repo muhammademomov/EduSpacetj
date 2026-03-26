@@ -103,6 +103,17 @@ const db_module = require('../db');
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
         console.log('✅ Таблица review_comments готова');
 
+        // Таблица токенов сброса пароля
+        await db_module.query(`CREATE TABLE IF NOT EXISTS password_resets (
+            id         VARCHAR(36)  PRIMARY KEY,
+            user_id    VARCHAR(36)  NOT NULL UNIQUE,
+            token      VARCHAR(64)  NOT NULL UNIQUE,
+            expires_at DATETIME     NOT NULL,
+            created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+        console.log('✅ Таблица password_resets готова');
+
         // Колонка link для уведомлений (переход к контексту)
         try {
             await db_module.query('ALTER TABLE notifications ADD COLUMN link VARCHAR(100) DEFAULT NULL');

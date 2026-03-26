@@ -170,6 +170,117 @@ router.put('/password', auth, async (req, res) => {
     }
 });
 
+
+// ─── POST /api/auth/forgot-password ───────────────────────────────
+// Отправить email со ссылкой сброса
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Укажите email' });
+    try {
+        const [rows] = await db.query('SELECT id, first_name FROM users WHERE email=? AND is_active=1', [email.toLowerCase().trim()]);
+        // Всегда отвечаем успехом — не раскрываем есть ли такой email
+        if (!rows.length) return res.json({ message: 'Если email зарегистрирован — письмо отправлено' });
+
+        const user = rows[0];
+        const token = require('crypto').randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 час
+
+        // Сохраняем токен в БД
+        await db.query(
+            `INSERT INTO password_resets (id, user_id, token, expires_at)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE token=VALUES(token), expires_at=VALUES(expires_at)`,
+            [newId(), user.id, token, expires]
+        );
+
+        // Отправляем email
+        const resetUrl = (process.env.FRONTEND_URL || 'https://eduspacetj-production.up.railway.app') + '#reset-password?token=' + token;
+        await sendResetEmail(email, user.first_name, resetUrl);
+
+        res.json({ message: 'Если email зарегистрирован — письмо отправлено' });
+    } catch(err) {
+        console.error('forgot-password error:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// ─── POST /api/auth/reset-password ────────────────────────────────
+// Установить новый пароль по токену
+router.post('/reset-password', async (req, res) => {
+    const { token, password } = req.body;
+    if (!token || !password || password.length < 8) {
+        return res.status(400).json({ error: 'Токен и пароль (мин. 8 символов) обязательны' });
+    }
+    try {
+        const [rows] = await db.query(
+            'SELECT user_id FROM password_resets WHERE token=? AND expires_at > NOW()',
+            [token]
+        );
+        if (!rows.length) return res.status(400).json({ error: 'Ссылка недействительна или истекла' });
+
+        const hash = await bcrypt.hash(password, 10);
+        await db.query('UPDATE users SET password_hash=? WHERE id=?', [hash, rows[0].user_id]);
+        await db.query('DELETE FROM password_resets WHERE token=?', [token]);
+
+        res.json({ message: 'Пароль успешно изменён' });
+    } catch(err) {
+        console.error('reset-password error:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// ─── POST /api/auth/check-reset-token ─────────────────────────────
+// Проверить что токен валидный (для фронта)
+router.get('/check-reset-token/:token', async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT user_id FROM password_resets WHERE token=? AND expires_at > NOW()',
+            [req.params.token]
+        );
+        res.json({ valid: rows.length > 0 });
+    } catch(err) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+
+// ─── Email helper ──────────────────────────────────────────────────
+async function sendResetEmail(to, firstName, resetUrl) {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_PASS,
+        },
+    });
+
+    await transporter.sendMail({
+        from: `"EduSpace.tj" <${process.env.GMAIL_USER}>`,
+        to,
+        subject: 'Сброс пароля — EduSpace.tj',
+        html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px">
+            <div style="text-align:center;margin-bottom:24px">
+                <div style="background:#18A96A;width:48px;height:48px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:24px">📚</div>
+                <h2 style="color:#111;margin:12px 0 0;font-size:20px">EduSpace.tj</h2>
+            </div>
+            <h3 style="color:#111;margin:0 0 8px">Привет, ${firstName}!</h3>
+            <p style="color:#555;margin:0 0 24px;line-height:1.6">
+                Мы получили запрос на сброс пароля вашего аккаунта.<br>
+                Нажмите на кнопку ниже — ссылка действует <strong>1 час</strong>.
+            </p>
+            <a href="${resetUrl}" style="display:block;background:#18A96A;color:#fff;text-align:center;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">
+                Сбросить пароль →
+            </a>
+            <p style="color:#999;font-size:12px;margin:20px 0 0;text-align:center">
+                Если вы не запрашивали сброс пароля — просто проигнорируйте это письмо.
+            </p>
+        </div>
+        `,
+    });
+}
+
 function safeJson(val, def) {
     if (!val) return def;
     try { return JSON.parse(val); } catch { return def; }
