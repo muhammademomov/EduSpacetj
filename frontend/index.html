@@ -400,11 +400,68 @@
   <div class="auth-sub">EduSpace.tj</div>
   <div class="field"><label>Email</label><input type="email" id="l-em" placeholder="email@mail.com"></div>
   <div class="field"><label>Пароль</label><input type="password" id="l-pw" placeholder="Ваш пароль"><div class="err-msg" id="l-err">Неверный email или пароль</div></div>
-  <div style="text-align:right;margin-bottom:14px"><a style="font-size:13px;color:var(--g);font-weight:700;cursor:pointer">Забыли пароль?</a></div>
+  <div style="text-align:right;margin-bottom:14px"><a onclick="go('forgot')" style="font-size:13px;color:var(--g);font-weight:700;cursor:pointer">Забыли пароль?</a></div>
   <button class="btn-full green" onclick="doLogin()">Войти</button>
   <div style="display:flex;align-items:center;gap:10px;margin:14px 0;font-size:12px;color:var(--text3)"><div style="flex:1;height:1px;background:var(--border)"></div>или<div style="flex:1;height:1px;background:var(--border)"></div></div>
   <button class="btn-full outline" onclick="go('register')">Создать аккаунт</button>
 </div></div>
+</div>
+
+<!-- ═══ FORGOT PASSWORD ═══ -->
+<div class="page" id="page-forgot">
+  <div class="auth-wrap">
+    <div class="auth-card" style="max-width:420px">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-size:40px;margin-bottom:8px">🔑</div>
+        <div style="font-size:20px;font-weight:800">Забыли пароль?</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:6px">Введите email — пришлём ссылку для сброса</div>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="forgot-email" placeholder="your@email.com" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div id="forgot-msg" style="display:none;padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:12px"></div>
+      <button class="btn-full green" id="forgot-btn" onclick="submitForgotPassword()" style="margin-bottom:12px">Отправить ссылку</button>
+      <button onclick="go('login')" style="width:100%;background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;padding:8px">← Вернуться к входу</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESET PASSWORD ═══ -->
+<div class="page" id="page-reset">
+  <div class="auth-wrap">
+    <div class="auth-card" style="max-width:420px">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-size:40px;margin-bottom:8px">🔒</div>
+        <div style="font-size:20px;font-weight:800">Новый пароль</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:6px">Придумайте надёжный пароль</div>
+      </div>
+      <div id="reset-invalid" style="display:none;text-align:center;padding:1.5rem">
+        <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+        <div style="font-weight:700;margin-bottom:6px">Ссылка недействительна</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Возможно, она уже использована или истекла</div>
+        <button onclick="go('forgot')" class="btn-full green">Запросить новую ссылку</button>
+      </div>
+      <div id="reset-form">
+        <div class="field">
+          <label>Новый пароль</label>
+          <input type="password" id="reset-pw" placeholder="Минимум 8 символов" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div class="field">
+          <label>Подтверждение пароля</label>
+          <input type="password" id="reset-pw2" placeholder="Повторите пароль" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div id="reset-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>
+        <button class="btn-full green" id="reset-btn" onclick="submitResetPassword()">Сохранить пароль</button>
+      </div>
+      <div id="reset-success" style="display:none;text-align:center;padding:1rem">
+        <div style="font-size:40px;margin-bottom:10px">✅</div>
+        <div style="font-weight:700;font-size:16px;margin-bottom:6px">Пароль изменён!</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:16px">Теперь можно войти с новым паролем</div>
+        <button onclick="go('login')" class="btn-full green">Войти</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ TEACHER SETUP ═══ -->
