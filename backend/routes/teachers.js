@@ -80,7 +80,7 @@ router.get('/:id', async (req, res) => {
             const replySelect = hasReplyCol ? ', r.teacher_reply, r.replied_at' : ', NULL AS teacher_reply, NULL AS replied_at';
             const [rows] = await db.query(
                 `SELECT r.id, r.stars, r.text, r.tags, r.created_at, r.student_id${replySelect},
-                        u.first_name, u.last_name, u.initials, u.color, c.title AS course_title
+                        u.first_name, u.last_name, u.initials, u.color, u.avatar_url, c.title AS course_title
                  FROM reviews r
                  JOIN users u ON u.id = r.student_id
                  LEFT JOIN courses c ON c.id = r.course_id
@@ -101,7 +101,7 @@ router.get('/:id', async (req, res) => {
                 date:r.created_at, courseTitle:r.course_title,
                 teacherReply:r.teacher_reply||null, repliedAt:r.replied_at||null,
                 studentId:r.student_id,
-                student:{ name:`${r.first_name} ${r.last_name}`, initials:r.initials, color:r.color },
+                student:{ name:`${r.first_name} ${r.last_name}`, initials:r.initials, color:r.color, avatarUrl:r.avatar_url||null },
             })),
         });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
@@ -219,6 +219,44 @@ router.get('/my/stats', auth, teacherOnly, async (req, res) => {
             grossRevenue: parseFloat(r.gross), commission: parseFloat(r.commission), netRevenue: parseFloat(r.net),
         });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── GET /api/teachers/my/payments ────────────────────────────────
+// История платежей учителя
+router.get('/my/payments', auth, teacherOnly, async (req, res) => {
+    try {
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.json([]);
+        const tpId = tp[0].id;
+
+        const [rows] = await db.query(`
+            SELECT
+                e.id, e.price_paid, e.commission_amount, e.teacher_amount, e.enrolled_at,
+                c.title AS course_title, c.emoji AS course_emoji,
+                u.first_name, u.last_name, u.initials, u.color, u.avatar_url
+            FROM enrollments e
+            JOIN courses c ON c.id = e.course_id
+            JOIN users u ON u.id = e.student_id
+            WHERE e.teacher_id = ?
+            ORDER BY e.enrolled_at DESC
+        `, [tpId]);
+
+        res.json(rows.map(r => ({
+            id: r.id,
+            pricePaid: parseFloat(r.price_paid),
+            commission: parseFloat(r.commission_amount),
+            teacherAmount: parseFloat(r.teacher_amount),
+            date: r.enrolled_at,
+            courseTitle: r.course_title,
+            courseEmoji: r.course_emoji || '📖',
+            student: {
+                name: r.first_name + ' ' + r.last_name,
+                initials: r.initials,
+                color: r.color,
+                avatarUrl: r.avatar_url || null
+            }
+        })));
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
 // ─── GET /api/teachers/my/students ────────────────────────────────
@@ -475,7 +513,7 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
 
         const [rows] = await db.query(`
             SELECT r.id, r.stars, r.text, r.created_at, r.student_id${replySelect},
-                   u.first_name, u.last_name, u.color,
+                   u.first_name, u.last_name, u.color, u.avatar_url, u.initials,
                    c.title as course_title
             FROM reviews r
             JOIN users u ON u.id = r.student_id
@@ -495,8 +533,9 @@ router.get('/my/reviews', auth, teacherOnly, async (req, res) => {
             studentId: r.student_id,
             student: {
                 name: r.first_name + ' ' + r.last_name,
-                initials: (r.first_name[0]||'') + (r.last_name[0]||''),
-                color: r.color || '#18A96A'
+                initials: r.initials || (r.first_name[0]||'') + (r.last_name[0]||''),
+                color: r.color || '#18A96A',
+                avatarUrl: r.avatar_url || null
             }
         })));
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
