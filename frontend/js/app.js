@@ -1603,53 +1603,201 @@ function showAddLessonModal() {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'add-lesson-modal';
-        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
         document.body.appendChild(modal);
     }
     modal.innerHTML =
-        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:500px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2)">' +
+        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:540px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;margin:auto">' +
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
                 '<div style="font-size:16px;font-weight:800">📚 Новый урок</div>' +
                 '<button onclick="document.getElementById(\'add-lesson-modal\').remove()" style="background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">✕</button>' +
             '</div>' +
-            '<div class="field" style="margin-bottom:12px">' +
-                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Название урока</label>' +
-                '<input id="al-title" type="text" placeholder="Например: Введение в тему" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor=\'var(--g)\'" onblur="this.style.borderColor=\'var(--border)\'">' +
+            '<div style="margin-bottom:12px">' +
+                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Название урока *</label>' +
+                '<input id="al-title" type="text" placeholder="Например: Введение в Python" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box">' +
             '</div>' +
-            '<div class="field" style="margin-bottom:16px">' +
-                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Описание / содержание (необязательно)</label>' +
-                '<textarea id="al-content" rows="4" placeholder="Что будет на этом уроке..." style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor=\'var(--g)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+            '<div style="margin-bottom:12px">' +
+                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Описание урока</label>' +
+                '<textarea id="al-content" rows="3" placeholder="Что студенты узнают на этом уроке..." style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical"></textarea>' +
             '</div>' +
-            '<div id="al-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>' +
-            '<button onclick="saveNewLesson()" class="btn-full green" id="al-save-btn">+ Добавить урок</button>' +
+            '<div style="margin-bottom:16px">' +
+                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:8px">📎 Прикрепить файл к уроку (необязательно)</label>' +
+                '<label id="al-file-label" style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px dashed var(--border);border-radius:10px;padding:14px;cursor:pointer">' +
+                    '<span style="font-size:24px">📁</span>' +
+                    '<div><div style="font-size:13px;font-weight:700">Выбрать файл</div>' +
+                    '<div style="font-size:11px;color:var(--text3)">PDF, Word, картинки, видео — до 100 МБ</div></div>' +
+                    '<input type="file" id="al-file" style="display:none" onchange="previewLessonFile(this)">' +
+                '</label>' +
+                '<div id="al-file-preview" style="display:none;margin-top:8px;padding:10px 12px;background:var(--gl2);border-radius:9px;font-size:13px;align-items:center;gap:8px">' +
+                    '<span id="al-file-ico">📄</span>' +
+                    '<span id="al-file-info" style="flex:1"></span>' +
+                    '<button onclick="clearLessonFile()" style="background:none;border:none;color:#EF4444;cursor:pointer;font-size:16px">✕</button>' +
+                '</div>' +
+            '</div>' +
+            '<div id="al-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px;padding:8px 12px;background:#fee2e2;border-radius:8px"></div>' +
+            '<div id="al-progress" style="display:none;margin-bottom:10px">' +
+                '<div style="height:6px;background:var(--border2);border-radius:3px;overflow:hidden"><div id="al-progress-bar" style="height:100%;background:var(--g);border-radius:3px;width:60%;transition:width .3s"></div></div>' +
+                '<div style="font-size:12px;color:var(--text3);margin-top:4px;text-align:center">Загрузка файла...</div>' +
+            '</div>' +
+            '<button onclick="saveNewLesson()" class="btn-full green" id="al-save-btn">📚 Добавить урок</button>' +
         '</div>';
     modal.style.display = 'flex';
-    setTimeout(function() { document.getElementById('al-title').focus(); }, 100);
+    setTimeout(function() { var t = document.getElementById('al-title'); if(t) t.focus(); }, 100);
 }
 
+function previewLessonFile(input) {
+    var file = input.files[0];
+    if (!file) return;
+    var ext = file.name.split('.').pop().toLowerCase();
+    var icons = {pdf:'📄',doc:'📝',docx:'📝',ppt:'📊',pptx:'📊',xls:'📈',xlsx:'📈',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',mp4:'🎬',mp3:'🎵',zip:'🗜️'};
+    var size = file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+' МБ' : (file.size/1024).toFixed(0)+' КБ';
+    var label = document.getElementById('al-file-label');
+    var preview = document.getElementById('al-file-preview');
+    if (label) label.style.display = 'none';
+    if (preview) {
+        preview.style.display = 'flex';
+        document.getElementById('al-file-ico').textContent = icons[ext] || '📎';
+        document.getElementById('al-file-info').textContent = file.name + ' · ' + size;
+    }
+}
+
+function clearLessonFile() {
+    var input = document.getElementById('al-file');
+    if (input) input.value = '';
+    var label = document.getElementById('al-file-label');
+    var preview = document.getElementById('al-file-preview');
+    if (label) label.style.display = 'flex';
+    if (preview) preview.style.display = 'none';
+}
+
+
 async function saveNewLesson() {
-    var title   = document.getElementById('al-title').value.trim();
-    var content = document.getElementById('al-content').value.trim();
-    var btn     = document.getElementById('al-save-btn');
-    var err     = document.getElementById('al-err');
+    var title    = document.getElementById('al-title').value.trim();
+    var desc     = document.getElementById('al-content').value.trim();
+    var fileInput = document.getElementById('al-file');
+    var btn      = document.getElementById('al-save-btn');
+    var err      = document.getElementById('al-err');
+    var progress = document.getElementById('al-progress');
 
     err.style.display = 'none';
     if (!title) { err.textContent = 'Введите название урока'; err.style.display = 'block'; return; }
 
-    btn.disabled = true; btn.textContent = '⏳ Добавление...';
+    btn.disabled = true; btn.textContent = '⏳ Создание урока...';
     try {
-        await post('/teachers/lessons', { courseId: currentCourseId, title, content });
+        // 1. Создаём урок
+        var lessonResult = await post('/teachers/lessons', { courseId: currentCourseId, title, content: desc });
+
+        // 2. Если выбран файл — загружаем как материал к этому уроку
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            btn.textContent = '⏳ Загрузка файла...';
+            if (progress) progress.style.display = 'block';
+            var fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            fd.append('courseId', currentCourseId);
+            fd.append('lessonId', lessonResult.lessonId);
+            fd.append('title', fileInput.files[0].name);
+            await upload('/teachers/materials/upload', fd);
+        }
+
         document.getElementById('add-lesson-modal').remove();
         showToast('✅ Урок добавлен!');
-        await loadCourseData(); // Обновляем страницу
+        await loadCourseData();
     } catch(e) {
         err.textContent = e.message || 'Ошибка';
         err.style.display = 'block';
-        btn.disabled = false; btn.textContent = '+ Добавить урок';
+        btn.disabled = false; btn.textContent = '📚 Добавить урок';
+        if (progress) progress.style.display = 'none';
     }
 }
 
 // ─── Удалить урок ─────────────────────────────────────────────────
+
+// ─── Материалы: переключение типа ────────────────────────────────
+var _matType = 'file';
+function setMatType(type) {
+    _matType = type;
+    ['file','link','photo'].forEach(function(t) {
+        var btn = document.getElementById('mat-type-' + t);
+        var field = document.getElementById('mat-field-' + t);
+        if (btn) {
+            btn.style.background = t === type ? 'var(--g)' : 'none';
+            btn.style.color = t === type ? '#fff' : 'var(--text2)';
+            btn.style.borderColor = t === type ? 'var(--g)' : 'var(--border)';
+        }
+        if (field) field.style.display = t === type ? '' : 'none';
+    });
+}
+
+function previewMatFile(input) {
+    var file = input.files[0];
+    if (!file) return;
+    var nameEl = document.getElementById('mat-fname');
+    if (nameEl) nameEl.textContent = file.name;
+    // Автозаполнение названия если пустое
+    var titleEl = document.getElementById('mat-title');
+    if (titleEl && !titleEl.value) titleEl.value = file.name.replace(/\.[^.]+$/, '');
+}
+
+function previewMatPhoto(input) {
+    var file = input.files[0];
+    if (!file) return;
+    var nameEl = document.getElementById('mat-photo-name');
+    if (nameEl) nameEl.textContent = file.name;
+    var titleEl = document.getElementById('mat-title');
+    if (titleEl && !titleEl.value) titleEl.value = file.name.replace(/\.[^.]+$/, '');
+    var preview = document.getElementById('mat-photo-preview');
+    var img = document.getElementById('mat-photo-img');
+    if (preview && img) {
+        preview.style.display = '';
+        img.src = URL.createObjectURL(file);
+    }
+}
+
+async function uploadCourseMaterialFull() {
+    var title  = (document.getElementById('mat-title') || {}).value || '';
+    var status = document.getElementById('cp-mat-upload-status');
+    var btn    = document.getElementById('mat-submit-btn');
+
+    if (!title.trim()) {
+        if (status) { status.style.display='block'; status.style.background='#fee2e2'; status.style.color='#991b1b'; status.textContent='Введите название материала'; }
+        return;
+    }
+
+    btn.disabled = true; btn.textContent = '⏳ Загрузка...';
+
+    try {
+        if (_matType === 'link') {
+            // Ссылка — сохраняем через специальный эндпоинт
+            var url = (document.getElementById('mat-url') || {}).value || '';
+            if (!url) throw new Error('Введите ссылку');
+            await post('/teachers/materials/link', { courseId: currentCourseId, title: title.trim(), url });
+        } else {
+            // Файл или фото
+            var inputId = _matType === 'photo' ? 'cp-mat-photo-input' : 'cp-mat-file-input';
+            var fileInput = document.getElementById(inputId);
+            if (!fileInput || !fileInput.files || !fileInput.files[0]) throw new Error('Выберите файл');
+            var fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            fd.append('courseId', currentCourseId);
+            fd.append('title', title.trim());
+            await upload('/teachers/materials/upload', fd);
+        }
+
+        if (status) { status.style.display='block'; status.style.background='#dcfce7'; status.style.color='#166534'; status.textContent='✅ Материал добавлен!'; }
+        // Сброс формы
+        document.getElementById('mat-title').value = '';
+        var fi = document.getElementById('cp-mat-file-input'); if(fi) fi.value='';
+        var pi = document.getElementById('cp-mat-photo-input'); if(pi) pi.value='';
+        var mn = document.getElementById('mat-fname'); if(mn) mn.textContent='Выбрать файл';
+        var pp = document.getElementById('mat-photo-preview'); if(pp) pp.style.display='none';
+        var ui = document.getElementById('mat-url'); if(ui) ui.value='';
+        setTimeout(function() { loadCourseData(); }, 800);
+    } catch(e) {
+        if (status) { status.style.display='block'; status.style.background='#fee2e2'; status.style.color='#991b1b'; status.textContent='❌ ' + (e.message||'Ошибка'); }
+        btn.disabled = false; btn.textContent = '+ Добавить';
+    }
+}
+
 async function deleteLesson(lessonId) {
     if (!confirm('Удалить этот урок? Действие нельзя отменить.')) return;
     try {
@@ -3374,16 +3522,48 @@ function renderMaterials(materials) {
         if (!oldBtn) {
             matsSection.insertAdjacentHTML('afterbegin',
                 '<div id="cp-upload-mat-btn" style="margin-bottom:16px">' +
-                    '<div style="background:var(--gl2);border:2px dashed var(--g);border-radius:14px;padding:24px;text-align:center">' +
-                        '<div style="font-size:36px;margin-bottom:10px">📎</div>' +
-                        '<div style="font-size:15px;font-weight:800;margin-bottom:6px">Добавить материал ученикам</div>' +
-                        '<div style="font-size:12px;color:var(--text3);margin-bottom:16px">PDF, Word, Excel, картинки, архивы — до 50 МБ</div>' +
-                        '<label style="display:inline-flex;align-items:center;gap:8px;background:var(--g);color:#fff;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">' +
-                            '<span style="font-size:16px">+</span> Выбрать файл' +
-                            '<input type="file" id="cp-mat-file-input" style="display:none" onchange="uploadCourseMaterial(this)">' +
-                        '</label>' +
+                    '<div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:16px">' +
+                        '<div style="font-size:14px;font-weight:800;margin-bottom:12px;color:var(--text)">➕ Добавить материал</div>' +
+
+                        // Тип материала
+                        '<div style="display:flex;gap:8px;margin-bottom:14px">' +
+                            '<button id="mat-type-file" onclick="setMatType(\'file\')" style="flex:1;padding:9px;border:1.5px solid var(--g);border-radius:9px;background:var(--g);color:#fff;font-size:12px;font-weight:700;cursor:pointer">📎 Файл</button>' +
+                            '<button id="mat-type-link" onclick="setMatType(\'link\')" style="flex:1;padding:9px;border:1.5px solid var(--border);border-radius:9px;background:none;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)">🔗 Ссылка</button>' +
+                            '<button id="mat-type-photo" onclick="setMatType(\'photo\')" style="flex:1;padding:9px;border:1.5px solid var(--border);border-radius:9px;background:none;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)">🖼️ Фото</button>' +
+                        '</div>' +
+
+                        // Название
+                        '<input id="mat-title" type="text" placeholder="Название материала *" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:10px">' +
+
+                        // Файл
+                        '<div id="mat-field-file">' +
+                            '<label style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px dashed var(--border);border-radius:9px;padding:12px;cursor:pointer">' +
+                                '<span style="font-size:22px">📁</span>' +
+                                '<div><div style="font-size:13px;font-weight:700" id="mat-fname">Выбрать файл</div>' +
+                                '<div style="font-size:11px;color:var(--text3)">PDF, Word, Excel, видео — до 100 МБ</div></div>' +
+                                '<input type="file" id="cp-mat-file-input" style="display:none" onchange="previewMatFile(this)">' +
+                            '</label>' +
+                        '</div>' +
+
+                        // Ссылка
+                        '<div id="mat-field-link" style="display:none">' +
+                            '<input id="mat-url" type="url" placeholder="https://..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;outline:none;box-sizing:border-box">' +
+                        '</div>' +
+
+                        // Фото
+                        '<div id="mat-field-photo" style="display:none">' +
+                            '<label style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px dashed var(--border);border-radius:9px;padding:12px;cursor:pointer">' +
+                                '<span style="font-size:22px">🖼️</span>' +
+                                '<div><div style="font-size:13px;font-weight:700" id="mat-photo-name">Выбрать фото</div>' +
+                                '<div style="font-size:11px;color:var(--text3)">JPG, PNG, GIF</div></div>' +
+                                '<input type="file" id="cp-mat-photo-input" accept="image/*" style="display:none" onchange="previewMatPhoto(this)">' +
+                            '</label>' +
+                            '<div id="mat-photo-preview" style="display:none;margin-top:8px"><img id="mat-photo-img" style="width:100%;border-radius:9px;max-height:200px;object-fit:cover"></div>' +
+                        '</div>' +
+
+                        '<div id="cp-mat-upload-status" style="display:none;margin-top:10px;padding:8px 12px;border-radius:9px;font-size:13px;text-align:center"></div>' +
+                        '<button onclick="uploadCourseMaterialFull()" class="btn-full green" style="margin-top:12px;height:42px" id="mat-submit-btn">+ Добавить</button>' +
                     '</div>' +
-                    '<div id="cp-mat-upload-status" style="display:none;margin-top:10px;padding:10px 14px;border-radius:9px;font-size:13px;text-align:center"></div>' +
                 '</div>'
             );
         }
