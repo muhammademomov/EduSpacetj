@@ -592,10 +592,58 @@ function goPayForProfileById(id) {
 function goPayForProfile() {
     if (!currentUser) { go('login'); return; }
     if (currentUser.role === 'teacher') { showToast('Преподаватели не могут записываться на курсы', 'info'); return; }
-    get('/teachers/' + currentProfileId).then(t => {
-        if (t.courses?.length) { pendingCourseId = t.courses[0].id; go('student-dash'); loadStudentDash(); sdShow('payment-flow'); }
-        else showToast('У этого преподавателя пока нет курсов', 'info');
-    }).catch(()=>{});
+
+    get('/teachers/' + currentProfileId).then(function(t) {
+        var courses = (t.courses || []).filter(function(c) { return c.status === 'active'; });
+        if (!courses.length) { showToast('У этого преподавателя пока нет активных курсов', 'info'); return; }
+
+        if (courses.length === 1) {
+            // Только один курс — сразу к оплате
+            selectCourseForPayment(courses[0].id);
+        } else {
+            // Несколько курсов — показываем модал выбора
+            showCourseSelectModal(courses);
+        }
+    }).catch(function(){});
+}
+
+function showCourseSelectModal(courses) {
+    var list = document.getElementById('course-select-list');
+    if (!list) return;
+
+    list.innerHTML = courses.map(function(c) {
+        return '<div onclick="selectCourseForPayment(\'' + c.id + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--g)\';this.style.background=\'var(--gl2)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'\'">'+
+            '<div style="display:flex;align-items:center;gap:12px">'+
+                '<div style="font-size:24px">' + (c.emoji || '📖') + '</div>'+
+                '<div>'+
+                    '<div style="font-size:14px;font-weight:700">' + c.title + '</div>'+
+                    '<div style="font-size:12px;color:var(--text3);margin-top:2px">' + (c.category || '') + ' · ' + (c.level || '') + '</div>'+
+                '</div>'+
+            '</div>'+
+            '<div style="text-align:right;flex-shrink:0">'+
+                '<div style="font-size:15px;font-weight:800;color:var(--g2)">' + parseFloat(c.price).toLocaleString('ru') + ' смн</div>'+
+                '<div style="font-size:11px;color:var(--text3)">в месяц</div>'+
+            '</div>'+
+        '</div>';
+    }).join('');
+
+    var modal = document.getElementById('course-select-modal');
+    if (modal) modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCourseSelectModal() {
+    var modal = document.getElementById('course-select-modal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function selectCourseForPayment(courseId) {
+    closeCourseSelectModal();
+    pendingCourseId = courseId;
+    go('student-dash');
+    loadStudentDash();
+    sdShow('payment-flow');
 }
 
 // ═══════════════════════════════════════════════════════
