@@ -987,13 +987,13 @@ async function onBalanceApproved() {
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
 
-        if (currentProfileId) {
-            // Пришёл через учителя → открываем его профиль
-            openProfile(currentProfileId);
-        } else if (pendingCourseId) {
-            // Есть конкретный курс → страница оплаты
+        if (pendingCourseId) {
+            // Есть курс → идём к оплате (баланс уже пополнен)
             sdShow('payment-flow');
             await initPayFlow();
+        } else if (currentProfileId) {
+            // Пришёл через учителя → профиль учителя
+            openProfile(currentProfileId);
         } else {
             // Пришёл сам → каталог
             go('catalog');
@@ -1002,21 +1002,21 @@ async function onBalanceApproved() {
 }
 
 function onTopupNotifClick() {
-    // Обновляем баланс и перенаправляем в зависимости от контекста
+    // Обновляем баланс и переходим к оплате курса
     get('/payments/balance').then(function(bal) {
         currentUser.balance = bal.balance;
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
         // Закрываем панель уведомлений
-        var sdpNotif = document.getElementById('sdp-notifications');
-        if (sdpNotif && sdpNotif.classList.contains('on')) sdShow('overview');
+        sdShow('overview');
 
-        if (currentProfileId) {
-            // Пришёл через профиль учителя → открываем профиль учителя
-            openProfile(currentProfileId);
-        } else if (pendingCourseId) {
-            // Есть конкретный курс → страница оплаты
+        if (pendingCourseId) {
+            // Есть курс для покупки → страница оплаты (теперь баланс есть)
             sdShow('payment-flow');
+            initPayFlow();
+        } else if (currentProfileId) {
+            // Пришёл через учителя → профиль учителя
+            openProfile(currentProfileId);
         } else {
             // Пришёл сам → каталог
             go('catalog');
@@ -3320,7 +3320,7 @@ async function loadTopupHistory() {
             }).join('') + '</div>' +
             // Кнопка продолжить если есть одобренные
             (hasApproved ? '<button class="btn-full green" style="margin-top:12px" onclick="onBalanceApproved()">' +
-                (currentProfileId ? '✅ Продолжить — выбрать курс у преподавателя' : '✅ Продолжить — перейти в каталог') +
+                (pendingCourseId ? '🎓 Оплатить курс' : (currentProfileId ? '👨‍🏫 К профилю преподавателя' : '🔍 Перейти в каталог')) +
             '</button>' : '') +
             // Подсказка если есть ожидающие
             (hasPending && !hasApproved ? '<div style="text-align:center;font-size:12px;color:var(--text3);margin-top:10px">⏳ Ожидаем одобрения от администратора...</div>' : '');
