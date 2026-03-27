@@ -331,6 +331,120 @@ function showAdmin() {
     loadRejectedCount();
 }
 
+// ─── ЗАЯВКИ НА ПОПОЛНЕНИЕ ──────────────────────────────
+function loadTopupRequests(status) {
+    status = status || 'pending';
+    var el = document.getElementById('topup-requests-table');
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:#6b7280">⏳ Загрузка...</div>';
+    req('GET', '/payments/admin/topup-requests?status=' + status).then(function(rows) {
+        if (!rows.length) {
+            el.innerHTML = '<div style="text-align:center;padding:2rem;color:#6b7280">Заявок нет</div>';
+            return;
+        }
+        var html = '<table><thead><tr><th>Студент</th><th>Сумма</th><th>Способ</th><th>№ Транзакции</th><th>Баланс сейчас</th><th>Дата</th>' +
+            (status === 'pending' ? '<th>Действия</th>' : '<th>Комментарий</th>') + '</tr></thead><tbody>';
+        rows.forEach(function(r) {
+            var av = adminAv(r);
+            var methodName = r.method === 'alif_mobi' ? '📱 Алиф Моби' : '💳 Карта';
+            html += '<tr>' +
+                '<td><div class="user-cell">' + av + '<div><div class="user-name">' + r.first_name + ' ' + r.last_name + '</div><div class="user-email">' + r.email + '</div></div></div></td>' +
+                '<td><strong style="color:#16A34A">+' + parseFloat(r.amount).toLocaleString('ru') + ' смн</strong></td>' +
+                '<td>' + methodName + '</td>' +
+                '<td style="font-family:monospace;font-size:12px">' + r.transaction_id + '</td>' +
+                '<td>' + parseFloat(r.current_balance).toLocaleString('ru') + ' смн</td>' +
+                '<td>' + new Date(r.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</td>';
+            if (status === 'pending') {
+                html += '<td><div class="action-btns">' +
+                    '<button class="btn-approve" onclick="approveTopup('' + r.id + '')">✓ Зачислить</button>' +
+                    '<button class="btn-reject" onclick="rejectTopup('' + r.id + '')">✕ Отклонить</button>' +
+                    '</div></td>';
+            } else {
+                html += '<td style="font-size:12px;color:#6b7280">' + (r.admin_comment || '—') + '</td>';
+            }
+            html += '</tr>';
+        });
+        el.innerHTML = html + '</tbody></table>';
+    }).catch(function(e) {
+        el.innerHTML = '<div style="color:red;padding:1rem">Ошибка: ' + e.message + '</div>';
+    });
+}
+
+function approveTopup(id) {
+    var comment = prompt('Комментарий для студента (необязательно):') || '';
+    if (!confirm('Зачислить баланс студенту?')) return;
+    req('POST', '/payments/admin/topup-approve/' + id, { admin_comment: comment }).then(function(r) {
+        showToast('✅ Баланс пополнен! Новый баланс: ' + r.newBalance + ' смн');
+        loadTopupRequests('pending');
+        loadStats();
+    }).catch(function(e) { showToast(e.message, 'error'); });
+}
+
+function rejectTopup(id) {
+    var comment = prompt('Причина отклонения:');
+    if (!comment) return;
+    req('POST', '/payments/admin/topup-reject/' + id, { admin_comment: comment }).then(function() {
+        showToast('Заявка отклонена');
+        loadTopupRequests('pending');
+    }).catch(function(e) { showToast(e.message, 'error'); });
+}
+
+// ─── ЗАЯВКИ НА ВЫВОД ───────────────────────────────────
+function loadWithdrawRequests(status) {
+    status = status || 'pending';
+    var el = document.getElementById('withdraw-requests-table');
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:#6b7280">⏳ Загрузка...</div>';
+    req('GET', '/payments/admin/withdraw-requests?status=' + status).then(function(rows) {
+        if (!rows.length) {
+            el.innerHTML = '<div style="text-align:center;padding:2rem;color:#6b7280">Заявок нет</div>';
+            return;
+        }
+        var html = '<table><thead><tr><th>Учитель</th><th>Сумма</th><th>Куда перевести</th><th>Заработано</th><th>Дата</th>' +
+            (status === 'pending' ? '<th>Действия</th>' : '<th>Статус</th>') + '</tr></thead><tbody>';
+        rows.forEach(function(r) {
+            var av = adminAv(r);
+            var methodName = r.method === 'alif_mobi' ? '📱 Алиф Моби' : '💳 Карта';
+            html += '<tr>' +
+                '<td><div class="user-cell">' + av + '<div><div class="user-name">' + r.first_name + ' ' + r.last_name + '</div><div class="user-email">' + r.email + '</div></div></div></td>' +
+                '<td><strong style="color:#7C3AED">' + parseFloat(r.amount).toLocaleString('ru') + ' смн</strong></td>' +
+                '<td>' + methodName + '<br><span style="font-family:monospace;font-size:13px;font-weight:700">' + r.card_or_phone + '</span></td>' +
+                '<td>' + parseFloat(r.total_earnings || 0).toLocaleString('ru') + ' смн</td>' +
+                '<td>' + new Date(r.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</td>';
+            if (status === 'pending') {
+                html += '<td><div class="action-btns">' +
+                    '<button class="btn-approve" onclick="approveWithdraw('' + r.id + '')">✓ Выплачено</button>' +
+                    '<button class="btn-reject" onclick="rejectWithdraw('' + r.id + '')">✕ Отклонить</button>' +
+                    '</div></td>';
+            } else {
+                html += '<td><span class="badge ' + (r.status === 'approved' ? 'active' : 'rejected') + '">' +
+                    (r.status === 'approved' ? '✅ Выплачено' : '❌ Отклонено') + '</span></td>';
+            }
+            html += '</tr>';
+        });
+        el.innerHTML = html + '</tbody></table>';
+    }).catch(function(e) {
+        el.innerHTML = '<div style="color:red;padding:1rem">Ошибка: ' + e.message + '</div>';
+    });
+}
+
+function approveWithdraw(id) {
+    var comment = prompt('Комментарий (необязательно):') || '';
+    if (!confirm('Подтвердить что деньги переведены?')) return;
+    req('POST', '/payments/admin/withdraw-approve/' + id, { admin_comment: comment }).then(function() {
+        showToast('✅ Вывод подтверждён');
+        loadWithdrawRequests('pending');
+    }).catch(function(e) { showToast(e.message, 'error'); });
+}
+
+function rejectWithdraw(id) {
+    var comment = prompt('Причина отклонения:');
+    if (!comment) return;
+    req('POST', '/payments/admin/withdraw-reject/' + id, { admin_comment: comment }).then(function() {
+        showToast('Заявка отклонена');
+        loadWithdrawRequests('pending');
+    }).catch(function(e) { showToast(e.message, 'error'); });
+}
+
+
 function showPanel(name) {
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
     document.querySelectorAll('.sb-item').forEach(function(b) { b.classList.remove('on'); });
@@ -603,6 +717,7 @@ function restoreTeacher(userId, btn) {
         btn.disabled = false; btn.textContent = '↩️ Вернуть на проверку';
     });
 }
+
 
 // Event listeners
 document.getElementById('login-btn').addEventListener('click', doLogin);
