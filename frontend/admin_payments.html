@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSpace — Финансы</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; min-height: 100vh; }
+.header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+.logo { background: #18A96A; color: #fff; font-weight: 800; font-size: 14px; padding: 6px 12px; border-radius: 8px; }
+.header h1 { font-size: 16px; font-weight: 700; }
+.back-btn { margin-left: auto; background: none; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: #374151; }
+.tabs { display: flex; gap: 8px; padding: 16px 24px 0; }
+.tab { padding: 8px 18px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 600; cursor: pointer; background: #e5e7eb; color: #6b7280; border: none; }
+.tab.on { background: #fff; color: #18A96A; border-bottom: 2px solid #18A96A; }
+.content { background: #fff; margin: 0 0 0 0; padding: 20px 24px; min-height: calc(100vh - 120px); }
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.filter-btn { padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid #e5e7eb; background: #fff; color: #374151; }
+.filter-btn.on { background: #18A96A; color: #fff; border-color: #18A96A; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; background: #f9fafb; color: #6b7280; font-size: 11px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
+td { padding: 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+tr:hover td { background: #f9fafb; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.badge-pending { background: #fef3c7; color: #92400e; }
+.badge-approved { background: #d1fae5; color: #065f46; }
+.badge-rejected { background: #fee2e2; color: #991b1b; }
+.btn-approve { background: #18A96A; color: #fff; border: none; padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; margin-right: 4px; }
+.btn-reject { background: #EF4444; color: #fff; border: none; padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.btn-approve:hover { background: #16A34A; }
+.btn-reject:hover { background: #DC2626; }
+.empty { text-align: center; padding: 3rem; color: #9ca3af; }
+.empty-ico { font-size: 2.5rem; margin-bottom: 8px; }
+.amount-pos { color: #16A34A; font-weight: 800; }
+.amount-neg { color: #7C3AED; font-weight: 800; }
+.user-cell { display: flex; align-items: center; gap: 8px; }
+.av { width: 32px; height: 32px; border-radius: 8px; background: #18A96A; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; overflow: hidden; }
+.av img { width: 100%; height: 100%; object-fit: cover; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 999; display: none; }
+.loading { text-align: center; padding: 3rem; color: #9ca3af; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">EduSpace</div>
+  <h1>💰 Финансы</h1>
+  <button class="back-btn" onclick="window.location.href='admin.html'">← Назад в админку</button>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="switchTab('topup', this)">💰 Пополнения</button>
+  <button class="tab" onclick="switchTab('withdraw', this)">💸 Выводы</button>
+</div>
+
+<div class="content">
+  <div class="filter-row">
+    <button class="filter-btn on" onclick="setFilter('pending', this)">⏳ Ожидают</button>
+    <button class="filter-btn" onclick="setFilter('approved', this)">✅ Одобренные</button>
+    <button class="filter-btn" onclick="setFilter('rejected', this)">❌ Отклонённые</button>
+  </div>
+  <div id="table-area"><div class="loading">⏳ Загрузка...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var API = 'https://eduspacetj-production.up.railway.app/api';
+var token = localStorage.getItem('admin_token');
+var currentTab = 'topup';
+var currentFilter = 'pending';
+
+if (!token) { window.location.href = 'admin.html'; }
+
+function req(method, url, data) {
+    var opts = { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, cache: 'no-store' };
+    if (data) opts.body = JSON.stringify(data);
+    return fetch(API + url, opts).then(function(r) {
+        return r.json().then(function(j) {
+            if (!r.ok) throw new Error(j.error || 'Ошибка');
+            return j;
+        });
+    });
+}
+
+function toast(msg, ok) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.background = ok === false ? '#EF4444' : '#18A96A';
+    el.style.display = 'block';
+    setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
+function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+    loadData();
+}
+
+function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+    loadData();
+}
+
+function av(item) {
+    var bg = item.color || '#18A96A';
+    var ini = (item.initials) || ((item.first_name||'')[0] + (item.last_name||'')[0]).toUpperCase() || '?';
+    var inner = item.avatar_url ? '<img src="' + item.avatar_url + '">' : ini;
+    return '<div class="av" style="background:' + bg + '">' + inner + '</div>';
+}
+
+function fmtDate(d) {
+    return new Date(d).toLocaleDateString('ru', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+}
+
+function loadData() {
+    var el = document.getElementById('table-area');
+    el.innerHTML = '<div class="loading">⏳ Загрузка...</div>';
+
+    if (currentTab === 'topup') {
+        req('GET', '/payments/admin/topup-requests?status=' + currentFilter)
+        .then(function(rows) { renderTopup(rows); })
+        .catch(function(e) { el.innerHTML = '<div class="empty"><div class="empty-ico">❌</div>' + e.message + '</div>'; });
+    } else {
+        req('GET', '/payments/admin/withdraw-requests?status=' + currentFilter)
+        .then(function(rows) { renderWithdraw(rows); })
+        .catch(function(e) { el.innerHTML = '<div class="empty"><div class="empty-ico">❌</div>' + e.message + '</div>'; });
+    }
+}
+
+function renderTopup(rows) {
+    var el = document.getElementById('table-area');
+    if (!rows.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-ico">💰</div>Заявок нет</div>';
+        return;
+    }
+    var html = '<table><thead><tr><th>Студент</th><th>Сумма</th><th>Способ</th><th>№ Транзакции</th><th>Баланс сейчас</th><th>Дата</th>' + (currentFilter === 'pending' ? '<th>Действие</th>' : '<th>Комментарий</th>') + '</tr></thead><tbody>';
+    rows.forEach(function(r) {
+        var method = r.method === 'alif_mobi' ? '📱 Алиф Моби' : '💳 Карта';
+        html += '<tr>';
+        html += '<td><div class="user-cell">' + av(r) + '<div><b>' + r.first_name + ' ' + r.last_name + '</b><br><span style="color:#9ca3af;font-size:11px">' + r.email + '</span></div></div></td>';
+        html += '<td><span class="amount-pos">+' + parseFloat(r.amount).toLocaleString('ru') + ' смн</span></td>';
+        html += '<td>' + method + '</td>';
+        html += '<td style="font-family:monospace">' + r.transaction_id + '</td>';
+        html += '<td>' + parseFloat(r.current_balance || 0).toLocaleString('ru') + ' смн</td>';
+        html += '<td>' + fmtDate(r.created_at) + '</td>';
+        if (currentFilter === 'pending') {
+            html += '<td><button class="btn-approve" onclick="approveTopup(\'' + r.id + '\', \'' + r.first_name + '\')">✓ Зачислить</button><button class="btn-reject" onclick="rejectTopup(\'' + r.id + '\')">✕</button></td>';
+        } else {
+            html += '<td><span class="badge badge-' + r.status + '">' + (r.status === 'approved' ? '✅ Зачислено' : '❌ Отклонено') + '</span>' + (r.admin_comment ? '<br><small>' + r.admin_comment + '</small>' : '') + '</td>';
+        }
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+}
+
+function renderWithdraw(rows) {
+    var el = document.getElementById('table-area');
+    if (!rows.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-ico">💸</div>Заявок нет</div>';
+        return;
+    }
+    var html = '<table><thead><tr><th>Учитель</th><th>Сумма</th><th>Реквизиты</th><th>Дата</th>' + (currentFilter === 'pending' ? '<th>Действие</th>' : '<th>Статус</th>') + '</tr></thead><tbody>';
+    rows.forEach(function(r) {
+        var method = r.method === 'alif_mobi' ? '📱 Алиф' : '💳 Карта';
+        html += '<tr>';
+        html += '<td><div class="user-cell">' + av(r) + '<div><b>' + r.first_name + ' ' + r.last_name + '</b><br><span style="color:#9ca3af;font-size:11px">' + r.email + '</span></div></div></td>';
+        html += '<td><span class="amount-neg">' + parseFloat(r.amount).toLocaleString('ru') + ' смн</span></td>';
+        html += '<td>' + method + '<br><b style="font-family:monospace">' + r.card_or_phone + '</b></td>';
+        html += '<td>' + fmtDate(r.created_at) + '</td>';
+        if (currentFilter === 'pending') {
+            html += '<td><button class="btn-approve" onclick="approveWithdraw(\'' + r.id + '\')">✓ Выплачено</button><button class="btn-reject" onclick="rejectWithdraw(\'' + r.id + '\')">✕</button></td>';
+        } else {
+            html += '<td><span class="badge badge-' + r.status + '">' + (r.status === 'approved' ? '✅ Выплачено' : '❌ Отклонено') + '</span></td>';
+        }
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+}
+
+function approveTopup(id, name) {
+    if (!confirm('Зачислить баланс студенту ' + name + '?')) return;
+    req('POST', '/payments/admin/topup-approve/' + id, {}).then(function(r) {
+        toast('✅ Баланс зачислен: ' + r.newBalance + ' смн');
+        loadData();
+    }).catch(function(e) { toast(e.message, false); });
+}
+
+function rejectTopup(id) {
+    var comment = prompt('Причина отклонения:');
+    if (!comment) return;
+    req('POST', '/payments/admin/topup-reject/' + id, { admin_comment: comment }).then(function() {
+        toast('Заявка отклонена');
+        loadData();
+    }).catch(function(e) { toast(e.message, false); });
+}
+
+function approveWithdraw(id) {
+    if (!confirm('Подтвердить что деньги переведены?')) return;
+    req('POST', '/payments/admin/withdraw-approve/' + id, {}).then(function() {
+        toast('✅ Вывод подтверждён');
+        loadData();
+    }).catch(function(e) { toast(e.message, false); });
+}
+
+function rejectWithdraw(id) {
+    var comment = prompt('Причина отклонения:');
+    if (!comment) return;
+    req('POST', '/payments/admin/withdraw-reject/' + id, { admin_comment: comment }).then(function() {
+        toast('Заявка отклонена');
+        loadData();
+    }).catch(function(e) { toast(e.message, false); });
+}
+
+// Загрузка при старте
+loadData();
+setInterval(loadData, 30000); // Обновление каждые 30 сек
+</script>
+</body>
+</html>
