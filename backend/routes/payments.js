@@ -209,13 +209,13 @@ router.post('/topup-request', auth, studentOnly, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
 
-    const { amount, method, transaction_id, comment } = req.body;
+    const { amount, method, transaction_id, comment, course_id } = req.body;
     try {
         const reqId = randomUUID();
         await db.query(
-            `INSERT INTO topup_requests (id, student_id, amount, method, transaction_id, comment, status)
-             VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
-            [reqId, req.user.id, parseFloat(amount), method, transaction_id.trim(), comment || null]
+            `INSERT INTO topup_requests (id, student_id, amount, method, transaction_id, comment, course_id, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+            [reqId, req.user.id, parseFloat(amount), method, transaction_id.trim(), comment || null, course_id || null]
         );
 
         // Уведомление студенту
@@ -300,28 +300,30 @@ router.post('/admin/topup-approve/:id', auth, async (req, res) => {
         if (topupReq.status !== 'pending') return res.status(400).json({ error: 'Заявка уже обработана' });
 
         await db.transaction(async (conn) => {
-            // 1. Пополняем баланс студента
+            // 1. Пополняем баланс на всю сумму
             await conn.execute(
                 'UPDATE student_profiles SET balance = balance + ?, total_added = total_added + ? WHERE user_id = ?',
                 [topupReq.amount, topupReq.amount, topupReq.student_id]
             );
-            // 2. Транзакция
+            // 2. Транзакция пополнения
             await conn.execute(
                 'INSERT INTO transactions (id, user_id, type, amount, description) VALUES (?,?,?,?,?)',
                 [randomUUID(), topupReq.student_id, 'topup', topupReq.amount,
-                 `Пополнение одобрено: ${topupReq.amount} смн (${topupReq.method === 'alif_mobi' ? 'Алиф Моби' : 'Карта'})`]
+                 `Пополнение одобрено: ${topupReq.amount} смн`]
             );
-            // 3. Обновляем статус заявки
+            // 3. Статус заявки
             await conn.execute(
                 `UPDATE topup_requests SET status='approved', admin_comment=?, reviewed_at=NOW() WHERE id=?`,
                 [admin_comment || null, req.params.id]
             );
-            // 4. Уведомление студенту
+            // 4. Уведомление студенту — с подсказкой что можно купить курс
+            const courseHint = topupReq.course_id ? ' Теперь вы можете оплатить курс.' : '';
             await conn.execute(
-                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?,?,?,?,?,?)',
                 [randomUUID(), topupReq.student_id, 'topup',
                  '✅ Баланс пополнен!',
-                 `+${topupReq.amount} смн зачислено на ваш счёт`]
+                 `+${topupReq.amount} смн зачислено на ваш счёт.${courseHint}`,
+                 topupReq.course_id || null]
             );
         });
 
