@@ -419,11 +419,15 @@ router.get('/:id/my', auth, async (req, res) => {
             console.log('Materials found:', matRows.length, 'for course:', courseId);
         } catch(e) { console.log('materials query error:', e.message); }
 
-        // Расписание
-        const [sched] = await db.query(
-            'SELECT * FROM schedule WHERE enrollment_id = ?',
-            [enrollment.id]
-        );
+        // Расписание (только для студентов у которых есть enrollment.id)
+        let sched = [];
+        if (enrollment.id) {
+            const [schedRows] = await db.query(
+                'SELECT * FROM schedule WHERE enrollment_id = ?',
+                [enrollment.id]
+            );
+            sched = schedRows;
+        }
 
         const safeJson = (v, d) => { if (!v) return d; try { return JSON.parse(v); } catch { return d; } };
         const doneLessons = lessons.filter(l => progressMap[l.id]?.isDone).length;
