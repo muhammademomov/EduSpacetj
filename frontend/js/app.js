@@ -1172,12 +1172,22 @@ async function initPayFlow() {
                 var infoEl = document.getElementById('topup-shortage-info');
                 if (infoEl) {
                     infoEl.style.display = 'block';
-                    infoEl.innerHTML = '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px">' +
-                        '<b>Недостаточно средств</b><br>' +
-                        'Цена курса: <b>' + c.price + ' смн</b> · Ваш баланс: <b>' + bal.balance + ' смн</b><br>' +
-                        'Пополните минимум на <b>' + shortage + ' смн</b>' +
-                    '</div>';
-                    // Предзаполняем сумму
+                    infoEl.innerHTML =
+                        '<div style="background:#f0fdf4;border:1.5px solid var(--g);border-radius:12px;padding:14px;margin-bottom:14px">' +
+                            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+                                '<div style="font-size:24px">' + (c.emoji||'📖') + '</div>' +
+                                '<div><div style="font-size:14px;font-weight:800">' + c.title + '</div>' +
+                                '<div style="font-size:12px;color:var(--text3)">' + (c.category||'') + '</div></div>' +
+                                '<div style="margin-left:auto;text-align:right"><div style="font-size:18px;font-weight:800;color:var(--g2)">' + parseFloat(c.price).toLocaleString('ru') + ' смн</div>' +
+                                '<div style="font-size:11px;color:var(--text3)">стоимость курса</div></div>' +
+                            '</div>' +
+                            (bal.balance > 0 ?
+                                '<div style="font-size:12px;color:var(--text2);padding:8px;background:rgba(0,0,0,.04);border-radius:8px">' +
+                                '💰 Ваш баланс: <b>' + bal.balance + ' смн</b> · Нужно пополнить минимум на <b>' + shortage + ' смн</b></div>'
+                            : '') +
+                            '<div style="font-size:12px;color:var(--text3);margin-top:8px">✅ После одобрения курс будет куплен автоматически. Остаток зачислится на баланс.</div>' +
+                        '</div>';
+                    // Предзаполняем сумму (минимум нужная сумма)
                     var amtInput = document.getElementById('tr-amount');
                     if (amtInput) amtInput.value = shortage;
                 }
@@ -3259,7 +3269,13 @@ async function submitTopupRequest() {
 
     btn.disabled = true; btn.textContent = '⏳ Отправка...';
     try {
-        await post('/payments/topup-request', { amount: parseFloat(amount), method: _topupMethod, transaction_id: txid, comment });
+        await post('/payments/topup-request', {
+            amount: parseFloat(amount),
+            method: _topupMethod,
+            transaction_id: txid,
+            comment,
+            course_id: pendingCourseId || null
+        });
         showToast('✅ Заявка отправлена! Ожидайте пополнения.');
         document.getElementById('tr-amount').value = '';
         document.getElementById('tr-txid').value = '';
