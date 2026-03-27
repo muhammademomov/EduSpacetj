@@ -1687,23 +1687,30 @@ async function saveNewLesson() {
         // 1. Создаём урок
         var lessonResult = await post('/teachers/lessons', { courseId: currentCourseId, title, content: desc });
 
-        // 2. Если выбран файл — загружаем как материал к этому уроку
+        // 2. Если выбран файл — загружаем отдельно (ошибка файла не отменяет урок)
         if (fileInput && fileInput.files && fileInput.files[0]) {
             btn.textContent = '⏳ Загрузка файла...';
             if (progress) progress.style.display = 'block';
-            var fd = new FormData();
-            fd.append('file', fileInput.files[0]);
-            fd.append('courseId', currentCourseId);
-            fd.append('lessonId', lessonResult.lessonId);
-            fd.append('title', fileInput.files[0].name);
-            await upload('/teachers/materials/upload', fd);
+            try {
+                var fd = new FormData();
+                fd.append('file', fileInput.files[0]);
+                fd.append('courseId', currentCourseId);
+                fd.append('lessonId', lessonResult.lessonId);
+                fd.append('title', fileInput.files[0].name);
+                await upload('/teachers/materials/upload', fd);
+            } catch(fileErr) {
+                // Урок создан, файл не загрузился — показываем предупреждение
+                console.warn('File upload failed:', fileErr.message);
+                showToast('Урок добавлен, но файл не загрузился: ' + (fileErr.message || ''), 'info');
+            }
         }
 
-        document.getElementById('add-lesson-modal').remove();
+        var modal = document.getElementById('add-lesson-modal');
+        if (modal) modal.remove();
         showToast('✅ Урок добавлен!');
         await loadCourseData();
     } catch(e) {
-        err.textContent = e.message || 'Ошибка';
+        err.textContent = e.message || 'Ошибка сервера';
         err.style.display = 'block';
         btn.disabled = false; btn.textContent = '📚 Добавить урок';
         if (progress) progress.style.display = 'none';
