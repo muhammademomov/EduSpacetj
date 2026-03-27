@@ -3379,6 +3379,7 @@ function renderCoursePage(data) {
     if (pbText) pbText.textContent = progress.done + ' из ' + progress.total + ' уроков';
 
     // Render lessons
+    window._currentCourseData = data;
     renderLessons(lessons);
 
     // Render schedule
@@ -3394,6 +3395,74 @@ function renderCoursePage(data) {
     cpTab('lessons', document.querySelector('.cp-tab.on') || document.querySelector('.cp-tab'));
 }
 
+
+// ─── Модал детали урока ────────────────────────────────────────────
+function openLessonDetail(lessonId, e) {
+    if (e) e.stopPropagation();
+    var data = window._currentCourseData;
+    if (!data) return;
+
+    var lesson = (data.lessons || []).find(function(l) { return l.id === lessonId; });
+    if (!lesson) return;
+
+    var lessonMats = (data.materials || []).filter(function(m) { return m.lessonId === lessonId; });
+    var isT = currentUser && currentUser.role === 'teacher';
+
+    var TYPE_ICONS = {pdf:'📄',doc:'📝',docx:'📝',ppt:'📊',pptx:'📊',xls:'📈',xlsx:'📈',
+                      jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',mp4:'🎬',mp3:'🎵',zip:'🗜️',txt:'📋'};
+
+    var modal = document.getElementById('lesson-detail-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'lesson-detail-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:flex-end;justify-content:center;padding:0';
+        modal.onclick = function(ev) { if (ev.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+
+    var matsHtml = '';
+    if (lessonMats.length) {
+        matsHtml = '<div style="margin-top:16px">' +
+            '<div style="font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📎 Файлы к уроку</div>' +
+            lessonMats.map(function(m) {
+                var ext = m.fileType || (m.fileUrl||'').split('.').pop().split('?')[0].toLowerCase();
+                var ico = TYPE_ICONS[ext] || '📎';
+                var size = m.fileSize ? (m.fileSize > 1024*1024 ? (m.fileSize/1024/1024).toFixed(1)+' МБ' : (m.fileSize/1024).toFixed(0)+' КБ') : '';
+                return '<a href="' + (m.fileUrl||'#') + '" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:10px;text-decoration:none;color:inherit;margin-bottom:8px;border:1px solid var(--border2)">' +
+                    '<div style="width:40px;height:40px;background:var(--gl2);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">' + ico + '</div>' +
+                    '<div style="flex:1;min-width:0">' +
+                        '<div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + m.title + '</div>' +
+                        '<div style="font-size:11px;color:var(--text3)">' + (size ? size + ' · ' : '') + ext.toUpperCase() + '</div>' +
+                    '</div>' +
+                    '<div style="font-size:16px;color:var(--g2)">↓</div>' +
+                '</a>';
+            }).join('') +
+        '</div>';
+    } else if (!isT) {
+        matsHtml = '<div style="margin-top:12px;text-align:center;padding:12px;color:var(--text3);font-size:13px">Файлов к этому уроку пока нет</div>';
+    }
+
+    var contentHtml = lesson.content
+        ? '<div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:4px;white-space:pre-wrap">' + lesson.content + '</div>'
+        : '';
+
+    modal.innerHTML =
+        '<div style="background:var(--white);border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:1.5rem;max-height:85vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)">' +
+            '<div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1.25rem"></div>' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">' +
+                '<div>' +
+                    '<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px">Урок ' + lesson.order + '</div>' +
+                    '<div style="font-size:18px;font-weight:800">' + lesson.title + '</div>' +
+                '</div>' +
+                '<button onclick="var m=document.getElementById(\'lesson-detail-modal\');if(m)m.remove()" style="background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;flex-shrink:0">✕</button>' +
+            '</div>' +
+            (contentHtml ? '<div style="padding:12px;background:var(--bg);border-radius:10px;margin-bottom:4px">' + contentHtml + '</div>' : '') +
+            matsHtml +
+            (!isT ? '<button onclick="event.stopPropagation();toggleLesson(\'' + lessonId + '\', ' + !lesson.isDone + ', event);document.getElementById(\'lesson-detail-modal\').remove()" class="btn-full ' + (lesson.isDone ? 'outline' : 'green') + '" style="margin-top:16px">' + (lesson.isDone ? '↩ Отметить не пройденным' : '✅ Отметить пройденным') + '</button>' : '') +
+        '</div>';
+    modal.style.display = 'flex';
+}
+
 function renderLessons(lessons) {
     const el = document.getElementById('cp-lessons-list');
     if (!lessons.length) {
@@ -3401,16 +3470,39 @@ function renderLessons(lessons) {
         return;
     }
     var isT = currentUser && currentUser.role === 'teacher';
+    // Строим карту материалов по уроку
+    var matsByLesson = {};
+    if (window._currentCourseData && window._currentCourseData.materials) {
+        window._currentCourseData.materials.forEach(function(m) {
+            if (m.lessonId) {
+                if (!matsByLesson[m.lessonId]) matsByLesson[m.lessonId] = [];
+                matsByLesson[m.lessonId].push(m);
+            }
+        });
+    }
+
     el.innerHTML = lessons.map(function(l) {
-        return '<div class="cp-lesson' + (l.isDone && !isT ? ' done' : '') + '" id="lesson-' + l.id + '">' +
+        var lessonMats = matsByLesson[l.id] || [];
+        var hasMats = lessonMats.length > 0;
+        var hasContent = l.content && l.content.trim();
+        return '<div class="cp-lesson' + (l.isDone && !isT ? ' done' : '') + '" id="lesson-' + l.id + '" onclick="openLessonDetail(\'' + l.id + '\', event)" style="cursor:pointer">' +
             '<div class="cp-lesson-num">' + (l.isDone && !isT ? '✓' : l.order) + '</div>' +
             '<div class="cp-lesson-info">' +
                 '<div class="cp-lesson-title">' + l.title + '</div>' +
-                '<div class="cp-lesson-meta">' + (l.isDone && l.doneAt && !isT ? 'Пройдено ' + new Date(l.doneAt).toLocaleDateString('ru', {day:'numeric',month:'short'}) : 'Урок ' + l.order) + '</div>' +
+                '<div class="cp-lesson-meta">' +
+                    (l.isDone && l.doneAt && !isT
+                        ? 'Пройдено ' + new Date(l.doneAt).toLocaleDateString('ru', {day:'numeric',month:'short'})
+                        : 'Урок ' + l.order) +
+                    (hasMats ? ' · 📎 ' + lessonMats.length + ' файл' + (lessonMats.length > 1 ? 'а' : '') : '') +
+                    (hasContent ? ' · 📝 есть описание' : '') +
+                '</div>' +
             '</div>' +
             (isT
-                ? '<button onclick="deleteLesson(\'' + l.id + '\')" style="background:none;border:none;color:#EF4444;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;opacity:.7" title="Удалить урок">🗑</button>'
-                : '<div class="cp-lesson-check" onclick="toggleLesson(\'' + l.id + '\', ' + (!l.isDone) + ', event)" title="' + (l.isDone ? 'Отметить не пройденным' : 'Отметить пройденным') + '">' + (l.isDone ? '✓' : '') + '</div>'
+                ? '<div style="display:flex;align-items:center;gap:4px">' +
+                    '<span style="font-size:12px;color:var(--text3)">→</span>' +
+                    '<button onclick="event.stopPropagation();deleteLesson(\'' + l.id + '\')" style="background:none;border:none;color:#EF4444;font-size:16px;cursor:pointer;padding:4px 6px;border-radius:6px;opacity:.7" title="Удалить урок">🗑</button>' +
+                  '</div>'
+                : '<div class="cp-lesson-check" onclick="event.stopPropagation();toggleLesson(\'' + l.id + '\', ' + (!l.isDone) + ', event)" title="' + (l.isDone ? 'Отметить не пройденным' : 'Отметить пройденным') + '">' + (l.isDone ? '✓' : '') + '</div>'
             ) +
         '</div>';
     }).join('');
