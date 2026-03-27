@@ -229,9 +229,10 @@ router.get('/my/payments', auth, teacherOnly, async (req, res) => {
         if (!tp.length) return res.json([]);
         const tpId = tp[0].id;
 
-        const [rows] = await db.query(`
+        // Приходы — зачисления от студентов
+        const [incomeRows] = await db.query(`
             SELECT
-                e.id, e.price_paid, e.commission_amount, e.teacher_amount, e.enrolled_at,
+                e.id, e.price_paid, e.commission_amount, e.teacher_amount, e.enrolled_at AS date,
                 c.title AS course_title, c.emoji AS course_emoji,
                 u.first_name, u.last_name, u.initials, u.color, u.avatar_url
             FROM enrollments e
@@ -241,12 +242,22 @@ router.get('/my/payments', auth, teacherOnly, async (req, res) => {
             ORDER BY e.enrolled_at DESC
         `, [tpId]);
 
-        res.json(rows.map(r => ({
+        // Расходы — выводы средств (только одобренные)
+        const [withdrawRows] = await db.query(`
+            SELECT id, amount, method, card_or_phone, reviewed_at AS date
+            FROM withdraw_requests
+            WHERE teacher_id = ? AND status = 'approved'
+            ORDER BY reviewed_at DESC
+        `, [req.user.id]);
+
+        // Объединяем и сортируем по дате
+        const income = incomeRows.map(r => ({
             id: r.id,
+            type: 'income',
+            amount: parseFloat(r.teacher_amount),
             pricePaid: parseFloat(r.price_paid),
             commission: parseFloat(r.commission_amount),
-            teacherAmount: parseFloat(r.teacher_amount),
-            date: r.enrolled_at,
+            date: r.date,
             courseTitle: r.course_title,
             courseEmoji: r.course_emoji || '📖',
             student: {
@@ -255,7 +266,19 @@ router.get('/my/payments', auth, teacherOnly, async (req, res) => {
                 color: r.color,
                 avatarUrl: r.avatar_url || null
             }
-        })));
+        }));
+
+        const withdrawals = withdrawRows.map(r => ({
+            id: r.id,
+            type: 'withdrawal',
+            amount: parseFloat(r.amount),
+            date: r.date,
+            method: r.method === 'alif_mobi' ? 'Алиф Моби' : 'Банковская карта',
+            cardOrPhone: r.card_or_phone
+        }));
+
+        const all = [...income, ...withdrawals].sort((a, b) => new Date(b.date) - new Date(a.date));
+        res.json(all);
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
