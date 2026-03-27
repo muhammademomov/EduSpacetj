@@ -710,13 +710,49 @@ function regStep2() {
     document.getElementById('pw-err').style.display = 'none';
     if (p1.length < 8) { alert('Пароль минимум 8 символов'); return; }
     regData = { firstName: fn, lastName: ln, phone: ph, email: em, password: p1, role: regRole === 's' ? 'student' : 'teacher', subject: document.getElementById('r-sub')?.value || '' };
-    document.getElementById('sms-ph').textContent = '+992 ' + ph;
+
+    // Показываем шаг с условиями
     document.getElementById('rs1').style.display = 'none';
-    document.getElementById('rs2').style.display = 'block';
-    document.getElementById('reg-sub').textContent = 'Шаг 2 из 3 — Подтверждение';
+    document.getElementById('rs-terms').style.display = 'block';
+    document.getElementById('reg-sub').textContent = 'Шаг 2 из 4 — Условия';
     document.getElementById('ss1').classList.add('done');
+    // Сбрасываем чекбокс
+    var chk = document.getElementById('terms-check');
+    if (chk) chk.checked = false;
+    onTermsCheck();
+}
+
+function onTermsCheck() {
+    var chk = document.getElementById('terms-check');
+    var btn = document.getElementById('terms-confirm-btn');
+    var lbl = document.getElementById('terms-label');
+    if (!btn) return;
+    var checked = chk && chk.checked;
+    btn.disabled = !checked;
+    btn.style.opacity = checked ? '1' : '.5';
+    btn.style.cursor = checked ? 'pointer' : 'not-allowed';
+    if (lbl) lbl.style.borderColor = checked ? 'var(--g)' : 'var(--border)';
+}
+
+function confirmTerms() {
+    var chk = document.getElementById('terms-check');
+    if (!chk || !chk.checked) return;
+
+    // Переходим к SMS
+    document.getElementById('rs-terms').style.display = 'none';
+    document.getElementById('rs2').style.display = 'block';
+    document.getElementById('reg-sub').textContent = 'Шаг 3 из 4 — Подтверждение';
+    document.getElementById('ss2').classList.add('done');
+    document.getElementById('sms-ph').textContent = '+992 ' + regData.phone;
     document.getElementById('s0').focus();
     startTimer();
+}
+
+function backToForm() {
+    document.getElementById('rs-terms').style.display = 'none';
+    document.getElementById('rs1').style.display = 'block';
+    document.getElementById('reg-sub').textContent = 'Шаг 1 из 4';
+    document.getElementById('ss1').classList.remove('done');
 }
 
 function smsIn(el, idx) {
@@ -743,6 +779,8 @@ async function verifySMS() {
         currentUser = result.user;
         document.getElementById('rs2').style.display = 'none';
         document.getElementById('rs3').style.display = 'block';
+        document.getElementById('reg-sub').textContent = 'Шаг 4 из 4 — Готово';
+        document.getElementById('ss3').classList.add('done');
         // Показываем ссылку на условия
         var termsNote = document.getElementById('rs3-terms');
         if (!termsNote) {
@@ -766,7 +804,8 @@ async function verifySMS() {
 
 function backReg() {
     document.getElementById('rs2').style.display = 'none';
-    document.getElementById('rs1').style.display = 'block';
+    document.getElementById('rs-terms').style.display = 'block';
+    document.getElementById('reg-sub').textContent = 'Шаг 2 из 4 — Условия';
     document.getElementById('ss1').classList.remove('done');
     clearInterval(regTimer);
 }
