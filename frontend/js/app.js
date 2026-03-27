@@ -1529,10 +1529,29 @@ async function loadTeacherCourses() {
         const courses = await get('/courses/my/list');
         const el = document.getElementById('td-all-courses');
         if (!courses.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Курсов пока нет</div><button class="btn-lg green" onclick="tdShow(\'t-add-course\')">Добавить курс</button></div>'; return; }
-        el.innerHTML = '<div class="d-card" style="padding:1.2rem">' + courses.map(c =>
-            `<div class="d-cr-row"><div class="d-cr-ico">${c.emoji}</div><div class="d-cr-inf"><div class="d-cr-t">${c.title}</div><div class="d-cr-m">${c.category} · ${c.student_count||0} уч. · <span class="st-badge2 ${c.status==='active'?'st-on':'st-rev'}">${c.status==='active'?'Активен':'На проверке'}</span></div></div><div class="d-cr-price">${c.price} смн</div></div>`
-        ).join('') + '</div>';
+        el.innerHTML = '<div class="d-card" style="padding:1.2rem">' + courses.map(function(c) {
+            return '<div class="d-cr-row" onclick="openTeacherCourse(\'' + c.id + '\')" style="cursor:pointer;border-radius:9px;transition:background .15s" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'\'\'">' +
+                '<div class="d-cr-ico">' + (c.emoji||'📖') + '</div>' +
+                '<div class="d-cr-inf">' +
+                    '<div class="d-cr-t">' + c.title + '</div>' +
+                    '<div class="d-cr-m">' + c.category + ' · ' + (c.student_count||0) + ' уч. · ' +
+                    '<span class="st-badge2 ' + (c.status==='active'?'st-on':'st-rev') + '">' + (c.status==='active'?'Активен':'На проверке') + '</span></div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:8px">' +
+                    '<div class="d-cr-price">' + c.price + ' смн</div>' +
+                    '<div style="font-size:12px;color:var(--text3)">→</div>' +
+                '</div>' +
+            '</div>';
+        }).join('') + '</div>';
     } catch(e) { console.error(e); }
+}
+
+
+// Учитель открывает свой курс (видит всё как студент + инструменты учителя)
+async function openTeacherCourse(courseId) {
+    currentCourseId = courseId;
+    go('course');
+    await loadCourseData();
 }
 
 async function loadTeacherStudents() {
@@ -2935,6 +2954,13 @@ async function loadCourseData() {
 
 function renderCoursePage(data) {
     const { course, progress, lessons, homework, materials, schedule, teacher } = data;
+
+    // Для учителя — меняем интерфейс
+    var isTeacherView = currentUser && currentUser.role === 'teacher';
+    var backBtn = document.querySelector('#page-course .pp-back');
+    var chatBtn = document.getElementById('cp-chat-btn');
+    if (backBtn) backBtn.textContent = isTeacherView ? '← Мои курсы' : '← Мои курсы';
+    if (chatBtn) chatBtn.style.display = isTeacherView ? 'none' : '';
 
     // Breadcrumb & hero
     document.getElementById('cp-bc-title').textContent  = course.title;
