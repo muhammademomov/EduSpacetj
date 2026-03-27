@@ -73,7 +73,9 @@ const uploadMaterial = multer({
         // Allow all common file types
         const allowed = ['jpg','jpeg','png','gif','webp','pdf',
                          'doc','docx','ppt','pptx','xls','xlsx',
-                         'mp4','mov','mp3','wav','zip','rar','txt','csv'];
+                         'mp4','mov','mp3','wav','zip','rar','txt','csv',
+                         'js','ts','py','java','cpp','c','html','css','json',
+                         'sql','sh','md','xml','yaml','yml'];
         const ext = file.originalname.split('.').pop().toLowerCase();
         if (allowed.includes(ext)) {
             cb(null, true);
