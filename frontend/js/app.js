@@ -140,6 +140,7 @@ function go(p, skipHistory) {
 
     if (p === 'catalog') loadCatalog();
     if (p === 'home') loadHomeStats();
+    if (p === 'terms') window.scrollTo(0, 0);
 }
 
 
@@ -742,6 +743,18 @@ async function verifySMS() {
         currentUser = result.user;
         document.getElementById('rs2').style.display = 'none';
         document.getElementById('rs3').style.display = 'block';
+        // Показываем ссылку на условия
+        var termsNote = document.getElementById('rs3-terms');
+        if (!termsNote) {
+            var rs3 = document.getElementById('rs3');
+            if (rs3) {
+                var note = document.createElement('p');
+                note.id = 'rs3-terms';
+                note.style.cssText = 'font-size:12px;color:var(--text3);text-align:center;margin-top:12px';
+                note.innerHTML = 'Регистрируясь, вы принимаете <a onclick="go(\'terms\')" style="color:var(--g);font-weight:700;cursor:pointer">условия использования</a>';
+                rs3.appendChild(note);
+            }
+        }
         document.getElementById('reg-sub').textContent = 'Готово!';
         document.getElementById('ss2').classList.add('done');
         document.getElementById('suc-role').textContent = regData.role === 'student' ? 'Ученик' : 'Преподаватель';
@@ -3771,7 +3784,7 @@ function closeMobileMenu() {
 
 // Mobile dash panel label map
 const SD_LABELS = {
-    'overview': 'Обзор', 'my-courses': 'Мои курсы', 'balance': 'Баланс',
+    'terms': 'Условия использования', 'overview': 'Обзор', 'my-courses': 'Мои курсы', 'balance': 'Баланс',
     'favorites': 'Избранное', 'chats': '💬 Сообщения', 'notifications': 'Уведомления',
     'settings': 'Настройки', 'payment-flow': 'Оплата'
 };
