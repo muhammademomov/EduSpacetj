@@ -1551,6 +1551,39 @@ async function loadTeacherCourses() {
 
 
 // Учитель открывает свой курс (видит всё как студент + инструменты учителя)
+
+// ─── Загрузка материала учителем прямо из страницы курса ──────────
+async function uploadCourseMaterial(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var statusEl = document.getElementById('cp-mat-upload-status');
+
+    statusEl.style.display = 'block';
+    statusEl.style.background = '#fef9c3';
+    statusEl.style.color = '#854d0e';
+    statusEl.textContent = '⏳ Загрузка: ' + file.name + '...';
+
+    try {
+        var fd = new FormData();
+        fd.append('file', file);
+        fd.append('courseId', currentCourseId);
+        fd.append('title', file.name);
+
+        var result = await upload('/teachers/materials/upload', fd);
+        statusEl.style.background = '#dcfce7';
+        statusEl.style.color = '#166534';
+        statusEl.textContent = '✅ Файл загружен: ' + file.name;
+
+        // Обновляем список материалов
+        setTimeout(function() { loadCourseData(); }, 1000);
+    } catch(e) {
+        statusEl.style.background = '#fee2e2';
+        statusEl.style.color = '#991b1b';
+        statusEl.textContent = '❌ Ошибка: ' + (e.message || 'попробуйте снова');
+    }
+    input.value = '';
+}
+
 async function openTeacherCourse(courseId) {
     currentCourseId = courseId;
     go('course');
@@ -2958,12 +2991,33 @@ async function loadCourseData() {
 function renderCoursePage(data) {
     const { course, progress, lessons, homework, materials, schedule, teacher } = data;
 
-    // Для учителя — меняем интерфейс
+    // Режим просмотра
     var isTeacherView = currentUser && currentUser.role === 'teacher';
-    var backBtn = document.querySelector('#page-course .pp-back');
+
+    // Адаптируем UI под роль
     var chatBtn = document.getElementById('cp-chat-btn');
-    if (backBtn) backBtn.textContent = isTeacherView ? '← Мои курсы' : '← Мои курсы';
     if (chatBtn) chatBtn.style.display = isTeacherView ? 'none' : '';
+
+    // Для учителя — показываем только Уроки и Материалы
+    var tabsWrap = document.querySelector('.cp-tabs');
+    if (tabsWrap) {
+        if (isTeacherView) {
+            tabsWrap.innerHTML =
+                '<button class="cp-tab on" onclick="cpTab(&quot;lessons&quot;, this)"><span class="tab-full">📚 Уроки</span><span class="tab-short">📚</span></button>' +
+                '<button class="cp-tab" onclick="cpTab(&quot;materials&quot;, this)"><span class="tab-full">📎 Материалы</span><span class="tab-short">📎</span></button>';
+        } else {
+            tabsWrap.innerHTML =
+                '<button class="cp-tab on" onclick="cpTab(&quot;lessons&quot;, this)"><span class="tab-full">📚 Уроки</span><span class="tab-short">📚</span></button>' +
+                '<button class="cp-tab" onclick="cpTab(&quot;schedule&quot;, this)"><span class="tab-full">📅 Расписание</span><span class="tab-short">📅</span></button>' +
+                '<button class="cp-tab" onclick="cpTab(&quot;homework&quot;, this)"><span class="tab-full">📝 Домашние задания</span><span class="tab-short">📝</span></button>' +
+                '<button class="cp-tab" onclick="cpTab(&quot;materials&quot;, this)"><span class="tab-full">📎 Материалы</span><span class="tab-short">📎</span></button>';
+        }
+    }
+
+    // Активная вкладка — уроки
+    document.querySelectorAll('.cp-section').forEach(function(s) { s.style.display = 'none'; });
+    var lessonsSection = document.getElementById('cps-lessons');
+    if (lessonsSection) lessonsSection.style.display = '';
 
     // Breadcrumb & hero
     document.getElementById('cp-bc-title').textContent  = course.title;
@@ -3139,11 +3193,34 @@ function renderHomework(homework) {
 }
 
 function renderMaterials(materials) {
+    // Кнопка загрузки для учителя
+    var isT = currentUser && currentUser.role === 'teacher';
+    var matsSection = document.getElementById('cps-materials');
+    if (matsSection && isT) {
+        var oldBtn = document.getElementById('cp-upload-mat-btn');
+        if (!oldBtn) {
+            matsSection.insertAdjacentHTML('afterbegin',
+                '<div id="cp-upload-mat-btn" style="margin-bottom:16px">' +
+                    '<div style="background:var(--gl2);border:2px dashed var(--g);border-radius:14px;padding:24px;text-align:center">' +
+                        '<div style="font-size:36px;margin-bottom:10px">📎</div>' +
+                        '<div style="font-size:15px;font-weight:800;margin-bottom:6px">Добавить материал ученикам</div>' +
+                        '<div style="font-size:12px;color:var(--text3);margin-bottom:16px">PDF, Word, Excel, картинки, архивы — до 50 МБ</div>' +
+                        '<label style="display:inline-flex;align-items:center;gap:8px;background:var(--g);color:#fff;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">' +
+                            '<span style="font-size:16px">+</span> Выбрать файл' +
+                            '<input type="file" id="cp-mat-file-input" style="display:none" onchange="uploadCourseMaterial(this)">' +
+                        '</label>' +
+                    '</div>' +
+                    '<div id="cp-mat-upload-status" style="display:none;margin-top:10px;padding:10px 14px;border-radius:9px;font-size:13px;text-align:center"></div>' +
+                '</div>'
+            );
+        }
+    }
+
     const el    = document.getElementById('cp-mat-list');
     const empty = document.getElementById('cp-mat-empty');
     if (!materials || !materials.length) {
-        if (empty) empty.style.display = '';
-        if (el)    el.innerHTML = '';
+        if (empty) empty.style.display = isT ? 'none' : '';
+        if (el)    el.innerHTML = isT ? '<div style="text-align:center;padding:1rem;color:var(--text3);font-size:13px">Файлов пока нет — загрузите первый материал</div>' : '';
         return;
     }
     if (empty) empty.style.display = 'none';
