@@ -355,8 +355,8 @@ function loadTopupRequests(status) {
                 '<td>' + new Date(r.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</td>';
             if (status === 'pending') {
                 html += '<td><div class="action-btns">' +
-                    '<button class="btn-approve" onclick="approveTopup('' + r.id + '')">✓ Зачислить</button>' +
-                    '<button class="btn-reject" onclick="rejectTopup('' + r.id + '')">✕ Отклонить</button>' +
+                    '<button class="btn-approve" onclick="approveTopup(\'' + r.id + '\')">✓ Зачислить</button>' +
+                    '<button class="btn-reject" onclick="rejectTopup(\'' + r.id + '\')">✕ Отклонить</button>' +
                     '</div></td>';
             } else {
                 html += '<td style="font-size:12px;color:#6b7280">' + (r.admin_comment || '—') + '</td>';
@@ -411,8 +411,8 @@ function loadWithdrawRequests(status) {
                 '<td>' + new Date(r.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</td>';
             if (status === 'pending') {
                 html += '<td><div class="action-btns">' +
-                    '<button class="btn-approve" onclick="approveWithdraw('' + r.id + '')">✓ Выплачено</button>' +
-                    '<button class="btn-reject" onclick="rejectWithdraw('' + r.id + '')">✕ Отклонить</button>' +
+                    '<button class="btn-approve" onclick="approveWithdraw(\'' + r.id + '\')">✓ Выплачено</button>' +
+                    '<button class="btn-reject" onclick="rejectWithdraw(\'' + r.id + '\')">✕ Отклонить</button>' +
                     '</div></td>';
             } else {
                 html += '<td><span class="badge ' + (r.status === 'approved' ? 'active' : 'rejected') + '">' +
