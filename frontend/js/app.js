@@ -930,6 +930,23 @@ async function goToReviewTab(teacherUserId) {
     }, 600);
 }
 
+function onTopupNotifClick() {
+    // Обновляем баланс и если есть pendingCourse — переходим к оплате
+    get('/payments/balance').then(function(bal) {
+        currentUser.balance = bal.balance;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        showLoggedIn();
+        var sdpNotif = document.getElementById('sdp-notifications');
+        if (sdpNotif && sdpNotif.classList.contains('on')) sdShow('overview');
+        if (pendingCourseId) {
+            sdShow('payment-flow');
+        } else {
+            sdShow('balance');
+            loadBalance();
+        }
+    }).catch(function(){});
+}
+
 function closeNotifPanel() {
     // Для студента - закрываем панель уведомлений, переходя на overview
     var currentPage = document.querySelector('.page.active') || document.querySelector('[id^="page-"].active');
@@ -1049,17 +1066,47 @@ function setLang(el) {
 // PAYMENT FLOW
 // ═══════════════════════════════════════════════════════
 async function initPayFlow() {
-    document.getElementById('pf-topup').style.display = 'block';
+    document.getElementById('pf-topup').style.display = 'none';
     document.getElementById('pf-checkout').style.display = 'none';
     document.getElementById('pf-success').style.display = 'none';
     try {
         const bal = await get('/payments/balance');
         currentUser.balance = bal.balance;
-        updateTopupPreview();
+
         if (pendingCourseId) {
-            document.getElementById('pf-topup').style.display = 'none';
-            document.getElementById('pf-checkout').style.display = 'block';
-            await renderCheckout(pendingCourseId, bal.balance);
+            // Есть курс для покупки
+            const c = await get('/courses/' + pendingCourseId);
+            if (bal.balance >= c.price) {
+                // Баланса хватает — сразу показываем checkout
+                document.getElementById('pf-checkout').style.display = 'block';
+                await renderCheckout(pendingCourseId, bal.balance);
+            } else {
+                // Баланса не хватает — показываем форму заявки на пополнение
+                var shortage = c.price - bal.balance;
+                document.getElementById('pf-topup').style.display = 'block';
+                // Показываем инфо о нехватке
+                var infoEl = document.getElementById('topup-shortage-info');
+                if (infoEl) {
+                    infoEl.style.display = 'block';
+                    infoEl.innerHTML = '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px">' +
+                        '<b>Недостаточно средств</b><br>' +
+                        'Цена курса: <b>' + c.price + ' смн</b> · Ваш баланс: <b>' + bal.balance + ' смн</b><br>' +
+                        'Пополните минимум на <b>' + shortage + ' смн</b>' +
+                    '</div>';
+                    // Предзаполняем сумму
+                    var amtInput = document.getElementById('tr-amount');
+                    if (amtInput) amtInput.value = shortage;
+                }
+                // Инициализируем выбор метода
+                selectTopupMethod('alif_mobi');
+                // Загружаем историю заявок
+                loadTopupHistory();
+            }
+        } else {
+            // Нет конкретного курса — просто форма пополнения
+            document.getElementById('pf-topup').style.display = 'block';
+            selectTopupMethod('alif_mobi');
+            loadTopupHistory();
         }
     } catch(e) { console.error(e); }
 }
@@ -3132,6 +3179,13 @@ async function submitTopupRequest() {
         document.getElementById('tr-txid').value = '';
         document.getElementById('tr-comment').value = '';
         loadTopupHistory();
+        // Показываем статус ожидания
+        var infoEl = document.getElementById('topup-shortage-info');
+        if (infoEl) {
+            infoEl.innerHTML = '<div style="background:#d1fae5;border:1px solid #34d399;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px">' +
+                '⏳ <b>Заявка отправлена!</b> Как только администратор одобрит — баланс пополнится и вы сможете записаться на курс.' +
+            '</div>';
+        }
     } catch(e) {
         errEl.textContent = e.message || 'Ошибка отправки';
         errEl.style.display = 'block';
