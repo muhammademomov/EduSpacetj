@@ -514,6 +514,30 @@ function renderProfile(t) {
     if (enrollBtn)  enrollBtn.style.display  = (isTeacher || isOwnProfile) ? 'none' : '';
     if (topEnroll)  topEnroll.style.display  = (isTeacher || isOwnProfile) ? 'none' : '';
     if (chatBtn)    chatBtn.style.display     = isOwnProfile ? 'none' : '';
+
+    // Проверяем куплены ли все курсы этого учителя
+    if (enrollBtn && currentUser && currentUser.role === 'student' && t.courses && t.courses.length > 0) {
+        get('/payments/enrollments').then(function(enrollments) {
+            var enrolledCourseIds = enrollments.map(function(e) { return e.course_id; });
+            var activeCourses = t.courses.filter(function(c) { return c.status === 'active'; });
+            var allBought = activeCourses.length > 0 && activeCourses.every(function(c) {
+                return enrolledCourseIds.includes(c.id);
+            });
+            if (allBought) {
+                // Все курсы куплены — заменяем кнопку
+                enrollBtn.textContent = '✅ Вы уже записаны';
+                enrollBtn.disabled = true;
+                enrollBtn.style.background = 'var(--bg)';
+                enrollBtn.style.color = 'var(--g2)';
+                enrollBtn.style.border = '1.5px solid var(--g)';
+                enrollBtn.style.cursor = 'default';
+                if (topEnroll) {
+                    topEnroll.textContent = '✅ Записан';
+                    topEnroll.disabled = true;
+                }
+            }
+        }).catch(function(){});
+    }
 }
 
 function buildReviewCard(r, isTeacher) {
@@ -595,16 +619,27 @@ function goPayForProfile() {
     if (!currentUser) { go('login'); return; }
     if (currentUser.role === 'teacher') { showToast('Преподаватели не могут записываться на курсы', 'info'); return; }
 
-    get('/teachers/' + currentProfileId).then(function(t) {
-        var courses = (t.courses || []).filter(function(c) { return c.status === 'active'; });
-        if (!courses.length) { showToast('У этого преподавателя пока нет активных курсов', 'info'); return; }
+    Promise.all([
+        get('/teachers/' + currentProfileId),
+        get('/payments/enrollments')
+    ]).then(function(results) {
+        var t = results[0];
+        var enrollments = results[1];
+        var enrolledIds = enrollments.map(function(e) { return e.course_id; });
 
-        if (courses.length === 1) {
-            // Только один курс — сразу к оплате
-            selectCourseForPayment(courses[0].id);
+        // Фильтруем — только активные и ещё не купленные
+        var availableCourses = (t.courses || []).filter(function(c) {
+            return c.status === 'active' && !enrolledIds.includes(c.id);
+        });
+
+        if (!availableCourses.length) {
+            showToast('✅ Вы уже записаны на все курсы этого преподавателя', 'info');
+            return;
+        }
+        if (availableCourses.length === 1) {
+            selectCourseForPayment(availableCourses[0].id);
         } else {
-            // Несколько курсов — показываем модал выбора
-            showCourseSelectModal(courses);
+            showCourseSelectModal(availableCourses);
         }
     }).catch(function(){});
 }
