@@ -3395,22 +3395,70 @@ function selectWdMethod(method) {
 }
 
 async function loadTeacherEarnings() {
+    // Баланс
     try {
         var data = await get('/payments/teacher/balance');
-        var netEl  = document.getElementById('earn-net');
-        var wdEl   = document.getElementById('earn-withdrawn');
-        var avEl   = document.getElementById('earn-available');
+        var netEl = document.getElementById('earn-net');
+        var wdEl  = document.getElementById('earn-withdrawn');
+        var avEl  = document.getElementById('earn-available');
         if (netEl) netEl.textContent = parseFloat(data.totalEarned).toLocaleString('ru') + ' смн';
         if (wdEl)  wdEl.textContent  = parseFloat(data.totalWithdrawn).toLocaleString('ru') + ' смн';
         if (avEl)  avEl.textContent  = parseFloat(data.available).toLocaleString('ru') + ' смн';
     } catch(e) { console.error(e); }
 
-    // История заявок на вывод
+    // История платежей от студентов
     try {
-        // Пока показываем только статичный текст (можно добавить GET /payments/teacher/withdrawals)
-        var el = document.getElementById('td-withdraw-list');
-        if (!el) return;
-    } catch(e) {}
+        var payments = await get('/teachers/my/payments');
+        var listEl = document.getElementById('td-payments-list');
+        if (!listEl) return;
+
+        if (!payments.length) {
+            listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">Продаж пока нет</div>';
+            return;
+        }
+
+        // Итоги сверху
+        var totalGross = payments.reduce(function(s, p) { return s + p.pricePaid; }, 0);
+        var totalComm  = payments.reduce(function(s, p) { return s + p.commission; }, 0);
+        var totalNet   = payments.reduce(function(s, p) { return s + p.teacherAmount; }, 0);
+
+        listEl.innerHTML =
+            // Итоговая строка
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">' +
+                '<div style="background:var(--bg);border-radius:10px;padding:12px;text-align:center">' +
+                    '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">Всего оплачено</div>' +
+                    '<div style="font-size:16px;font-weight:800">' + totalGross.toLocaleString('ru') + ' смн</div>' +
+                '</div>' +
+                '<div style="background:#fee2e2;border-radius:10px;padding:12px;text-align:center">' +
+                    '<div style="font-size:11px;color:#991b1b;margin-bottom:4px">Комиссия (15%)</div>' +
+                    '<div style="font-size:16px;font-weight:800;color:#DC2626">−' + totalComm.toLocaleString('ru') + ' смн</div>' +
+                '</div>' +
+                '<div style="background:#d1fae5;border-radius:10px;padding:12px;text-align:center">' +
+                    '<div style="font-size:11px;color:#065f46;margin-bottom:4px">Вам начислено</div>' +
+                    '<div style="font-size:16px;font-weight:800;color:var(--g2)">' + totalNet.toLocaleString('ru') + ' смн</div>' +
+                '</div>' +
+            '</div>' +
+            // Список платежей
+            '<div style="display:flex;flex-direction:column;gap:8px">' +
+            payments.map(function(p) {
+                var date = new Date(p.date).toLocaleDateString('ru', {day:'numeric', month:'short', year:'numeric'});
+                var av = p.student.avatarUrl
+                    ? '<img src="' + p.student.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+                    : (p.student.initials || '?');
+                return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:10px">' +
+                    '<div style="width:38px;height:38px;border-radius:50%;background:' + (p.student.color||'#18A96A') + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;flex-shrink:0;overflow:hidden">' + av + '</div>' +
+                    '<div style="flex:1;min-width:0">' +
+                        '<div style="font-size:13px;font-weight:700">' + p.student.name + '</div>' +
+                        '<div style="font-size:11px;color:var(--text3)">' + p.courseEmoji + ' ' + p.courseTitle + ' · ' + date + '</div>' +
+                    '</div>' +
+                    '<div style="text-align:right;flex-shrink:0">' +
+                        '<div style="font-size:14px;font-weight:800;color:var(--g2)">+' + p.teacherAmount.toLocaleString('ru') + ' смн</div>' +
+                        '<div style="font-size:11px;color:var(--text3)">из ' + p.pricePaid.toLocaleString('ru') + ' смн</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('') +
+            '</div>';
+    } catch(e) { console.error(e); }
 }
 
 async function submitWithdraw() {
