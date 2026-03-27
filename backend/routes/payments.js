@@ -299,6 +299,10 @@ router.post('/admin/topup-approve/:id', auth, async (req, res) => {
         const topupReq = reqs[0];
         if (topupReq.status !== 'pending') return res.status(400).json({ error: 'Заявка уже обработана' });
 
+        let enrollmentDone = false;
+        let courseTitle = null;
+        let remainingBalance = 0;
+
         await db.transaction(async (conn) => {
             // 1. Пополняем баланс на всю сумму
             await conn.execute(
@@ -309,26 +313,102 @@ router.post('/admin/topup-approve/:id', auth, async (req, res) => {
             await conn.execute(
                 'INSERT INTO transactions (id, user_id, type, amount, description) VALUES (?,?,?,?,?)',
                 [randomUUID(), topupReq.student_id, 'topup', topupReq.amount,
-                 `Пополнение одобрено: ${topupReq.amount} смн`]
+                 `Пополнение: ${topupReq.amount} смн`]
             );
             // 3. Статус заявки
             await conn.execute(
                 `UPDATE topup_requests SET status='approved', admin_comment=?, reviewed_at=NOW() WHERE id=?`,
                 [admin_comment || null, req.params.id]
             );
-            // 4. Уведомление студенту — с подсказкой что можно купить курс
-            const courseHint = topupReq.course_id ? ' Теперь вы можете оплатить курс.' : '';
+
+            // 4. Если есть course_id — автоматически покупаем курс
+            if (topupReq.course_id) {
+                // Проверяем не записан ли уже
+                const [existEnroll] = await conn.execute(
+                    'SELECT id FROM enrollments WHERE student_id=? AND course_id=?',
+                    [topupReq.student_id, topupReq.course_id]
+                );
+                if (!existEnroll.length) {
+                    const [courses] = await conn.execute(
+                        `SELECT c.*, tp.id AS teacher_profile_id, tp.user_id AS teacher_user_id
+                         FROM courses c JOIN teacher_profiles tp ON tp.id = c.teacher_id
+                         WHERE c.id = ? AND c.status = 'active'`, [topupReq.course_id]
+                    );
+                    if (courses.length) {
+                        const course = courses[0];
+                        const price = parseFloat(course.price);
+                        // Получаем текущий баланс после пополнения
+                        const [sp] = await conn.execute(
+                            'SELECT balance FROM student_profiles WHERE user_id=?', [topupReq.student_id]
+                        );
+                        const balNow = parseFloat(sp[0].balance);
+                        if (balNow >= price) {
+                            const commission = Math.round(price * COMMISSION * 100) / 100;
+                            const teacherGet  = Math.round((price - commission) * 100) / 100;
+                            const enrollId    = randomUUID();
+                            // Списываем с баланса студента
+                            await conn.execute(
+                                'UPDATE student_profiles SET balance = balance - ?, total_spent = total_spent + ? WHERE user_id = ?',
+                                [price, price, topupReq.student_id]
+                            );
+                            // Запись на курс
+                            await conn.execute(
+                                `INSERT INTO enrollments (id, student_id, course_id, teacher_id, price_paid, commission_amount, teacher_amount)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                                [enrollId, topupReq.student_id, topupReq.course_id, course.teacher_profile_id, price, commission, teacherGet]
+                            );
+                            // Транзакция оплаты
+                            await conn.execute(
+                                'INSERT INTO transactions (id, user_id, type, amount, description, related_course_id) VALUES (?,?,?,?,?,?)',
+                                [randomUUID(), topupReq.student_id, 'payment', price,
+                                 `Оплата курса: ${course.title}`, topupReq.course_id]
+                            );
+                            // Счётчики
+                            await conn.execute('UPDATE courses SET student_count = student_count + 1 WHERE id = ?', [topupReq.course_id]);
+                            await conn.execute(
+                                'UPDATE teacher_profiles SET student_count = student_count + 1, total_earnings = total_earnings + ? WHERE id = ?',
+                                [teacherGet, course.teacher_profile_id]
+                            );
+                            // Уведомление учителю
+                            await conn.execute(
+                                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                                [randomUUID(), course.teacher_user_id, 'new_student',
+                                 '🎉 Новый ученик!',
+                                 `Записался на курс "${course.title}". Доход: ${teacherGet} смн`]
+                            );
+                            courseTitle = course.title;
+                            enrollmentDone = true;
+                            remainingBalance = balNow - price;
+                        }
+                    }
+                }
+            }
+
+            // 5. Уведомление студенту
+            const [finalBal] = await conn.execute(
+                'SELECT balance FROM student_profiles WHERE user_id=?', [topupReq.student_id]
+            );
+            remainingBalance = parseFloat(finalBal[0].balance);
+
+            const notifTitle = enrollmentDone ? '🎉 Курс куплен!' : '✅ Баланс пополнен!';
+            const notifBody  = enrollmentDone
+                ? `Курс "${courseTitle}" оплачен. Остаток на балансе: ${remainingBalance} смн`
+                : `+${topupReq.amount} смн зачислено на ваш счёт`;
+
             await conn.execute(
-                'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?,?,?,?,?,?)',
-                [randomUUID(), topupReq.student_id, 'topup',
-                 '✅ Баланс пополнен!',
-                 `+${topupReq.amount} смн зачислено на ваш счёт.${courseHint}`,
-                 topupReq.course_id || null]
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), topupReq.student_id, enrollmentDone ? 'enrollment' : 'topup',
+                 notifTitle, notifBody]
             );
         });
 
         const [bal] = await db.query('SELECT balance FROM student_profiles WHERE user_id=?', [topupReq.student_id]);
-        res.json({ message: 'Баланс пополнен', newBalance: parseFloat(bal[0].balance) });
+        res.json({
+            message: enrollmentDone ? `Курс куплен! Остаток: ${remainingBalance} смн` : 'Баланс пополнен',
+            newBalance: parseFloat(bal[0].balance),
+            enrollmentDone,
+            courseTitle
+        });
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
