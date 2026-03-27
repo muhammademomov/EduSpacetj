@@ -930,21 +930,57 @@ async function goToReviewTab(teacherUserId) {
     }, 600);
 }
 
+
+// Вызывается когда заявка одобрена и студент нажимает "Продолжить"
+async function onBalanceApproved() {
+    try {
+        const bal = await get('/payments/balance');
+        currentUser.balance = bal.balance;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        showLoggedIn();
+
+        if (currentProfileId) {
+            // Пришёл через учителя → открываем его профиль
+            openProfile(currentProfileId);
+        } else if (pendingCourseId) {
+            // Есть конкретный курс → страница оплаты
+            sdShow('payment-flow');
+            await initPayFlow();
+        } else {
+            // Пришёл сам → каталог
+            go('catalog');
+        }
+    } catch(e) { showToast('Ошибка: ' + (e.message||''), 'error'); }
+}
+
 function onTopupNotifClick() {
-    // Обновляем баланс и если есть pendingCourse — переходим к оплате
+    // Обновляем баланс и перенаправляем в зависимости от контекста
     get('/payments/balance').then(function(bal) {
         currentUser.balance = bal.balance;
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
+        // Закрываем панель уведомлений
         var sdpNotif = document.getElementById('sdp-notifications');
         if (sdpNotif && sdpNotif.classList.contains('on')) sdShow('overview');
-        if (pendingCourseId) {
+
+        if (currentProfileId) {
+            // Пришёл через профиль учителя → открываем профиль учителя
+            openProfile(currentProfileId);
+        } else if (pendingCourseId) {
+            // Есть конкретный курс → страница оплаты
             sdShow('payment-flow');
         } else {
-            sdShow('balance');
-            loadBalance();
+            // Пришёл сам → каталог
+            go('catalog');
         }
     }).catch(function(){});
+}
+
+// Показать кнопку "Продолжить" после успешной заявки
+function _showContinueBtn() {
+    var histEl = document.getElementById('tr-history');
+    if (!histEl) return;
+    // Кнопка появится в loadTopupHistory после отправки заявки
 }
 
 function closeNotifPanel() {
@@ -1108,6 +1144,8 @@ async function initPayFlow() {
             selectTopupMethod('alif_mobi');
             loadTopupHistory();
         }
+        // После пополнения — показываем кнопку "Продолжить"
+        _showContinueBtn();
     } catch(e) { console.error(e); }
 }
 
@@ -3202,6 +3240,10 @@ async function loadTopupHistory() {
         if (!reqs.length) { el.innerHTML = ''; return; }
         var statusMap = { pending:'⏳ На проверке', approved:'✅ Зачислено', rejected:'❌ Отклонено' };
         var colorMap  = { pending:'#D97706', approved:'#16A34A', rejected:'#DC2626' };
+        // Проверяем есть ли одобренные заявки — если да, показываем кнопку "Продолжить"
+        var hasApproved = reqs.some(function(r) { return r.status === 'approved'; });
+        var hasPending  = reqs.some(function(r) { return r.status === 'pending'; });
+
         el.innerHTML = '<div class="d-card"><div class="d-card-title">История заявок</div>' +
             reqs.map(function(r) {
                 return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2)">' +
@@ -3211,7 +3253,13 @@ async function loadTopupHistory() {
                     '</div>' +
                     '<span style="font-size:12px;font-weight:700;color:' + colorMap[r.status] + '">' + statusMap[r.status] + '</span>' +
                 '</div>';
-            }).join('') + '</div>';
+            }).join('') + '</div>' +
+            // Кнопка продолжить если есть одобренные
+            (hasApproved ? '<button class="btn-full green" style="margin-top:12px" onclick="onBalanceApproved()">' +
+                (currentProfileId ? '✅ Продолжить — выбрать курс у преподавателя' : '✅ Продолжить — перейти в каталог') +
+            '</button>' : '') +
+            // Подсказка если есть ожидающие
+            (hasPending && !hasApproved ? '<div style="text-align:center;font-size:12px;color:var(--text3);margin-top:10px">⏳ Ожидаем одобрения от администратора...</div>' : '');
     } catch(e) {}
 }
 
