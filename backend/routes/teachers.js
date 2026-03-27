@@ -555,6 +555,38 @@ router.delete('/lessons/:id', auth, teacherOnly, async (req, res) => {
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// ─── POST /api/teachers/materials/link ────────────────────────────
+// Сохранить ссылку как материал курса
+router.post('/materials/link', auth, teacherOnly, async (req, res) => {
+    const { courseId, title, url, lessonId } = req.body;
+    if (!courseId || !title || !url) return res.status(400).json({ error: 'courseId, title и url обязательны' });
+    try {
+        const { randomUUID } = require('crypto');
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(403).json({ error: 'Нет профиля' });
+
+        await db.query(
+            `INSERT INTO course_materials (id, course_id, lesson_id, teacher_id, title, file_url, file_type, file_size)
+             VALUES (?,?,?,?,?,?,?,?)`,
+            [randomUUID(), courseId, lessonId||null, tp[0].id, title.trim(), url, 'link', 0]
+        );
+
+        // Уведомление студентам
+        const [enrolls] = await db.query(
+            'SELECT student_id FROM enrollments WHERE course_id=? AND status=\'active\'', [courseId]
+        );
+        for (const e of enrolls) {
+            await db.query(
+                'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
+                [randomUUID(), e.student_id, 'new_material', '🔗 Новая ссылка к курсу', title]
+            );
+        }
+
+        res.json({ message: 'Ссылка добавлена' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 // ─── DELETE /api/teachers/materials/:id ──────────────────────────
 router.delete('/materials/:id', auth, teacherOnly, async (req, res) => {
     try {
