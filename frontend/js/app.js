@@ -38,8 +38,8 @@ let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 let regRole = 's', regData = {};
 let regTimer, regSec = 59;
 let topupAmt = 1000;
-let pendingCourseId = null;
-let currentProfileId = null;
+let pendingCourseId = localStorage.getItem('pendingCourseId') || null;
+let currentProfileId = localStorage.getItem('pendingProfileId') || null;
 let setupTp = 'pro';
 let acLc = 1;
 
@@ -581,6 +581,8 @@ function startEnroll(courseId) {
     if (!currentUser) { go('login'); return; }
     if (currentUser.role === 'teacher') { showToast('Преподаватели не могут записываться на курсы', 'info'); return; }
     pendingCourseId = courseId;
+    localStorage.setItem('pendingCourseId', courseId);
+    if (currentProfileId) localStorage.setItem('pendingProfileId', currentProfileId);
     go('student-dash'); loadStudentDash(); sdShow('payment-flow');
 }
 
@@ -641,6 +643,8 @@ function closeCourseSelectModal() {
 function selectCourseForPayment(courseId) {
     closeCourseSelectModal();
     pendingCourseId = courseId;
+    localStorage.setItem('pendingCourseId', courseId);
+    if (currentProfileId) localStorage.setItem('pendingProfileId', currentProfileId);
     go('student-dash');
     loadStudentDash();
     sdShow('payment-flow');
@@ -1002,23 +1006,23 @@ async function onBalanceApproved() {
 }
 
 function onTopupNotifClick() {
-    // Обновляем баланс и переходим к оплате курса
     get('/payments/balance').then(function(bal) {
         currentUser.balance = bal.balance;
         localStorage.setItem('user', JSON.stringify(currentUser));
         showLoggedIn();
-        // Закрываем панель уведомлений
         sdShow('overview');
 
+        // Восстанавливаем из localStorage если потерялось
+        if (!pendingCourseId) pendingCourseId = localStorage.getItem('pendingCourseId');
+        if (!currentProfileId) currentProfileId = localStorage.getItem('pendingProfileId');
+
         if (pendingCourseId) {
-            // Есть курс для покупки → страница оплаты (теперь баланс есть)
+            // Есть курс → сразу на страницу оплаты
             sdShow('payment-flow');
             initPayFlow();
         } else if (currentProfileId) {
-            // Пришёл через учителя → профиль учителя
             openProfile(currentProfileId);
         } else {
-            // Пришёл сам → каталог
             go('catalog');
         }
     }).catch(function(){});
@@ -1298,6 +1302,9 @@ async function doPayCourse() {
         document.getElementById('pf-checkout').style.display = 'none';
         document.getElementById('pf-success').style.display = 'block';
         pendingCourseId = null;
+        currentProfileId = null;
+        localStorage.removeItem('pendingCourseId');
+        localStorage.removeItem('pendingProfileId');
         loadStudentDash();
     } catch(e) {
         document.getElementById('pay-btn-main').disabled = false;
