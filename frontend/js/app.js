@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// EduSpace.tj — Frontend App
+// EduSpace.tj — Frontend App v2.1 (lessons clickable)
 // ═══════════════════════════════════════════════════════
 
 const API = 'https://eduspacetj-production.up.railway.app/api';
