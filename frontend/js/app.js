@@ -466,7 +466,9 @@ function renderProfile(t) {
                 '<div style="font-size:14px;font-weight:700;margin:2px 0">' + d.name + '</div>' +
                 '<div style="font-size:12px;color:var(--text2)">' + (d.institution || '') + (d.year ? ' · ' + d.year : '') + '</div>' +
                 openBtn + '</div>' +
-                '</' + tag + '>';
+                '</' + tag + '>' +
+            (isTeach ? '<button onclick="deleteCourseMaterial(\'' + m.id + '\')" style="background:none;border:none;color:#EF4444;font-size:18px;cursor:pointer;padding:8px;flex-shrink:0;opacity:.7" title="Удалить материал">🗑</button>' : '') +
+        '</div>';
         }).join('')
         : '<div style="text-align:center;padding:2rem;color:var(--text3)">Документы не загружены</div>';
 
@@ -1594,6 +1596,79 @@ async function openTeacherCourse(courseId) {
 }
 
 // ─── Редактор информации о курсе (для учителя) ────────────────────
+
+// ─── Модал добавления урока ────────────────────────────────────────
+function showAddLessonModal() {
+    var modal = document.getElementById('add-lesson-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'add-lesson-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem';
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML =
+        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:500px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2)">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
+                '<div style="font-size:16px;font-weight:800">📚 Новый урок</div>' +
+                '<button onclick="document.getElementById(\'add-lesson-modal\').remove()" style="background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">✕</button>' +
+            '</div>' +
+            '<div class="field" style="margin-bottom:12px">' +
+                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Название урока</label>' +
+                '<input id="al-title" type="text" placeholder="Например: Введение в тему" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor=\'var(--g)\'" onblur="this.style.borderColor=\'var(--border)\'">' +
+            '</div>' +
+            '<div class="field" style="margin-bottom:16px">' +
+                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Описание / содержание (необязательно)</label>' +
+                '<textarea id="al-content" rows="4" placeholder="Что будет на этом уроке..." style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor=\'var(--g)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+            '</div>' +
+            '<div id="al-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>' +
+            '<button onclick="saveNewLesson()" class="btn-full green" id="al-save-btn">+ Добавить урок</button>' +
+        '</div>';
+    modal.style.display = 'flex';
+    setTimeout(function() { document.getElementById('al-title').focus(); }, 100);
+}
+
+async function saveNewLesson() {
+    var title   = document.getElementById('al-title').value.trim();
+    var content = document.getElementById('al-content').value.trim();
+    var btn     = document.getElementById('al-save-btn');
+    var err     = document.getElementById('al-err');
+
+    err.style.display = 'none';
+    if (!title) { err.textContent = 'Введите название урока'; err.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = '⏳ Добавление...';
+    try {
+        await post('/teachers/lessons', { courseId: currentCourseId, title, content });
+        document.getElementById('add-lesson-modal').remove();
+        showToast('✅ Урок добавлен!');
+        await loadCourseData(); // Обновляем страницу
+    } catch(e) {
+        err.textContent = e.message || 'Ошибка';
+        err.style.display = 'block';
+        btn.disabled = false; btn.textContent = '+ Добавить урок';
+    }
+}
+
+// ─── Удалить урок ─────────────────────────────────────────────────
+async function deleteLesson(lessonId) {
+    if (!confirm('Удалить этот урок? Действие нельзя отменить.')) return;
+    try {
+        await req('DELETE', '/teachers/lessons/' + lessonId);
+        showToast('Урок удалён');
+        await loadCourseData();
+    } catch(e) { showToast(e.message || 'Ошибка', 'error'); }
+}
+
+// ─── Удалить материал ─────────────────────────────────────────────
+async function deleteCourseMaterial(matId) {
+    if (!confirm('Удалить этот материал?')) return;
+    try {
+        await req('DELETE', '/teachers/materials/' + matId);
+        showToast('Материал удалён');
+        await loadCourseData();
+    } catch(e) { showToast(e.message || 'Ошибка', 'error'); }
+}
+
 async function showCourseEditModal(courseId) {
     try {
         var c = await get('/courses/' + courseId);
@@ -3101,6 +3176,20 @@ function renderCoursePage(data) {
     var lessonsSection = document.getElementById('cps-lessons');
     if (lessonsSection) lessonsSection.style.display = '';
 
+    // Для учителя — кнопка добавления урока
+    if (isTeacherView && lessonsSection) {
+        var oldAddBtn = document.getElementById('cp-add-lesson-btn');
+        if (!oldAddBtn) {
+            lessonsSection.insertAdjacentHTML('afterbegin',
+                '<div id="cp-add-lesson-btn" style="margin-bottom:16px">' +
+                    '<button onclick="showAddLessonModal()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--gl2);border:2px dashed var(--g);border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--g2);cursor:pointer;transition:all .2s" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'var(--gl2)\'">' +
+                        '<span style="font-size:20px">+</span> Добавить новый урок' +
+                    '</button>' +
+                '</div>'
+            );
+        }
+    }
+
     // Breadcrumb & hero
     document.getElementById('cp-bc-title').textContent  = course.title;
     document.getElementById('cp-emoji').textContent     = course.emoji || '📖';
@@ -3156,16 +3245,18 @@ function renderLessons(lessons) {
         el.innerHTML = '<div class="cp-empty"><div class="cp-empty-ico">📚</div><div class="cp-empty-title">Уроков пока нет</div><div class="cp-empty-sub">Преподаватель добавит уроки по ходу курса</div></div>';
         return;
     }
+    var isT = currentUser && currentUser.role === 'teacher';
     el.innerHTML = lessons.map(function(l) {
-        return '<div class="cp-lesson' + (l.isDone ? ' done' : '') + '" id="lesson-' + l.id + '">' +
-            '<div class="cp-lesson-num">' + (l.isDone ? '✓' : l.order) + '</div>' +
+        return '<div class="cp-lesson' + (l.isDone && !isT ? ' done' : '') + '" id="lesson-' + l.id + '">' +
+            '<div class="cp-lesson-num">' + (l.isDone && !isT ? '✓' : l.order) + '</div>' +
             '<div class="cp-lesson-info">' +
                 '<div class="cp-lesson-title">' + l.title + '</div>' +
-                '<div class="cp-lesson-meta">' + (l.isDone && l.doneAt ? 'Пройдено ' + new Date(l.doneAt).toLocaleDateString('ru', {day:'numeric',month:'short'}) : 'Урок ' + l.order) + '</div>' +
+                '<div class="cp-lesson-meta">' + (l.isDone && l.doneAt && !isT ? 'Пройдено ' + new Date(l.doneAt).toLocaleDateString('ru', {day:'numeric',month:'short'}) : 'Урок ' + l.order) + '</div>' +
             '</div>' +
-            '<div class="cp-lesson-check" onclick="toggleLesson(\'' + l.id + '\', ' + (!l.isDone) + ', event)" title="' + (l.isDone ? 'Отметить не пройденным' : 'Отметить пройденным') + '">' +
-                (l.isDone ? '✓' : '') +
-            '</div>' +
+            (isT
+                ? '<button onclick="deleteLesson(\'' + l.id + '\')" style="background:none;border:none;color:#EF4444;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;opacity:.7" title="Удалить урок">🗑</button>'
+                : '<div class="cp-lesson-check" onclick="toggleLesson(\'' + l.id + '\', ' + (!l.isDone) + ', event)" title="' + (l.isDone ? 'Отметить не пройденным' : 'Отметить пройденным') + '">' + (l.isDone ? '✓' : '') + '</div>'
+            ) +
         '</div>';
     }).join('');
 }
@@ -3323,9 +3414,11 @@ function renderMaterials(materials) {
         var date = m.createdAt
             ? new Date(m.createdAt).toLocaleDateString('ru',{day:'numeric',month:'short'})
             : '';
+        var isTeach = currentUser && currentUser.role === 'teacher';
         var tag  = m.fileUrl ? 'a' : 'div';
         var href = m.fileUrl ? ' href="' + m.fileUrl + '" target="_blank"' : '';
-        return '<' + tag + href + ' class="cp-mat-card">' +
+        return '<div style="display:flex;align-items:center;gap:8px">' +
+            '<' + tag + href + ' class="cp-mat-card" style="flex:1">' +
             '<div class="cp-mat-ico">' + ico + '</div>' +
             '<div class="cp-mat-info">' +
                 '<div class="cp-mat-title">' + m.title + '</div>' +
@@ -3336,7 +3429,9 @@ function renderMaterials(materials) {
                 '</div>' +
             '</div>' +
             (m.fileUrl ? '<div class="cp-mat-dl">⬇️ Скачать</div>' : '') +
-        '</' + tag + '>';
+        '</' + tag + '>' +
+            (isTeach ? '<button onclick="deleteCourseMaterial(\'' + m.id + '\')" style="background:none;border:none;color:#EF4444;font-size:18px;cursor:pointer;padding:8px;flex-shrink:0;opacity:.7" title="Удалить материал">🗑</button>' : '') +
+        '</div>';
     }).join('');
 }
 
