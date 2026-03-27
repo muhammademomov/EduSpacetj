@@ -1447,6 +1447,17 @@
   </div>
 </div>
 
+<!-- ═══ COURSE SELECT MODAL ═══ -->
+<div id="course-select-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--white);border-radius:20px;width:100%;max-width:480px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div style="font-size:16px;font-weight:800">📚 Выберите курс</div>
+      <button onclick="closeCourseSelectModal()" style="background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div id="course-select-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</div>
+
 <!-- ═══ REPLY MODAL ═══ -->
 <div id="reply-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:1rem">
   <div style="background:var(--white);border-radius:20px;width:100%;max-width:480px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2)">
