@@ -408,7 +408,7 @@ router.get('/:id/my', auth, async (req, res) => {
         try {
             const [matRows] = await db.query(
                 `SELECT m.id, m.title, m.description, m.file_url, m.file_type, m.file_size,
-                        m.created_at, cl.title as lesson_title
+                        m.lesson_id, m.created_at, cl.title as lesson_title
                  FROM course_materials m
                  LEFT JOIN course_lessons cl ON cl.id = m.lesson_id
                  WHERE m.course_id = ?
@@ -454,6 +454,7 @@ router.get('/:id/my', auth, async (req, res) => {
             },
             lessons: lessons.map(l => ({
                 id: l.id, title: l.title, order: l.order_num,
+                content: l.content || null,
                 isDone: !!(progressMap[l.id]?.isDone),
                 doneAt: progressMap[l.id]?.doneAt || null,
             })),
@@ -471,6 +472,7 @@ router.get('/:id/my', auth, async (req, res) => {
             materials: materials.map(m => ({
                 id: m.id, title: m.title, description: m.description,
                 fileUrl: m.file_url, fileType: m.file_type, fileSize: m.file_size,
+                lessonId: m.lesson_id || null,
                 lessonTitle: m.lesson_title, createdAt: m.created_at,
             })),
             schedule: sched.map(s => ({
