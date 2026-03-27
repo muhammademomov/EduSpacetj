@@ -1448,16 +1448,19 @@ async function loadTeacherDash() {
         const previewEl = document.getElementById('td-courses-preview');
         if (previewEl) {
             if (courses.length > 0) {
-                previewEl.innerHTML = courses.slice(0,3).map(c =>
-                    `<div class="d-cr-row">
-                      <div class="d-cr-ico">${c.emoji}</div>
-                      <div class="d-cr-inf">
-                        <div class="d-cr-t">${c.title}</div>
-                        <div class="d-cr-m">${c.category} · ${c.student_count||0} уч. · <span class="st-badge2 ${c.status==='active'?'st-on':'st-rev'}">${c.status==='active'?'Активен':'На проверке'}</span></div>
-                      </div>
-                      <div class="d-cr-price">${parseFloat(c.price).toLocaleString('ru')} смн</div>
-                    </div>`
-                ).join('');
+                previewEl.innerHTML = courses.slice(0,3).map(function(c) {
+                    return '<div class="d-cr-row" onclick="openTeacherCourse(\'' + c.id + '\')" style="cursor:pointer;border-radius:9px;transition:background .15s" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'\'">' +
+                        '<div class="d-cr-ico">' + (c.emoji||'📖') + '</div>' +
+                        '<div class="d-cr-inf">' +
+                            '<div class="d-cr-t">' + c.title + '</div>' +
+                            '<div class="d-cr-m">' + c.category + ' · ' + (c.student_count||0) + ' уч. · <span class="st-badge2 ' + (c.status==='active'?'st-on':'st-rev') + '">' + (c.status==='active'?'Активен':'На проверке') + '</span></div>' +
+                        '</div>' +
+                        '<div style="display:flex;align-items:center;gap:6px">' +
+                            '<div class="d-cr-price">' + parseFloat(c.price).toLocaleString('ru') + ' смн</div>' +
+                            '<div style="color:var(--text3);font-size:12px">→</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
             } else {
                 previewEl.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-icon">📚</div><div class="empty-title">Курсов пока нет</div><button class="btn-sm solid" onclick="tdShow(\'t-add-course\')">Добавить курс</button></div>';
             }
