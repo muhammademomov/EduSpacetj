@@ -3415,7 +3415,7 @@ function openLessonDetail(lessonId, e) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'lesson-detail-modal';
-        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:flex-end;justify-content:center;padding:0';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem';
         modal.onclick = function(ev) { if (ev.target === modal) modal.remove(); };
         document.body.appendChild(modal);
     }
@@ -3447,8 +3447,8 @@ function openLessonDetail(lessonId, e) {
         : '';
 
     modal.innerHTML =
-        '<div style="background:var(--white);border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:1.5rem;max-height:85vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)">' +
-            '<div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1.25rem"></div>' +
+        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:560px;padding:1.5rem;max-height:85vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2)">' +
+            
             '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">' +
                 '<div>' +
                     '<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px">Урок ' + lesson.order + '</div>' +
