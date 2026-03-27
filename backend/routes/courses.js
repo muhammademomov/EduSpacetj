@@ -129,6 +129,10 @@ const db_module = require('../db');
             FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
         console.log('✅ Таблица topup_requests готова');
+        try {
+            await db_module.query('ALTER TABLE topup_requests ADD COLUMN course_id VARCHAR(36) DEFAULT NULL');
+            console.log('✅ Колонка course_id добавлена в topup_requests');
+        } catch(e) { console.log('✅ course_id уже существует'); }
 
         // Заявки на вывод средств (от учителей)
         await db_module.query(`CREATE TABLE IF NOT EXISTS withdraw_requests (
