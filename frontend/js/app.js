@@ -1593,6 +1593,65 @@ async function openTeacherCourse(courseId) {
     await loadCourseData();
 }
 
+// ─── Редактор информации о курсе (для учителя) ────────────────────
+async function showCourseEditModal(courseId) {
+    try {
+        var c = await get('/courses/' + courseId);
+        var modal = document.getElementById('course-edit-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'course-edit-modal';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem';
+            document.body.appendChild(modal);
+        }
+        modal.innerHTML =
+            '<div style="background:var(--white);border-radius:20px;width:100%;max-width:520px;padding:1.5rem;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2)">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
+                    '<div style="font-size:16px;font-weight:800">✏️ Редактировать курс</div>' +
+                    '<button onclick="var m=document.getElementById(\'course-edit-modal\');if(m)m.remove()" style="background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">✕</button>' +
+                '</div>' +
+                '<div class="field"><label>Название курса</label><input id="ce-title" type="text" value="' + (c.title||'') + '" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"></div>' +
+                '<div class="field"><label>Описание</label><textarea id="ce-desc" rows="4" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical">' + (c.description||'') + '</textarea></div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+                    '<div class="field"><label>Цена (смн)</label><input id="ce-price" type="number" value="' + (c.price||0) + '" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"></div>' +
+                    '<div class="field"><label>Уровень</label><select id="ce-level" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box">' +
+                        ['Начинающий','Средний','Продвинутый'].map(function(l) {
+                            return '<option' + (c.level===l?' selected':'') + '>' + l + '</option>';
+                        }).join('') +
+                    '</select></div>' +
+                '</div>' +
+                '<div id="ce-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>' +
+                '<button onclick="saveCourseEdit(\'' + courseId + '\')" class="btn-full green" id="ce-save-btn">💾 Сохранить изменения</button>' +
+                '<div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px">После изменений курс пройдёт повторную проверку</div>' +
+            '</div>';
+        modal.style.display = 'flex';
+    } catch(e) { showToast('Ошибка загрузки курса', 'error'); }
+}
+
+async function saveCourseEdit(courseId) {
+    var title = document.getElementById('ce-title').value.trim();
+    var desc  = document.getElementById('ce-desc').value.trim();
+    var price = document.getElementById('ce-price').value;
+    var level = document.getElementById('ce-level').value;
+    var btn   = document.getElementById('ce-save-btn');
+    var err   = document.getElementById('ce-err');
+
+    err.style.display = 'none';
+    if (!title) { err.textContent = 'Введите название'; err.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = '⏳ Сохранение...';
+    try {
+        await put('/courses/' + courseId, { title, description: desc, price: parseFloat(price), level });
+        document.getElementById('course-edit-modal').remove();
+        showToast('✅ Курс обновлён! Отправлен на проверку.');
+        loadTeacherCourses();
+    } catch(e) {
+        err.textContent = e.message || 'Ошибка';
+        err.style.display = 'block';
+        btn.disabled = false; btn.textContent = '💾 Сохранить изменения';
+    }
+}
+
 async function loadTeacherStudents() {
     try {
         const students = await get('/teachers/my/students');
@@ -3001,19 +3060,39 @@ function renderCoursePage(data) {
     var chatBtn = document.getElementById('cp-chat-btn');
     if (chatBtn) chatBtn.style.display = isTeacherView ? 'none' : '';
 
+    // Кнопка редактирования для учителя
+    var editBtnEl = document.getElementById('cp-edit-btn');
+    if (isTeacherView) {
+        if (!editBtnEl) {
+            var barRight = document.querySelector('#page-course .pp-bar-right');
+            if (barRight) {
+                var btn = document.createElement('button');
+                btn.id = 'cp-edit-btn';
+                btn.className = 'btn-sm solid';
+                btn.textContent = '✏️ Редактировать';
+                btn.onclick = function() { showCourseEditModal(currentCourseId); };
+                barRight.appendChild(btn);
+            }
+        } else {
+            editBtnEl.style.display = '';
+        }
+    } else {
+        if (editBtnEl) editBtnEl.style.display = 'none';
+    }
+
     // Для учителя — показываем только Уроки и Материалы
     var tabsWrap = document.querySelector('.cp-tabs');
     if (tabsWrap) {
         if (isTeacherView) {
             tabsWrap.innerHTML =
-                '<button class="cp-tab on" onclick="cpTab(&quot;lessons&quot;, this)"><span class="tab-full">📚 Уроки</span><span class="tab-short">📚</span></button>' +
-                '<button class="cp-tab" onclick="cpTab(&quot;materials&quot;, this)"><span class="tab-full">📎 Материалы</span><span class="tab-short">📎</span></button>';
+                '<button class=\"cp-tab on\" onclick=\"cpTab(\'lessons\', this)\"><span class=\"tab-full\">📚 Уроки</span><span class=\"tab-short\">📚</span></button>' +
+                '<button class=\"cp-tab\" onclick=\"cpTab(\'materials\', this)\"><span class=\"tab-full\">📎 Материалы</span><span class=\"tab-short\">📎</span></button>';
         } else {
             tabsWrap.innerHTML =
-                '<button class="cp-tab on" onclick="cpTab(&quot;lessons&quot;, this)"><span class="tab-full">📚 Уроки</span><span class="tab-short">📚</span></button>' +
-                '<button class="cp-tab" onclick="cpTab(&quot;schedule&quot;, this)"><span class="tab-full">📅 Расписание</span><span class="tab-short">📅</span></button>' +
-                '<button class="cp-tab" onclick="cpTab(&quot;homework&quot;, this)"><span class="tab-full">📝 Домашние задания</span><span class="tab-short">📝</span></button>' +
-                '<button class="cp-tab" onclick="cpTab(&quot;materials&quot;, this)"><span class="tab-full">📎 Материалы</span><span class="tab-short">📎</span></button>';
+                '<button class=\"cp-tab on\" onclick=\"cpTab(\'lessons\', this)\"><span class=\"tab-full\">📚 Уроки</span><span class=\"tab-short\">📚</span></button>' +
+                '<button class=\"cp-tab\" onclick=\"cpTab(\'schedule\', this)\"><span class=\"tab-full\">📅 Расписание</span><span class=\"tab-short\">📅</span></button>' +
+                '<button class=\"cp-tab\" onclick=\"cpTab(\'homework\', this)\"><span class=\"tab-full\">📝 Домашние задания</span><span class=\"tab-short\">📝</span></button>' +
+                '<button class=\"cp-tab\" onclick=\"cpTab(\'materials\', this)\"><span class=\"tab-full\">📎 Материалы</span><span class=\"tab-short\">📎</span></button>';
         }
     }
 
