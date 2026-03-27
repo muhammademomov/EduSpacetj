@@ -3283,18 +3283,29 @@ async function submitTopupRequest() {
             comment,
             course_id: pendingCourseId || null
         });
-        showToast('✅ Заявка отправлена! Ожидайте пополнения.');
         document.getElementById('tr-amount').value = '';
         document.getElementById('tr-txid').value = '';
         document.getElementById('tr-comment').value = '';
-        loadTopupHistory();
-        // Показываем статус ожидания
-        var infoEl = document.getElementById('topup-shortage-info');
-        if (infoEl) {
-            infoEl.innerHTML = '<div style="background:#d1fae5;border:1px solid #34d399;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px">' +
-                '⏳ <b>Заявка отправлена!</b> Как только администратор одобрит — баланс пополнится и вы сможете записаться на курс.' +
-            '</div>';
+
+        // Показываем экран ожидания
+        var payWrap = document.querySelector('.payment-wrap');
+        if (payWrap) {
+            payWrap.innerHTML =
+                '<div style="text-align:center;padding:3rem 1rem">' +
+                    '<div style="font-size:56px;margin-bottom:16px">⏳</div>' +
+                    '<div style="font-size:18px;font-weight:800;margin-bottom:8px">Заявка отправлена!</div>' +
+                    '<div style="font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.6">' +
+                        'Администратор проверит перевод и одобрит.<br>' +
+                        (pendingCourseId ? '<b>Курс будет куплен автоматически</b> после одобрения.' : 'Баланс пополнится в течение 15–30 минут.') +
+                    '</div>' +
+                    '<div style="background:var(--bg);border-radius:12px;padding:14px;font-size:13px;color:var(--text3)">' +
+                        '🔄 Страница обновится автоматически...' +
+                    '</div>' +
+                '</div>';
         }
+
+        // Polling — проверяем каждые 10 секунд одобрена ли заявка
+        _startApprovalPolling();
     } catch(e) {
         errEl.textContent = e.message || 'Ошибка отправки';
         errEl.style.display = 'block';
@@ -3390,6 +3401,44 @@ async function submitWithdraw() {
     } finally {
         btn.disabled = false; btn.textContent = 'Подать заявку на вывод';
     }
+}
+
+
+// ─── Polling: ждём одобрения заявки ───────────────────
+var _approvalPollTimer = null;
+
+function _startApprovalPolling() {
+    if (_approvalPollTimer) clearInterval(_approvalPollTimer);
+    _approvalPollTimer = setInterval(async function() {
+        try {
+            var reqs = await get('/payments/topup-requests');
+            var latest = reqs[0]; // самая последняя заявка
+            if (latest && latest.status === 'approved') {
+                clearInterval(_approvalPollTimer);
+                _approvalPollTimer = null;
+                // Обновляем баланс
+                var bal = await get('/payments/balance');
+                currentUser.balance = bal.balance;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                showLoggedIn();
+                // Очищаем pendingCourseId из localStorage
+                localStorage.removeItem('pendingCourseId');
+                localStorage.removeItem('pendingProfileId');
+                pendingCourseId = null;
+                currentProfileId = null;
+                // Показываем успех и переходим в Мои курсы
+                showToast('🎉 ' + (latest.admin_comment || 'Оплата прошла успешно!'));
+                sdShow('my-courses');
+                loadMyCourses();
+            } else if (latest && latest.status === 'rejected') {
+                clearInterval(_approvalPollTimer);
+                _approvalPollTimer = null;
+                showToast('❌ Заявка отклонена. ' + (latest.admin_comment || ''), 'error');
+                sdShow('payment-flow');
+                initPayFlow();
+            }
+        } catch(e) { /* тихо */ }
+    }, 10000); // каждые 10 секунд
 }
 
 // ═══════════════════════════════════════════════════════
