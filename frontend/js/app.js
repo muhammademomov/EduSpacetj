@@ -1442,9 +1442,12 @@ async function loadTeacherDash() {
         const ratingEl = document.getElementById('tdm-rating');
         if (ratingEl) ratingEl.textContent = myProfile && myProfile.rating > 0 ? parseFloat(myProfile.rating).toFixed(1) + ' ★' : '—';
         document.getElementById('td-courses-cnt').textContent = courses.length;
-        document.getElementById('earn-gross').textContent = parseFloat(stats.grossRevenue).toLocaleString('ru') + ' смн';
-        document.getElementById('earn-comm').textContent = parseFloat(stats.commission).toLocaleString('ru') + ' смн';
-        document.getElementById('earn-net').textContent = parseFloat(stats.netRevenue).toLocaleString('ru') + ' смн';
+        var earnGross = document.getElementById('earn-gross');
+        var earnComm  = document.getElementById('earn-comm');
+        var earnNet   = document.getElementById('earn-net');
+        if (earnGross) earnGross.textContent = parseFloat(stats.grossRevenue).toLocaleString('ru') + ' смн';
+        if (earnComm)  earnComm.textContent  = parseFloat(stats.commission).toLocaleString('ru') + ' смн';
+        if (earnNet)   earnNet.textContent   = parseFloat(stats.netRevenue).toLocaleString('ru') + ' смн';
         const previewEl = document.getElementById('td-courses-preview');
         if (previewEl) {
             if (courses.length > 0) {
