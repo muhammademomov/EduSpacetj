@@ -341,15 +341,29 @@ router.get('/:id/my', auth, async (req, res) => {
         const courseId   = req.params.id;
         const studentId  = req.user.id;
 
-        // Проверяем запись
-        const [enroll] = await db.query(
-            `SELECT e.*, tp.work_days, tp.work_hours, tp.platforms, tp.conditions
-             FROM enrollments e
-             JOIN teacher_profiles tp ON tp.id = e.teacher_id
-             WHERE e.course_id = ? AND e.student_id = ?`, [courseId, studentId]
-        );
-        if (!enroll.length) return res.status(403).json({ error: 'Вы не записаны на этот курс' });
-        const enrollment = enroll[0];
+        // Учитель может открыть свой курс без записи
+        let enrollment = null;
+        if (req.user.role === 'teacher') {
+            // Проверяем что это его курс
+            const [ownerCheck] = await db.query(
+                `SELECT c.id FROM courses c
+                 JOIN teacher_profiles tp ON tp.id = c.teacher_id
+                 WHERE c.id = ? AND tp.user_id = ?`, [courseId, studentId]
+            );
+            if (!ownerCheck.length) return res.status(403).json({ error: 'Это не ваш курс' });
+            // Для учителя делаем mock enrollment
+            enrollment = { status: 'active', enrolled_at: new Date(), work_days: '[]', work_hours: '{}', platforms: '[]', conditions: null };
+        } else {
+            // Студент — проверяем запись
+            const [enroll] = await db.query(
+                `SELECT e.*, tp.work_days, tp.work_hours, tp.platforms, tp.conditions
+                 FROM enrollments e
+                 JOIN teacher_profiles tp ON tp.id = e.teacher_id
+                 WHERE e.course_id = ? AND e.student_id = ?`, [courseId, studentId]
+            );
+            if (!enroll.length) return res.status(403).json({ error: 'Вы не записаны на этот курс' });
+            enrollment = enroll[0];
+        }
 
         // Курс + уроки
         const [courseRows] = await db.query(
