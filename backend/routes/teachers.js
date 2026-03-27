@@ -534,6 +534,11 @@ router.post('/lessons', auth, teacherOnly, async (req, res) => {
         const orderNum = maxOrder[0].mx + 1;
 
         const lessonId = randomUUID();
+        // Добавляем колонку content если её нет
+        try {
+            await db.query('ALTER TABLE course_lessons ADD COLUMN content TEXT');
+        } catch(e) {} // уже существует
+
         await db.query(
             'INSERT INTO course_lessons (id, course_id, title, content, order_num) VALUES (?,?,?,?,?)',
             [lessonId, courseId, title.trim(), content||null, orderNum]
