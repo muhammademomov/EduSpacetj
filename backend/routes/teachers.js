@@ -510,6 +510,51 @@ router.post('/materials/upload', auth, teacherOnly, uploadMaterial.single('file'
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка загрузки: ' + err.message }); }
 });
 
+
+// ─── POST /api/teachers/lessons ───────────────────────────────────
+// Учитель добавляет новый урок к курсу
+router.post('/lessons', auth, teacherOnly, async (req, res) => {
+    const { courseId, title, content } = req.body;
+    if (!courseId || !title) return res.status(400).json({ error: 'courseId и title обязательны' });
+    try {
+        const { randomUUID } = require('crypto');
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        if (!tp.length) return res.status(403).json({ error: 'Нет профиля' });
+
+        // Проверяем что курс принадлежит учителю
+        const [course] = await db.query(
+            'SELECT id FROM courses WHERE id=? AND teacher_id=?', [courseId, tp[0].id]
+        );
+        if (!course.length) return res.status(403).json({ error: 'Нет доступа к курсу' });
+
+        // Порядковый номер
+        const [maxOrder] = await db.query(
+            'SELECT COALESCE(MAX(order_num),0) AS mx FROM course_lessons WHERE course_id=?', [courseId]
+        );
+        const orderNum = maxOrder[0].mx + 1;
+
+        const lessonId = randomUUID();
+        await db.query(
+            'INSERT INTO course_lessons (id, course_id, title, content, order_num) VALUES (?,?,?,?,?)',
+            [lessonId, courseId, title.trim(), content||null, orderNum]
+        );
+
+        res.json({ message: 'Урок добавлен', lessonId, orderNum });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── DELETE /api/teachers/lessons/:id ─────────────────────────────
+router.delete('/lessons/:id', auth, teacherOnly, async (req, res) => {
+    try {
+        const [tp] = await db.query('SELECT id FROM teacher_profiles WHERE user_id=?', [req.user.id]);
+        await db.query(
+            'DELETE FROM course_lessons WHERE id=? AND course_id IN (SELECT id FROM courses WHERE teacher_id=?)',
+            [req.params.id, tp[0].id]
+        );
+        res.json({ message: 'Урок удалён' });
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 // ─── DELETE /api/teachers/materials/:id ──────────────────────────
 router.delete('/materials/:id', auth, teacherOnly, async (req, res) => {
     try {
