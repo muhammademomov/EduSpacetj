@@ -6146,15 +6146,14 @@ function renderCoursePage(data) {
     // Render schedule
     renderSchedule(schedule, teacher);
 
-    // Render homework — принудительно показываем секцию перед рендером
+    // Render homework
     var hwSection = document.getElementById('cps-homework');
-    if (hwSection) hwSection.style.display = '';
+    console.log('Homework data:', homework ? homework.length : 0, 'items, isTeacher:', isTeacherView);
     if (isTeacherView) {
         renderHomeworkTeacher(homework);
     } else {
+        // Для студента — рендерим в скрытую секцию, CSS .on покажет её при клике
         renderHomework(homework);
-        // Скрываем обратно если не активная вкладка
-        if (hwSection) hwSection.style.display = 'none';
     }
 
     // Render materials
@@ -6394,9 +6393,6 @@ function renderHomework(homework) {
 function renderHomeworkTeacher(homework) {
     var hwSection = document.getElementById('cps-homework');
     if (!hwSection) return;
-
-    // Показываем секцию
-    hwSection.style.display = '';
 
     // Убираем старую кнопку
     var oldBtn = document.getElementById('cp-add-hw-btn');
