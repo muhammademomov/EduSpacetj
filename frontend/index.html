@@ -6438,6 +6438,32 @@ function renderHomeworkTeacher(homework) {
     }).join('');
 }
 
+
+var _hwAttType = 'file';
+function setHwAttType(type) {
+    _hwAttType = type;
+    ['file','video','link','none'].forEach(function(t) {
+        var btn = document.getElementById('hw-att-' + t + '-btn');
+        var field = document.getElementById('hw-att-' + t);
+        if (btn) {
+            btn.style.background = t === type ? 'var(--g)' : 'none';
+            btn.style.color = t === type ? '#fff' : 'var(--text2)';
+            btn.style.borderColor = t === type ? 'var(--g)' : 'var(--border)';
+        }
+        if (field) field.style.display = (t === type && t !== 'none') ? '' : 'none';
+    });
+}
+
+function previewHwFile(input, type) {
+    var file = input.files[0];
+    if (!file) return;
+    var nameEl = document.getElementById(type === 'video' ? 'hw-video-name' : 'hw-file-name');
+    if (nameEl) {
+        var size = file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+' МБ' : (file.size/1024).toFixed(0)+' КБ';
+        nameEl.textContent = file.name + ' · ' + size;
+    }
+}
+
 function showAddHwModal() {
     var data = window._currentCourseData;
     var lessons = (data && data.lessons) || [];
@@ -6450,43 +6476,114 @@ function showAddHwModal() {
         document.body.appendChild(modal);
     }
     modal.innerHTML =
-        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:500px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">' +
+        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:520px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2);max-height:92vh;overflow-y:auto">' +
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
                 '<div style="font-size:16px;font-weight:800">📝 Новое задание</div>' +
                 '<button onclick="document.getElementById(\'add-hw-modal\').remove()" style="background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer">✕</button>' +
             '</div>' +
+
+            // Название
             '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Название задания *</label>' +
             '<input id="hw-title" type="text" placeholder="Например: Решить задачи 1-5" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"></div>' +
+
+            // Описание
             '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Описание</label>' +
             '<textarea id="hw-desc" rows="3" placeholder="Подробное описание задания..." style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical"></textarea></div>' +
-            '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Срок сдачи</label>' +
+
+            // Файл / видео / ссылка
+            '<div style="margin-bottom:12px">' +
+                '<label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:8px">📎 Прикрепить материал (необязательно)</label>' +
+                '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+                    '<button id="hw-att-file-btn" onclick="setHwAttType(\'file\')" style="flex:1;padding:9px 6px;border:1.5px solid var(--g);background:var(--g);color:#fff;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">📁 Файл</button>' +
+                    '<button id="hw-att-video-btn" onclick="setHwAttType(\'video\')" style="flex:1;padding:9px 6px;border:1.5px solid var(--border);background:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)">🎬 Видео</button>' +
+                    '<button id="hw-att-link-btn" onclick="setHwAttType(\'link\')" style="flex:1;padding:9px 6px;border:1.5px solid var(--border);background:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)">🔗 Ссылка</button>' +
+                    '<button id="hw-att-none-btn" onclick="setHwAttType(\'none\')" style="flex:1;padding:9px 6px;border:1.5px solid var(--border);background:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)">✕ Нет</button>' +
+                '</div>' +
+                // Поле файл/видео
+                '<div id="hw-att-file" style="">' +
+                    '<label style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px dashed var(--border);border-radius:9px;padding:12px;cursor:pointer" id="hw-file-label">' +
+                        '<span style="font-size:22px">📁</span>' +
+                        '<div><div id="hw-file-name" style="font-size:13px;font-weight:700">Выбрать файл</div>' +
+                        '<div style="font-size:11px;color:var(--text3)">PDF, Word, картинки — до 50 МБ</div></div>' +
+                        '<input type="file" id="hw-file-input" style="display:none" onchange="previewHwFile(this, \'file\')"/>' +
+                    '</label>' +
+                '</div>' +
+                // Поле видео
+                '<div id="hw-att-video" style="display:none">' +
+                    '<label style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px dashed var(--border);border-radius:9px;padding:12px;cursor:pointer">' +
+                        '<span style="font-size:22px">🎬</span>' +
+                        '<div><div id="hw-video-name" style="font-size:13px;font-weight:700">Выбрать видео</div>' +
+                        '<div style="font-size:11px;color:var(--text3)">MP4, MOV, AVI — до 100 МБ</div></div>' +
+                        '<input type="file" id="hw-video-input" accept="video/*" style="display:none" onchange="previewHwFile(this, \'video\')"/>' +
+                    '</label>' +
+                '</div>' +
+                // Поле ссылка
+                '<div id="hw-att-link" style="display:none">' +
+                    '<input id="hw-link-url" type="url" placeholder="https://youtube.com/... или другая ссылка" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"/>' +
+                '</div>' +
+            '</div>' +
+
+            // Срок сдачи
+            '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">📅 Срок сдачи</label>' +
             '<input id="hw-due" type="date" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"></div>' +
+
+            // Урок
             (lessons.length ? '<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Урок (необязательно)</label>' +
             '<select id="hw-lesson" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"><option value="">— Общее задание —</option>' +
             lessons.map(function(l) { return '<option value="' + l.id + '">Урок ' + l.order + ': ' + l.title + '</option>'; }).join('') +
             '</select></div>' : '') +
-            '<div id="hw-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>' +
+
+            '<div id="hw-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px;padding:8px 12px;background:#fee2e2;border-radius:8px"></div>' +
             '<button onclick="saveNewHw()" class="btn-full green" id="hw-save-btn">+ Создать задание</button>' +
         '</div>';
     modal.style.display = 'flex';
 }
 
 async function saveNewHw() {
-    var title = document.getElementById('hw-title').value.trim();
-    var desc  = document.getElementById('hw-desc').value.trim();
-    var due   = document.getElementById('hw-due').value;
+    var title  = document.getElementById('hw-title').value.trim();
+    var desc   = document.getElementById('hw-desc').value.trim();
+    var due    = document.getElementById('hw-due').value;
     var lesson = document.getElementById('hw-lesson') ? document.getElementById('hw-lesson').value : '';
-    var btn   = document.getElementById('hw-save-btn');
-    var err   = document.getElementById('hw-err');
+    var btn    = document.getElementById('hw-save-btn');
+    var err    = document.getElementById('hw-err');
     err.style.display = 'none';
     if (!title) { err.textContent = 'Введите название'; err.style.display = 'block'; return; }
     btn.disabled = true; btn.textContent = '⏳ Создание...';
     try {
-        await post('/teachers/homework', {
+        // 1. Создаём задание
+        var hwResult = await post('/teachers/homework', {
             courseId: currentCourseId, title, description: desc,
             dueDate: due || null, lessonId: lesson || null
         });
-        document.getElementById('add-hw-modal').remove();
+
+        // 2. Если есть вложение — загружаем
+        if (_hwAttType === 'file' || _hwAttType === 'video') {
+            var inputId = _hwAttType === 'video' ? 'hw-video-input' : 'hw-file-input';
+            var fileInput = document.getElementById(inputId);
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                btn.textContent = '⏳ Загрузка файла...';
+                try {
+                    var fd = new FormData();
+                    fd.append('file', fileInput.files[0]);
+                    fd.append('courseId', currentCourseId);
+                    fd.append('title', fileInput.files[0].name);
+                    if (lesson) fd.append('lessonId', lesson);
+                    await upload('/teachers/materials/upload', fd);
+                } catch(fileErr) {
+                    showToast('Задание создано, но файл не загрузился: ' + (fileErr.message||''), 'info');
+                }
+            }
+        } else if (_hwAttType === 'link') {
+            var url = document.getElementById('hw-link-url').value.trim();
+            if (url) {
+                try {
+                    await post('/teachers/materials/link', { courseId: currentCourseId, title: title + ' — ссылка', url });
+                } catch(e) {}
+            }
+        }
+
+        var modal = document.getElementById('add-hw-modal');
+        if (modal) modal.remove();
         showToast('✅ Задание создано!');
         await loadCourseData();
     } catch(e) {
