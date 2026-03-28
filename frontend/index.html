@@ -2655,7 +2655,7 @@ input,select,textarea{font-family:inherit}
   </div>
 </div>
 <script>// ═══════════════════════════════════════════════════════
-// EduSpace.tj v2.3 — homework + search + email
+// EduSpace.tj — Frontend App v2.2 (isTeach fixed)
 // ═══════════════════════════════════════════════════════
 
 const API = 'https://eduspacetj-production.up.railway.app/api';
@@ -6146,11 +6146,15 @@ function renderCoursePage(data) {
     // Render schedule
     renderSchedule(schedule, teacher);
 
-    // Render homework
+    // Render homework — принудительно показываем секцию перед рендером
+    var hwSection = document.getElementById('cps-homework');
+    if (hwSection) hwSection.style.display = '';
     if (isTeacherView) {
         renderHomeworkTeacher(homework);
     } else {
         renderHomework(homework);
+        // Скрываем обратно если не активная вкладка
+        if (hwSection) hwSection.style.display = 'none';
     }
 
     // Render materials
@@ -6390,6 +6394,9 @@ function renderHomework(homework) {
 function renderHomeworkTeacher(homework) {
     var hwSection = document.getElementById('cps-homework');
     if (!hwSection) return;
+
+    // Показываем секцию
+    hwSection.style.display = '';
 
     // Убираем старую кнопку
     var oldBtn = document.getElementById('cp-add-hw-btn');
