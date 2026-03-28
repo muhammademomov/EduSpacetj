@@ -2655,7 +2655,7 @@ input,select,textarea{font-family:inherit}
   </div>
 </div>
 <script>// ═══════════════════════════════════════════════════════
-// EduSpace.tj — Frontend App v2.2 (isTeach fixed)
+// EduSpace.tj v2.3 — homework + search + email
 // ═══════════════════════════════════════════════════════
 
 const API = 'https://eduspacetj-production.up.railway.app/api';
@@ -6350,7 +6350,15 @@ function renderSchedule(schedule, teacher) {
 function renderHomework(homework) {
     const el    = document.getElementById('cp-hw-list');
     const empty = document.getElementById('cp-hw-empty');
-    if (!homework.length) { empty.style.display = ''; el.innerHTML = ''; return; }
+    if (!homework.length) {
+        if (empty) empty.style.display = '';
+        if (el) el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)">' +
+            '<div style="font-size:40px;margin-bottom:12px">📝</div>' +
+            '<div style="font-size:15px;font-weight:700;margin-bottom:6px">Заданий пока нет</div>' +
+            '<div style="font-size:13px">Преподаватель добавит домашние задания по ходу курса</div>' +
+        '</div>';
+        return;
+    }
     empty.style.display = 'none';
     const STATUS_LABELS = { pending: '📋 Ожидает', submitted: '✅ Сдано', reviewed: '💬 Проверено' };
     el.innerHTML = homework.map(function(h) {
