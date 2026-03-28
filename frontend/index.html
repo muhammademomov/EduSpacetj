@@ -3007,9 +3007,18 @@ async function openProfile(id) {
     currentProfileId = id;
     try {
         const t = await get('/teachers/' + id);
-        renderProfile(t);
+        try {
+            renderProfile(t);
+        } catch(renderErr) {
+            console.error('renderProfile error:', renderErr);
+            showToast('Ошибка отрисовки профиля: ' + renderErr.message, 'error');
+            return;
+        }
         go('profile');
-    } catch(e) { alert('Не удалось загрузить профиль'); console.error(e); }
+    } catch(e) {
+        console.error('openProfile error:', e);
+        showToast('Ошибка загрузки профиля: ' + (e.message || ''), 'error');
+    }
 }
 
 function renderProfile(t) {
