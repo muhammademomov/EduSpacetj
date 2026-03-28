@@ -2,9 +2,6 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>EduSpace.tj</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -2919,6 +2916,14 @@ function catSearch(q) {
 function catSearchKey(e) {
     if (e.key === 'Enter') catSearch(e.target.value.trim());
 }
+function catSearchInput(el) {
+    // Поиск при вводе с задержкой
+    clearTimeout(window._catSearchTimer);
+    var q = el.value.trim();
+    if (q.length === 0 || q.length >= 2) {
+        window._catSearchTimer = setTimeout(function() { loadCatalog(q); }, 400);
+    }
+}
 
 async function sortTeachers(v) {
     try {
@@ -4953,14 +4958,50 @@ function buildTccard(t) {
 }
 
 function buildCcard(c) {
-    return `
-        <div class="ccard" onclick="openProfile('${c.teacher?.id||''}')">
-            <div class="ccard-img">${c.emoji||'📖'}</div>
-            <div class="ccard-body"><div class="ccard-cat">${c.category}</div><div class="ccard-title">${c.title}</div>
-            <div class="ccard-teacher"><div class="t-dot" style="background:${c.teacher?.color||'#18A96A'};overflow:hidden;padding:0">${c.teacher?.avatarUrl ? '<img src="'+c.teacher.avatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">' : (c.teacher?.initials||'?')}</div>${c.teacher?.firstName||''} ${c.teacher?.lastName||''}</div>
-            <div class="ccard-meta"><span class="stars">★</span><span style="font-weight:700">${c.rating > 0 ? c.rating.toFixed(1) : '—'}</span></div></div>
-            <div class="ccard-foot"><div class="ccard-price">${c.price} смн</div><button class="ccard-enroll" onclick="event.stopPropagation();startEnroll('${c.id}')">Записаться</button></div>
-        </div>`;
+    var teacherId = (c.teacher && c.teacher.id) ? c.teacher.id : '';
+    var teacherColor = (c.teacher && c.teacher.color) ? c.teacher.color : '#18A96A';
+    var teacherAv = (c.teacher && c.teacher.avatarUrl)
+        ? '<img src="' + c.teacher.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
+        : ((c.teacher && c.teacher.initials) ? c.teacher.initials : '?');
+    var teacherName = ((c.teacher && c.teacher.firstName) ? c.teacher.firstName : '') + ' ' + ((c.teacher && c.teacher.lastName) ? c.teacher.lastName : '');
+    var rating = c.rating > 0 ? parseFloat(c.rating).toFixed(1) : '—';
+    var studentCount = c.student_count || c.studentCount || 0;
+
+    return '<div class="ccard" onclick="openProfile(\'' + teacherId + '\')" style="cursor:pointer">' +
+        '<div class="ccard-img">' + (c.emoji || '📖') + '</div>' +
+        '<div class="ccard-body">' +
+            '<div class="ccard-cat">' + (c.category || '') + '</div>' +
+            '<div class="ccard-title">' + c.title + '</div>' +
+            '<div class="ccard-teacher">' +
+                '<div class="t-dot" style="background:' + teacherColor + ';overflow:hidden;padding:0">' + teacherAv + '</div>' +
+                teacherName.trim() +
+            '</div>' +
+            '<div class="ccard-meta" style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
+                '<span><span class="stars">★</span> <span style="font-weight:700">' + rating + '</span></span>' +
+                (studentCount > 0 ? '<span style="color:var(--text3);font-size:11px">· ' + studentCount + ' учеников</span>' : '') +
+            '</div>' +
+        '</div>' +
+        '<div class="ccard-foot">' +
+            '<div class="ccard-price">' + parseFloat(c.price).toLocaleString('ru') + ' смн</div>' +
+            '<button class="ccard-enroll" onclick="event.stopPropagation();startEnroll(\'' + c.id + '\')">Записаться</button>' +
+        '</div>' +
+    '</div>';
+}
+
+// Функция записи на курс из каталога
+function startEnroll(courseId) {
+    if (!currentUser) { go('login'); return; }
+    if (currentUser.role === 'teacher') { showToast('Преподаватели не могут записываться на курсы', 'info'); return; }
+    // Найдём учителя этого курса
+    var course = catalogCourses.find(function(c) { return c.id === courseId; });
+    if (!course || !course.teacher) { showToast('Курс не найден', 'error'); return; }
+    currentProfileId = course.teacher.id;
+    pendingCourseId = courseId;
+    localStorage.setItem('pendingCourseId', courseId);
+    localStorage.setItem('pendingProfileId', course.teacher.id);
+    go('student-dash');
+    loadStudentDash();
+    sdShow('payment-flow');
 }
 
 
@@ -6035,6 +6076,7 @@ function renderCoursePage(data) {
         if (isTeacherView) {
             tabsWrap.innerHTML =
                 '<button class=\"cp-tab on\" onclick=\"cpTab(\'lessons\', this)\"><span class=\"tab-full\">📚 Уроки</span><span class=\"tab-short\">📚</span></button>' +
+                '<button class=\"cp-tab\" onclick=\"cpTab(\'homework\', this)\"><span class=\"tab-full\">📝 Домашние задания</span><span class=\"tab-short\">📝</span></button>' +
                 '<button class=\"cp-tab\" onclick=\"cpTab(\'materials\', this)\"><span class=\"tab-full\">📎 Материалы</span><span class=\"tab-short\">📎</span></button>';
         } else {
             tabsWrap.innerHTML =
@@ -6105,7 +6147,11 @@ function renderCoursePage(data) {
     renderSchedule(schedule, teacher);
 
     // Render homework
-    renderHomework(homework);
+    if (isTeacherView) {
+        renderHomeworkTeacher(homework);
+    } else {
+        renderHomework(homework);
+    }
 
     // Render materials
     renderMaterials(materials);
@@ -6329,6 +6375,137 @@ function renderHomework(homework) {
             answerBlock + commentBlock + submitBtn +
         '</div>';
     }).join('');
+}
+
+
+// ─── Домашние задания (учитель) ────────────────────────────────────
+function renderHomeworkTeacher(homework) {
+    var hwSection = document.getElementById('cps-homework');
+    if (!hwSection) return;
+
+    // Убираем старую кнопку
+    var oldBtn = document.getElementById('cp-add-hw-btn');
+    if (oldBtn) oldBtn.remove();
+
+    // Кнопка добавления ДЗ
+    hwSection.insertAdjacentHTML('afterbegin',
+        '<div id="cp-add-hw-btn" style="margin-bottom:16px">' +
+            '<button onclick="showAddHwModal()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--gl2);border:2px dashed var(--g);border-radius:12px;padding:14px;font-size:14px;font-weight:700;color:var(--g2);cursor:pointer">+ Создать домашнее задание</button>' +
+        '</div>'
+    );
+
+    // Список заданий
+    var listEl = document.getElementById('cp-hw-list');
+    var emptyEl = document.getElementById('cp-hw-empty');
+    if (!homework || !homework.length) {
+        if (emptyEl) { emptyEl.style.display = ''; emptyEl.querySelector('.cp-empty-title').textContent = 'Заданий пока нет'; }
+        if (listEl) listEl.innerHTML = '';
+        return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    listEl.innerHTML = homework.map(function(hw) {
+        var statusColor = hw.status === 'reviewed' ? '#18A96A' : hw.status === 'submitted' ? '#F59E0B' : '#6B7280';
+        var statusText = hw.status === 'reviewed' ? '✅ Проверено' : hw.status === 'submitted' ? '📨 Сдано' : '⏳ Ожидает';
+        return '<div style="padding:14px;background:var(--white);border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">' +
+                '<div style="font-size:14px;font-weight:700">' + hw.title + '</div>' +
+                '<span style="font-size:11px;font-weight:700;color:' + statusColor + ';white-space:nowrap">' + statusText + '</span>' +
+            '</div>' +
+            (hw.description ? '<div style="font-size:13px;color:var(--text2);margin-bottom:8px">' + hw.description + '</div>' : '') +
+            (hw.dueDate ? '<div style="font-size:11px;color:var(--text3)">📅 Срок: ' + new Date(hw.dueDate).toLocaleDateString('ru', {day:'numeric',month:'long'}) + '</div>' : '') +
+            (hw.studentAnswer ? '<div style="margin-top:10px;padding:10px;background:var(--bg);border-radius:8px;font-size:13px"><strong>Ответ ученика:</strong> ' + hw.studentAnswer + '</div>' : '') +
+            (hw.status === 'submitted' && !hw.teacherComment ?
+                '<button onclick="showHwReviewModal(\'' + hw.id + '\')" style="margin-top:10px;padding:8px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✅ Проверить</button>'
+                : '') +
+            (hw.teacherComment ? '<div style="margin-top:8px;padding:10px;background:#dcfce7;border-radius:8px;font-size:13px"><strong>Ваш комментарий:</strong> ' + hw.teacherComment + '</div>' : '') +
+        '</div>';
+    }).join('');
+}
+
+function showAddHwModal() {
+    var data = window._currentCourseData;
+    var lessons = (data && data.lessons) || [];
+    var modal = document.getElementById('add-hw-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'add-hw-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem';
+        modal.onclick = function(e) { if(e.target===modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML =
+        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:500px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
+                '<div style="font-size:16px;font-weight:800">📝 Новое задание</div>' +
+                '<button onclick="document.getElementById(\'add-hw-modal\').remove()" style="background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer">✕</button>' +
+            '</div>' +
+            '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Название задания *</label>' +
+            '<input id="hw-title" type="text" placeholder="Например: Решить задачи 1-5" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"></div>' +
+            '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Описание</label>' +
+            '<textarea id="hw-desc" rows="3" placeholder="Подробное описание задания..." style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical"></textarea></div>' +
+            '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Срок сдачи</label>' +
+            '<input id="hw-due" type="date" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"></div>' +
+            (lessons.length ? '<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px">Урок (необязательно)</label>' +
+            '<select id="hw-lesson" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box"><option value="">— Общее задание —</option>' +
+            lessons.map(function(l) { return '<option value="' + l.id + '">Урок ' + l.order + ': ' + l.title + '</option>'; }).join('') +
+            '</select></div>' : '') +
+            '<div id="hw-err" style="display:none;color:#EF4444;font-size:13px;margin-bottom:10px"></div>' +
+            '<button onclick="saveNewHw()" class="btn-full green" id="hw-save-btn">+ Создать задание</button>' +
+        '</div>';
+    modal.style.display = 'flex';
+}
+
+async function saveNewHw() {
+    var title = document.getElementById('hw-title').value.trim();
+    var desc  = document.getElementById('hw-desc').value.trim();
+    var due   = document.getElementById('hw-due').value;
+    var lesson = document.getElementById('hw-lesson') ? document.getElementById('hw-lesson').value : '';
+    var btn   = document.getElementById('hw-save-btn');
+    var err   = document.getElementById('hw-err');
+    err.style.display = 'none';
+    if (!title) { err.textContent = 'Введите название'; err.style.display = 'block'; return; }
+    btn.disabled = true; btn.textContent = '⏳ Создание...';
+    try {
+        await post('/teachers/homework', {
+            courseId: currentCourseId, title, description: desc,
+            dueDate: due || null, lessonId: lesson || null
+        });
+        document.getElementById('add-hw-modal').remove();
+        showToast('✅ Задание создано!');
+        await loadCourseData();
+    } catch(e) {
+        err.textContent = e.message || 'Ошибка';
+        err.style.display = 'block';
+        btn.disabled = false; btn.textContent = '+ Создать задание';
+    }
+}
+
+function showHwReviewModal(hwId) {
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem';
+    modal.innerHTML =
+        '<div style="background:var(--white);border-radius:20px;width:100%;max-width:480px;padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.2)">' +
+            '<div style="font-size:16px;font-weight:800;margin-bottom:16px">✅ Проверить задание</div>' +
+            '<textarea id="hw-review-text" rows="4" placeholder="Напишите комментарий ученику..." style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical;margin-bottom:12px"></textarea>' +
+            '<div style="display:flex;gap:10px">' +
+                '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:none;cursor:pointer">Отмена</button>' +
+                '<button onclick="submitHwReview(\'' + hwId + '\', this)" style="flex:2;padding:12px;background:var(--g);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✅ Подтвердить</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(modal);
+}
+
+async function submitHwReview(hwId, btn) {
+    var comment = document.getElementById('hw-review-text').value.trim();
+    if (!comment) { showToast('Напишите комментарий', 'error'); return; }
+    btn.disabled = true; btn.textContent = '⏳...';
+    try {
+        await put('/teachers/homework/' + hwId + '/comment', { comment });
+        btn.closest('div[style*="fixed"]').remove();
+        showToast('✅ Задание проверено!');
+        await loadCourseData();
+    } catch(e) { showToast(e.message || 'Ошибка', 'error'); btn.disabled = false; }
 }
 
 function renderMaterials(materials) {
