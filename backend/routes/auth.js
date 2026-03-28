@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendWelcomeEmail } = require('../email');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -81,6 +82,8 @@ router.post('/register', [
             token,
             user: { id: userId, firstName, lastName, email, role, initials, color },
         });
+        // Приветственное письмо (асинхронно)
+        sendWelcomeEmail({ email, firstName, role }).catch(() => {});
     } catch (err) {
         console.error('register error:', err);
         res.status(500).json({ error: 'Ошибка сервера' });

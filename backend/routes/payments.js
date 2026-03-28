@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendTopupApprovedEmail, sendNewStudentEmail } = require('../email');
 const router  = express.Router();
 const { body, validationResult } = require('express-validator');
 const db = require('../db');
@@ -403,6 +404,17 @@ router.post('/admin/topup-approve/:id', auth, async (req, res) => {
         });
 
         const [bal] = await db.query('SELECT balance FROM student_profiles WHERE user_id=?', [topupReq.student_id]);
+        // Email уведомления асинхронно
+        try {
+            const [studentUser] = await db.query('SELECT email, first_name FROM users WHERE id=?', [topupReq.student_id]);
+            if (studentUser.length) {
+                sendTopupApprovedEmail(
+                    { email: studentUser[0].email, firstName: studentUser[0].first_name },
+                    topupReq.amount,
+                    enrollmentDone ? courseTitle : null
+                ).catch(() => {});
+            }
+        } catch(e) {}
         res.json({
             message: enrollmentDone ? `Курс куплен! Остаток: ${remainingBalance} смн` : 'Баланс пополнен',
             newBalance: parseFloat(bal[0].balance),
