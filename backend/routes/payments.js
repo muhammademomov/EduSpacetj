@@ -603,4 +603,75 @@ router.post('/admin/withdraw-reject/:id', auth, async (req, res) => {
     } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// ─── GET /api/payments/admin/history ──────────────────────
+// Полная история всех транзакций платформы
+router.get('/admin/history', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    try {
+        const { randomUUID } = require('crypto');
+        // Все зачисления студентов
+        const [topups] = await db.query(`
+            SELECT 
+                tr.id, tr.amount, tr.created_at, tr.description,
+                u.first_name, u.last_name, u.email, u.initials, u.color, u.avatar_url,
+                'topup' AS type
+            FROM topup_requests tr
+            JOIN users u ON u.id = tr.student_id
+            WHERE tr.status = 'approved'
+            ORDER BY tr.reviewed_at DESC
+            LIMIT 100
+        `);
+        // Все покупки курсов
+        const [enrollments] = await db.query(`
+            SELECT 
+                e.id, e.price_paid AS amount, e.enrolled_at AS created_at,
+                u.first_name, u.last_name, u.email, u.initials, u.color, u.avatar_url,
+                c.title AS course_title, c.emoji AS course_emoji,
+                e.commission_amount, e.teacher_amount,
+                'enrollment' AS type
+            FROM enrollments e
+            JOIN users u ON u.id = e.student_id
+            JOIN courses c ON c.id = e.course_id
+            ORDER BY e.enrolled_at DESC
+            LIMIT 100
+        `);
+        // Все выводы учителей
+        const [withdrawals] = await db.query(`
+            SELECT 
+                wr.id, wr.amount, wr.reviewed_at AS created_at,
+                u.first_name, u.last_name, u.email, u.initials, u.color, u.avatar_url,
+                wr.method, wr.card_or_phone,
+                'withdrawal' AS type
+            FROM withdraw_requests wr
+            JOIN users u ON u.id = wr.teacher_id
+            WHERE wr.status = 'approved'
+            ORDER BY wr.reviewed_at DESC
+            LIMIT 100
+        `);
+
+        // Объединяем и сортируем
+        const all = [
+            ...topups.map(r => ({
+                id: r.id, type: 'topup', amount: parseFloat(r.amount),
+                date: r.created_at, description: r.description,
+                user: { name: r.first_name+' '+r.last_name, email: r.email, initials: r.initials, color: r.color, avatarUrl: r.avatar_url }
+            })),
+            ...enrollments.map(r => ({
+                id: r.id, type: 'enrollment', amount: parseFloat(r.amount),
+                commission: parseFloat(r.commission_amount), teacherAmount: parseFloat(r.teacher_amount),
+                date: r.created_at, courseTitle: r.course_title, courseEmoji: r.course_emoji,
+                user: { name: r.first_name+' '+r.last_name, email: r.email, initials: r.initials, color: r.color, avatarUrl: r.avatar_url }
+            })),
+            ...withdrawals.map(r => ({
+                id: r.id, type: 'withdrawal', amount: parseFloat(r.amount),
+                date: r.created_at, method: r.method, cardOrPhone: r.card_or_phone,
+                user: { name: r.first_name+' '+r.last_name, email: r.email, initials: r.initials, color: r.color, avatarUrl: r.avatar_url }
+            }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        res.json(all);
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 module.exports = router;
