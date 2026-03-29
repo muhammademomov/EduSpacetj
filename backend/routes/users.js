@@ -437,4 +437,25 @@ router.get('/chats', auth, async (req, res) => {
     } catch(err) { console.error('GET /chats error:', err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// ─── GET /api/users/admin/students ────────────────────────
+// Список всех студентов
+router.get('/admin/students', auth, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+    try {
+        const [students] = await db.query(`
+            SELECT u.id, u.first_name, u.last_name, u.email, u.initials, u.color, u.avatar_url, u.created_at,
+                   sp.balance, sp.total_spent,
+                   COUNT(DISTINCT e.id) AS courses_count
+            FROM users u
+            LEFT JOIN student_profiles sp ON sp.user_id = u.id
+            LEFT JOIN enrollments e ON e.student_id = u.id
+            WHERE u.role = 'student' AND u.is_active = 1
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
+        `);
+        res.json(students);
+    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 module.exports = router;
