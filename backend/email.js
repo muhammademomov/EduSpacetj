@@ -15,7 +15,32 @@ async function sendEmail({ to, subject, html }) {
     } catch(e) { console.error('Email failed:', e.message); }
 }
 
-// Приветственное письмо при регистрации
+// Код подтверждения при регистрации
+async function sendVerificationEmail({ email, firstName, code }) {
+    await sendEmail({
+        to: email,
+        subject: '🔐 Код подтверждения — EduSpace.tj',
+        html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px">
+          <div style="text-align:center;margin-bottom:24px">
+            <h1 style="color:#18A96A;margin:0">EduSpace.tj</h1>
+            <p style="color:#666;margin:4px 0 0">Первый маркетплейс курсов Таджикистана</p>
+          </div>
+          <h2 style="margin:0 0 8px">Привет, ${firstName}! 👋</h2>
+          <p style="color:#555;margin:0 0 24px">Для завершения регистрации введите этот код:</p>
+          <div style="background:#fff;border:2px solid #18A96A;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px">
+            <div style="font-size:40px;font-weight:900;letter-spacing:12px;color:#18A96A">${code}</div>
+          </div>
+          <p style="color:#999;font-size:13px;text-align:center;margin:0">
+            ⏱ Код действителен <strong>10 минут</strong><br>
+            Если вы не регистрировались — проигнорируйте это письмо.
+          </p>
+          <p style="color:#ccc;font-size:11px;text-align:center;margin:20px 0 0">EduSpace.tj · Душанбе, Таджикистан</p>
+        </div>`
+    });
+}
+
+// Приветственное письмо после подтверждения
 async function sendWelcomeEmail(user) {
     await sendEmail({
         to: user.email,
@@ -103,4 +128,4 @@ async function sendHomeworkEmail(student, teacherName, courseTitle, hwTitle) {
     });
 }
 
-module.exports = { sendWelcomeEmail, sendTopupApprovedEmail, sendNewStudentEmail, sendHomeworkEmail };
+module.exports = { sendVerificationEmail, sendWelcomeEmail, sendTopupApprovedEmail, sendNewStudentEmail, sendHomeworkEmail };
