@@ -68,7 +68,7 @@ router.post('/register', [
         });
 
         // Отправляем код на email
-        sendVerificationEmail({ email, firstName, code: verifyCode }).catch(() => {});
+        await sendVerificationEmail({ email, firstName, code: verifyCode });
 
         res.status(201).json({
             message: 'Код подтверждения отправлен на email',
@@ -115,7 +115,9 @@ router.post('/verify-email', async (req, res) => {
         const token = jwt.sign({ id: userId, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
         // Приветственное письмо
-        sendWelcomeEmail({ email: user.email, firstName: user.first_name, role: user.role }).catch(() => {});
+        sendWelcomeEmail({ email: user.email, firstName: user.first_name, role: user.role }).catch((e) => {
+            console.error('welcome email error:', e.message);
+        });
 
         res.json({
             message: 'Email подтверждён!',
@@ -150,7 +152,7 @@ router.post('/resend-code', async (req, res) => {
             [verifyCode, verifyExpires, userId]
         );
 
-        sendVerificationEmail({ email: user.email, firstName: user.first_name, code: verifyCode }).catch(() => {});
+        await sendVerificationEmail({ email: user.email, firstName: user.first_name, code: verifyCode });
 
         res.json({ message: 'Новый код отправлен' });
     } catch (err) {
