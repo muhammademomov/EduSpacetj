@@ -1547,17 +1547,18 @@ input,select,textarea{font-family:inherit}
       <span style="font-size:13px;color:var(--text2);line-height:1.5">Я прочитал(а) и принимаю <a onclick="go('terms')" style="color:var(--g);font-weight:700;cursor:pointer">условия использования</a> платформы EduSpace.tj</span>
     </label>
 
-    <button class="btn-full green" id="terms-confirm-btn" onclick="confirmTerms()" disabled style="opacity:.5;cursor:not-allowed">Принять и получить SMS →</button>
+    <button class="btn-full green" id="terms-confirm-btn" onclick="confirmTerms()" disabled style="opacity:.5;cursor:not-allowed">Принять и получить код →</button>
     <button class="btn-full outline" style="margin-top:8px" onclick="backToForm()">← Назад к форме</button>
   </div>
 
   <div id="rs2" style="display:none">
-    <div class="sms-info">📱 <div>SMS отправлен на <strong id="sms-ph">+992...</strong>. Введите код.</div></div>
-    <div style="text-align:center;font-size:14px;color:var(--text2);margin-bottom:4px">Код подтверждения</div>
-    <div class="sms-inputs"><input class="sms-box" id="s0" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,0)"><input class="sms-box" id="s1" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,1)"><input class="sms-box" id="s2" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,2)"><input class="sms-box" id="s3" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,3)"></div>
+    <div class="sms-info">📧 <div>Код отправлен на <strong id="sms-ph">email@example.com</strong>. Введите его ниже.</div></div>
+    <div style="text-align:center;font-size:14px;color:var(--text2);margin-bottom:4px">6-значный код подтверждения</div>
+    <div class="sms-inputs"><input class="sms-box" id="s0" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,0)"><input class="sms-box" id="s1" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,1)"><input class="sms-box" id="s2" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,2)"><input class="sms-box" id="s3" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,3)"><input class="sms-box" id="s4" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,4)"><input class="sms-box" id="s5" maxlength="1" type="text" inputmode="numeric" oninput="smsIn(this,5)"></div>
     <div class="err-msg" id="sms-err" style="text-align:center;margin-bottom:8px">Неверный код</div>
     <button class="btn-full green" onclick="verifySMS()">Подтвердить</button>
     <div class="resend-row" style="margin-top:8px">Отправить снова: <span class="tmr-txt" id="tmr-txt">0:59</span></div>
+    <button class="btn-full outline" id="resend-code-btn" onclick="resendCode()" style="margin-top:8px;display:none">Отправить код повторно</button>
     <button class="btn-full outline" style="margin-top:8px" onclick="backReg()">← Назад</button>
   </div>
   <div id="rs3" style="display:none;text-align:center">
@@ -3410,14 +3411,25 @@ function confirmTerms() {
     var chk = document.getElementById('terms-check');
     if (!chk || !chk.checked) return;
 
-    // Переходим к SMS
-    document.getElementById('rs-terms').style.display = 'none';
-    document.getElementById('rs2').style.display = 'block';
-    document.getElementById('reg-sub').textContent = 'Шаг 3 из 4 — Подтверждение';
-    document.getElementById('ss2').classList.add('done');
-    document.getElementById('sms-ph').textContent = '+992 ' + regData.phone;
-    document.getElementById('s0').focus();
-    startTimer();
+    var btn = document.getElementById('terms-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Отправка...';
+
+    post('/auth/register', regData).then(function(result) {
+        regData._userId = result.userId;
+
+        document.getElementById('rs-terms').style.display = 'none';
+        document.getElementById('rs2').style.display = 'block';
+        document.getElementById('reg-sub').textContent = 'Шаг 3 из 4 — Подтверждение';
+        document.getElementById('ss2').classList.add('done');
+        document.getElementById('sms-ph').textContent = regData.email;
+        startTimer();
+        document.getElementById('s0').focus();
+    }).catch(function(e) {
+        btn.disabled = false;
+        btn.textContent = 'Принять и получить код →';
+        alert(e.message || 'Ошибка регистрации');
+    });
 }
 
 function backToForm() {
@@ -3429,31 +3441,46 @@ function backToForm() {
 
 function smsIn(el, idx) {
     el.classList.toggle('filled', el.value !== '');
-    if (el.value && idx < 3) document.getElementById('s' + (idx+1)).focus();
-    const code = [0,1,2,3].map(i => document.getElementById('s'+i).value).join('');
-    if (code.length === 4) setTimeout(verifySMS, 200);
+    if (el.value && idx < 5) document.getElementById('s' + (idx+1)).focus();
+
+    const code = [0,1,2,3,4,5].map(i => {
+        const input = document.getElementById('s' + i);
+        return input ? input.value : '';
+    }).join('');
+
+    if (code.length === 6) setTimeout(verifySMS, 200);
 }
 
 async function verifySMS() {
-    const code = [0,1,2,3].map(i => document.getElementById('s'+i).value).join('');
-    if (code.length < 4) {
+    const code = [0,1,2,3,4,5].map(i => {
+        const input = document.getElementById('s' + i);
+        return input ? input.value : '';
+    }).join('');
+
+    if (code.length < 6) {
         document.getElementById('sms-err').style.display = 'block';
-        document.getElementById('sms-err').textContent = 'Введите 4-значный код';
+        document.getElementById('sms-err').textContent = 'Введите 6-значный код из письма';
         return;
     }
-    // Demo: accept any 4-digit code (real SMS integration requires backend)
+
     document.getElementById('sms-err').style.display = 'none';
     clearInterval(regTimer);
+
     try {
-        const result = await post('/auth/register', regData);
+        const result = await post('/auth/verify-email', {
+            userId: regData._userId,
+            code: code
+        });
+
         localStorage.setItem('token', result.token);
         localStorage.setItem('user', JSON.stringify(result.user));
         currentUser = result.user;
+
         document.getElementById('rs2').style.display = 'none';
         document.getElementById('rs3').style.display = 'block';
         document.getElementById('reg-sub').textContent = 'Шаг 4 из 4 — Готово';
         document.getElementById('ss3').classList.add('done');
-        // Показываем ссылку на условия
+
         var termsNote = document.getElementById('rs3-terms');
         if (!termsNote) {
             var rs3 = document.getElementById('rs3');
@@ -3461,16 +3488,17 @@ async function verifySMS() {
                 var note = document.createElement('p');
                 note.id = 'rs3-terms';
                 note.style.cssText = 'font-size:12px;color:var(--text3);text-align:center;margin-top:12px';
-                note.innerHTML = 'Регистрируясь, вы принимаете <a onclick="go(\'terms\')" style="color:var(--g);font-weight:700;cursor:pointer">условия использования</a>';
+                note.innerHTML = 'Регистрируясь, вы принимаете <a onclick="go('terms')" style="color:var(--g);font-weight:700;cursor:pointer">условия использования</a>';
                 rs3.appendChild(note);
             }
         }
+
         document.getElementById('reg-sub').textContent = 'Готово!';
         document.getElementById('ss2').classList.add('done');
         document.getElementById('suc-role').textContent = regData.role === 'student' ? 'Ученик' : 'Преподаватель';
     } catch(e) {
         document.getElementById('sms-err').style.display = 'block';
-        document.getElementById('sms-err').textContent = e.message || 'Ошибка регистрации';
+        document.getElementById('sms-err').textContent = e.message || 'Неверный код';
     }
 }
 
@@ -3483,19 +3511,40 @@ function backReg() {
 }
 
 function startTimer() {
-    regSec = 59; clearInterval(regTimer);
+    regSec = 59;
+    clearInterval(regTimer);
     document.getElementById('tmr-txt').textContent = '0:59';
+
+    var resendBtn = document.getElementById('resend-code-btn');
+    if (resendBtn) resendBtn.style.display = 'none';
+
     regTimer = setInterval(() => {
         regSec--;
         document.getElementById('tmr-txt').textContent = '0:' + (regSec < 10 ? '0' : '') + regSec;
-        if (regSec <= 0) clearInterval(regTimer);
+        if (regSec <= 0) {
+            clearInterval(regTimer);
+            document.getElementById('tmr-txt').textContent = '';
+            if (resendBtn) resendBtn.style.display = 'inline-block';
+        }
     }, 1000);
+}
+
+async function resendCode() {
+    if (!regData._userId) return;
+    try {
+        await post('/auth/resend-code', { userId: regData._userId });
+        startTimer();
+        document.getElementById('sms-err').style.display = 'none';
+        showToast('Новый код отправлен на ' + regData.email);
+    } catch(e) {
+        showToast(e.message || 'Ошибка отправки', 'error');
+    }
 }
 
 function afterReg() {
     showLoggedIn();
     ['r-fn','r-ln','r-ph','r-em','r-pw','r-pw2'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-    [0,1,2,3].forEach(i => { const s=document.getElementById('s'+i); if(s){s.value='';s.classList.remove('filled');} });
+    [0,1,2,3,4,5].forEach(i => { const s=document.getElementById('s'+i); if(s){s.value='';s.classList.remove('filled');} });
     document.getElementById('rs1').style.display = 'block';
     document.getElementById('rs2').style.display = 'none';
     document.getElementById('rs3').style.display = 'none';
@@ -3532,7 +3581,11 @@ async function doLogin() {
         goDash();
     } catch(e) {
         document.getElementById('l-err').style.display = 'block';
-        document.getElementById('l-err').textContent = e.message || 'Неверный email или пароль';
+        if (e.status === 403 && e.message && e.message.indexOf('не подтверждён') !== -1) {
+            document.getElementById('l-err').textContent = '⚠️ Email не подтверждён. Проверьте почту или зарегистрируйтесь снова.';
+        } else {
+            document.getElementById('l-err').textContent = e.message || 'Неверный email или пароль';
+        }
     }
 }
 
