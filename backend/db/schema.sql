@@ -2,19 +2,21 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 CREATE TABLE IF NOT EXISTS users (
-    id          VARCHAR(36)  PRIMARY KEY,
-    first_name  VARCHAR(100) NOT NULL,
-    last_name   VARCHAR(100) NOT NULL,
-    email       VARCHAR(255) NOT NULL UNIQUE,
-    phone       VARCHAR(20)  NOT NULL,
+    id            VARCHAR(36)  PRIMARY KEY,
+    first_name    VARCHAR(100) NOT NULL,
+    last_name     VARCHAR(100) NOT NULL,
+    email         VARCHAR(255) NOT NULL UNIQUE,
+    phone         VARCHAR(20)  NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role        ENUM('student','teacher','admin') NOT NULL,
-    avatar_url  VARCHAR(500),
-    color       VARCHAR(10)  DEFAULT '#18A96A',
-    initials    VARCHAR(5),
-    is_active   TINYINT(1)   DEFAULT 1,
-    created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    updated_at  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    role          ENUM('student','teacher','admin') NOT NULL,
+    avatar_url    VARCHAR(500),
+    color         VARCHAR(10)  DEFAULT '#18A96A',
+    initials      VARCHAR(5),
+    is_active     TINYINT(1)   DEFAULT 0,
+    verify_code   VARCHAR(6),
+    verify_expires DATETIME,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
     INDEX idx_role  (role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
