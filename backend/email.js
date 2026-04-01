@@ -1,18 +1,33 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = 'EduSpace.tj <onboarding@resend.dev>';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'EduSpace.tj <onboarding@resend.dev>';
 
 async function sendEmail({ to, subject, html }) {
-    if (!RESEND_API_KEY) { console.warn('RESEND_API_KEY not set'); return; }
-    try {
-        const res = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RESEND_API_KEY },
-            body: JSON.stringify({ from: FROM_EMAIL, to, subject, html })
-        });
-        const data = await res.json();
-        if (!res.ok) console.error('Email error:', data);
-        else console.log('Email sent to', to);
-    } catch(e) { console.error('Email failed:', e.message); }
+    if (!RESEND_API_KEY) {
+        throw new Error('RESEND_API_KEY not set');
+    }
+
+    const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + RESEND_API_KEY
+        },
+        body: JSON.stringify({
+            from: FROM_EMAIL,
+            to,
+            subject,
+            html
+        })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data?.message || 'Email sending failed');
+    }
+
+    console.log('Email sent to', to);
+    return data;
 }
 
 // Код подтверждения при регистрации
