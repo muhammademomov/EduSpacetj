@@ -26,8 +26,15 @@ router.post('/register', [
     const { firstName, lastName, email, phone, password, role, subject } = req.body;
 
     try {
-        const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
-        if (existing.length) return res.status(409).json({ error: 'Email уже используется' });
+        const [existing] = await db.query('SELECT id, is_active FROM users WHERE email = ?', [email]);
+        if (existing.length) {
+            // Если аккаунт уже активен — блокируем
+            if (existing[0].is_active) {
+                return res.status(409).json({ error: 'Email уже используется' });
+            }
+            // Если не активен (не подтверждён) — удаляем старую запись и регистрируем заново
+            await db.query('DELETE FROM users WHERE id = ?', [existing[0].id]);
+        }
 
         const passwordHash = await bcrypt.hash(password, 10);
         const initials = (firstName[0] + lastName[0]).toUpperCase();
@@ -68,7 +75,16 @@ router.post('/register', [
         });
 
         // Отправляем код на email
-        await sendVerificationEmail({ email, firstName, code: verifyCode });
+        try {
+            await sendVerificationEmail({ email, firstName, code: verifyCode });
+        } catch (emailErr) {
+            console.error('Email sending failed:', emailErr.message);
+            // Удаляем пользователя если письмо не отправилось — чтобы можно было попробовать снова
+            await db.query('DELETE FROM users WHERE id = ?', [userId]);
+            return res.status(500).json({
+                error: 'Не удалось отправить письмо на ' + email + '. Проверьте правильность адреса.',
+            });
+        }
 
         res.status(201).json({
             message: 'Код подтверждения отправлен на email',
