@@ -459,54 +459,41 @@ router.get('/admin/students', auth, async (req, res) => {
 });
 
 
-// ─── GET /api/users/admin/all-teachers ─────────────────────────────
-router.get('/admin/all-teachers', auth, async (req, res) => {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
+// ─── POST /admin/block/:userId — заблокировать учителя ───────────
+router.post('/admin/block/:userId', auth, adminOnly, async (req, res) => {
     try {
-        const [teachers] = await db.query(`
-            SELECT u.id, u.first_name, u.last_name, u.email, u.initials, u.color, u.avatar_url, u.is_active, u.created_at,
-                   tp.subject, tp.rating, tp.student_count, tp.price, tp.is_moderated
-            FROM users u
-            JOIN teacher_profiles tp ON tp.user_id = u.id
-            WHERE u.role = 'teacher'
-            ORDER BY u.created_at DESC
-        `);
-        res.json(teachers);
-    } catch(err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
-});
-
-// ─── POST /api/users/admin/block/:userId — заблокировать/разблокировать ──
-router.post('/admin/block/:userId', auth, async (req, res) => {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
-    const { userId } = req.params;
-    try {
-        const [rows] = await db.query('SELECT id, is_active, first_name, last_name FROM users WHERE id = ? AND role != ?', [userId, 'admin']);
-        if (!rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
-        const user = rows[0];
-        // is_active: 1 = активен, 2 = заблокирован
-        const newStatus = user.is_active === 2 ? 1 : 2;
-        await db.query('UPDATE users SET is_active = ? WHERE id = ?', [newStatus, userId]);
-        res.json({ 
-            message: newStatus === 2 ? 'Пользователь заблокирован' : 'Пользователь разблокирован',
-            is_active: newStatus
-        });
+        await db.query(
+            'UPDATE teacher_profiles SET is_visible=0, is_moderated=0 WHERE user_id=?',
+            [req.params.userId]
+        );
+        res.json({ message: 'Учитель заблокирован' });
     } catch (err) {
-        console.error('block error:', err);
+        console.error(err);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
 
-// ─── DELETE /api/users/admin/delete/:userId — удалить пользователя ──────
-router.delete('/admin/delete/:userId', auth, async (req, res) => {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
-    const { userId } = req.params;
+// ─── POST /admin/unblock/:userId — разблокировать учителя ─────────
+router.post('/admin/unblock/:userId', auth, adminOnly, async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT id, role FROM users WHERE id = ? AND role != ?', [userId, 'admin']);
-        if (!rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
-        await db.query('DELETE FROM users WHERE id = ?', [userId]);
-        res.json({ message: 'Пользователь удалён' });
+        await db.query(
+            'UPDATE teacher_profiles SET is_visible=1, is_moderated=1 WHERE user_id=?',
+            [req.params.userId]
+        );
+        res.json({ message: 'Учитель разблокирован' });
     } catch (err) {
-        console.error('delete error:', err);
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// ─── DELETE /admin/teacher/:userId — полное удаление учителя ──────
+router.delete('/admin/teacher/:userId', auth, adminOnly, async (req, res) => {
+    try {
+        await db.query('DELETE FROM users WHERE id=?', [req.params.userId]);
+        res.json({ message: 'Учитель удалён' });
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
