@@ -629,14 +629,23 @@ function loadAllTeachers() {
         if (!all.length) { el.innerHTML = '<div class="empty-state"><div class="empty-title">Учителей пока нет</div></div>'; return; }
         var rows = all.map(function(t) {
             var item = {avatar_url:t.avatarUrl, color:t.color, initials:t.initials, first_name:t.firstName, last_name:t.lastName};
+            var isBlocked = t.isVisible === false || t.isVisible === 0;
+            var statusBadge = isBlocked
+                ? '<span class="badge" style="background:#fee2e2;color:#dc2626">🚫 Заблокирован</span>'
+                : (t.isModerated ? '<span class="badge active">✓ Одобрен</span>' : '<span class="badge pending">⏳ На проверке</span>');
+            var blockBtn = isBlocked
+                ? '<button onclick="unblockTeacher(\'' + t.userId + '\')" style="padding:5px 10px;border-radius:6px;border:1.5px solid #16a34a;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">✅ Разблокировать</button>'
+                : '<button onclick="blockTeacher(\'' + t.userId + '\')" style="padding:5px 10px;border-radius:6px;border:1.5px solid #f59e0b;background:#fffbeb;color:#b45309;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">🚫 Блокировать</button>';
+            var deleteBtn = '<button onclick="deleteTeacher(\'' + t.userId + '\', \'' + t.firstName + ' ' + t.lastName + '\')" style="padding:5px 10px;border-radius:6px;border:1.5px solid #dc2626;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer">🗑 Удалить</button>';
             return '<tr>' +
                 '<td><div class="user-cell">'+adminAv(item)+'<div><div class="user-name">'+t.firstName+' '+t.lastName+'</div><div class="user-email">'+(t.subject||'')+'</div></div></div></td>' +
                 '<td>'+(t.rating>0?'★ '+parseFloat(t.rating).toFixed(1):'—')+'</td>' +
                 '<td>'+(t.studentCount||0)+'</td>' +
                 '<td>'+(t.price>0?t.price+' смн':'—')+'</td>' +
-                '<td><span class="badge '+(t.isModerated?'active':'pending')+'">'+(t.isModerated?'✓ Одобрен':'⏳ На проверке')+'</span></td></tr>';
+                '<td>'+statusBadge+'</td>' +
+                '<td>'+blockBtn+deleteBtn+'</td></tr>';
         }).join('');
-        el.innerHTML = '<table><thead><tr><th>Учитель</th><th>Рейтинг</th><th>Учеников</th><th>Цена</th><th>Статус</th></tr></thead><tbody>'+rows+'</tbody></table>';
+        el.innerHTML = '<table><thead><tr><th>Учитель</th><th>Рейтинг</th><th>Учеников</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead><tbody>'+rows+'</tbody></table>';
     }).catch(function(e) { el.innerHTML = '<div class="empty-state"><div class="empty-title" style="color:var(--red)">Ошибка</div></div>'; });
 }
 
@@ -960,6 +969,40 @@ document.getElementById('teacher-modal').addEventListener('click', function(e) {
 document.getElementById('refresh-stats').addEventListener('click', loadStats);
 document.getElementById('refresh-teachers').addEventListener('click', loadPendingTeachers);
 document.getElementById('refresh-courses').addEventListener('click', loadPendingCourses);
+
+function blockTeacher(userId) {
+    if (!confirm('Заблокировать этого учителя? Он не будет виден в каталоге.')) return;
+    req('POST', '/users/admin/block/' + userId).then(function() {
+        showToast('Учитель заблокирован');
+        loadAllTeachers();
+    }).catch(function(e) { alert('Ошибка: ' + e.message); });
+}
+
+function unblockTeacher(userId) {
+    if (!confirm('Разблокировать этого учителя?')) return;
+    req('POST', '/users/admin/unblock/' + userId).then(function() {
+        showToast('Учитель разблокирован');
+        loadAllTeachers();
+    }).catch(function(e) { alert('Ошибка: ' + e.message); });
+}
+
+function deleteTeacher(userId, name) {
+    if (!confirm('ПОЛНОЕ УДАЛЕНИЕ: ' + name + '\nВсе данные будут удалены навсегда. Продолжить?')) return;
+    if (!confirm('Вы уверены? Это действие НЕОБРАТИМО!')) return;
+    req('DELETE', '/users/admin/teacher/' + userId).then(function() {
+        showToast('Учитель удалён');
+        loadAllTeachers();
+    }).catch(function(e) { alert('Ошибка: ' + e.message); });
+}
+
+function showToast(msg) {
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style = 'position:fixed;bottom:24px;right:24px;background:#18A96A;color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;z-index:9999;font-size:14px';
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 3000);
+}
+
 document.getElementById('refresh-all-teachers').addEventListener('click', loadAllTeachers);
 document.getElementById('refresh-all-students').addEventListener('click', loadAllStudents);
 document.getElementById('refresh-rejected').addEventListener('click', loadRejected);
