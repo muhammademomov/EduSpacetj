@@ -192,11 +192,16 @@ router.post('/login', [
         }
 
         // Проверяем подтверждён ли email
-        if (!user.is_active) {
+        if (user.is_active === 0) {
             return res.status(403).json({
                 error: 'Email не подтверждён',
                 userId: user.id,
                 needVerify: true,
+            });
+        }
+        if (user.is_active === 2) {
+            return res.status(403).json({
+                error: 'Ваш аккаунт заблокирован. Обратитесь в поддержку.',
             });
         }
 
