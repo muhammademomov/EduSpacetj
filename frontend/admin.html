@@ -629,21 +629,21 @@ function loadAllTeachers() {
         if (!all.length) { el.innerHTML = '<div class="empty-state"><div class="empty-title">Учителей пока нет</div></div>'; return; }
         var rows = all.map(function(t) {
             var item = {avatar_url:t.avatarUrl, color:t.color, initials:t.initials, first_name:t.firstName, last_name:t.lastName};
-            var isBlocked = t.isVisible === false || t.isVisible === 0;
-            var statusBadge = isBlocked
-                ? '<span class="badge" style="background:#fee2e2;color:#dc2626">🚫 Заблокирован</span>'
-                : (t.isModerated ? '<span class="badge active">✓ Одобрен</span>' : '<span class="badge pending">⏳ На проверке</span>');
-            var blockBtn = isBlocked
-                ? '<button onclick="unblockTeacher(\'' + t.userId + '\')" style="padding:5px 10px;border-radius:6px;border:1.5px solid #16a34a;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">✅ Разблокировать</button>'
-                : '<button onclick="blockTeacher(\'' + t.userId + '\')" style="padding:5px 10px;border-radius:6px;border:1.5px solid #f59e0b;background:#fffbeb;color:#b45309;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">🚫 Блокировать</button>';
-            var deleteBtn = '<button onclick="deleteTeacher(\'' + t.userId + '\', \'' + t.firstName + ' ' + t.lastName + '\')" style="padding:5px 10px;border-radius:6px;border:1.5px solid #dc2626;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer">🗑 Удалить</button>';
+            var hidden = !t.isVisible;
+            var statusHtml =
+                '<span class="badge '+(t.isModerated?'active':'pending')+'" style="margin-right:4px">'+(t.isModerated?'✓ Одобрен':'⏳ На проверке')+'</span>' +
+                (hidden ? '<span class="badge" style="background:#fef3c7;color:#92400e;margin-right:4px">👁 Скрыт</span>' : '');
+            var hideBtn = hidden
+                ? '<button title="Показать" onclick="adminShowTeacher(\'' + t.userId + '\')" style="background:#f0fdf4;border:1.5px solid #16a34a;color:#16a34a;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">👁 Показать</button>'
+                : '<button title="Скрыть" onclick="adminHideTeacher(\'' + t.userId + '\')" style="background:#fffbeb;border:1.5px solid #f59e0b;color:#b45309;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">🙈 Скрыть</button>';
+            var delBtn = '<button title="Удалить навсегда" onclick="adminDeleteTeacher(\'' + t.userId + '\',\'' + t.firstName+' '+t.lastName + '\')" style="background:#fef2f2;border:1.5px solid #dc2626;color:#dc2626;border-radius:7px;padding:5px 9px;font-size:14px;cursor:pointer">🗑</button>';
             return '<tr>' +
                 '<td><div class="user-cell">'+adminAv(item)+'<div><div class="user-name">'+t.firstName+' '+t.lastName+'</div><div class="user-email">'+(t.subject||'')+'</div></div></div></td>' +
                 '<td>'+(t.rating>0?'★ '+parseFloat(t.rating).toFixed(1):'—')+'</td>' +
                 '<td>'+(t.studentCount||0)+'</td>' +
                 '<td>'+(t.price>0?t.price+' смн':'—')+'</td>' +
-                '<td>'+statusBadge+'</td>' +
-                '<td>'+blockBtn+deleteBtn+'</td></tr>';
+                '<td>'+statusHtml+'</td>' +
+                '<td style="white-space:nowrap">'+hideBtn+delBtn+'</td></tr>';
         }).join('');
         el.innerHTML = '<table><thead><tr><th>Учитель</th><th>Рейтинг</th><th>Учеников</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead><tbody>'+rows+'</tbody></table>';
     }).catch(function(e) { el.innerHTML = '<div class="empty-state"><div class="empty-title" style="color:var(--red)">Ошибка</div></div>'; });
@@ -655,13 +655,23 @@ function loadAllStudents() {
         document.getElementById('all-students-cnt').textContent = students.length;
         if (!students.length) { el.innerHTML = '<div class="empty-state"><div class="empty-title">Студентов пока нет</div></div>'; return; }
         var rows = students.map(function(s) {
+            var hidden = s.is_active === 0 || s.is_active === false;
+            var statusHtml = hidden
+                ? '<span class="badge" style="background:#fef3c7;color:#92400e">👁 Скрыт</span>'
+                : '<span class="badge active">✓ Активен</span>';
+            var hideBtn = hidden
+                ? '<button title="Показать" onclick="adminShowStudent(\'' + s.id + '\')" style="background:#f0fdf4;border:1.5px solid #16a34a;color:#16a34a;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">👁 Показать</button>'
+                : '<button title="Скрыть" onclick="adminHideStudent(\'' + s.id + '\')" style="background:#fffbeb;border:1.5px solid #f59e0b;color:#b45309;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">🙈 Скрыть</button>';
+            var delBtn = '<button title="Удалить навсегда" onclick="adminDeleteStudent(\'' + s.id + '\',\'' + s.first_name+' '+s.last_name + '\')" style="background:#fef2f2;border:1.5px solid #dc2626;color:#dc2626;border-radius:7px;padding:5px 9px;font-size:14px;cursor:pointer">🗑</button>';
             return '<tr>' +
                 '<td><div class="user-cell">'+adminAv(s)+'<div><div class="user-name">'+s.first_name+' '+s.last_name+'</div><div class="user-email">'+s.email+'</div></div></div></td>' +
                 '<td style="font-weight:600;color:var(--g2)">'+parseFloat(s.balance||0).toLocaleString('ru')+' смн</td>' +
-                '<td>'+( s.courses_count||0)+' курсов</td>' +
+                '<td>'+(s.courses_count||0)+' курсов</td>' +
+                '<td>'+statusHtml+'</td>' +
+                '<td style="white-space:nowrap">'+hideBtn+delBtn+'</td>' +
                 '<td>'+new Date(s.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})+'</td></tr>';
         }).join('');
-        el.innerHTML = '<table><thead><tr><th>Студент</th><th>Баланс</th><th>Курсы</th><th>Дата рег.</th></tr></thead><tbody>'+rows+'</tbody></table>';
+        el.innerHTML = '<table><thead><tr><th>Студент</th><th>Баланс</th><th>Курсы</th><th>Статус</th><th>Действия</th><th>Дата рег.</th></tr></thead><tbody>'+rows+'</tbody></table>';
     }).catch(function(e) {
         el.innerHTML = '<div class="empty-state"><div class="empty-title" style="color:var(--red)">Ошибка: '+e.message+'</div></div>';
     });
@@ -970,37 +980,38 @@ document.getElementById('refresh-stats').addEventListener('click', loadStats);
 document.getElementById('refresh-teachers').addEventListener('click', loadPendingTeachers);
 document.getElementById('refresh-courses').addEventListener('click', loadPendingCourses);
 
-function blockTeacher(userId) {
-    if (!confirm('Заблокировать этого учителя? Он не будет виден в каталоге.')) return;
-    req('POST', '/users/admin/block/' + userId).then(function() {
-        showToast('Учитель заблокирован');
-        loadAllTeachers();
-    }).catch(function(e) { alert('Ошибка: ' + e.message); });
+// ── Учителя: скрыть/показать/удалить ──────────────────────
+function adminHideTeacher(uid) {
+    if (!confirm('Скрыть учителя из каталога?')) return;
+    req('POST', '/users/admin/block/' + uid).then(function() { showAdminToast('Учитель скрыт'); loadAllTeachers(); }).catch(function(e){ alert(e.message); });
+}
+function adminShowTeacher(uid) {
+    req('POST', '/users/admin/unblock/' + uid).then(function() { showAdminToast('Учитель снова виден'); loadAllTeachers(); }).catch(function(e){ alert(e.message); });
+}
+function adminDeleteTeacher(uid, name) {
+    if (!confirm('Удалить навсегда: ' + name + '?\nВсе данные будут удалены из базы!')) return;
+    req('DELETE', '/users/admin/teacher/' + uid).then(function() { showAdminToast('Учитель удалён'); loadAllTeachers(); }).catch(function(e){ alert(e.message); });
 }
 
-function unblockTeacher(userId) {
-    if (!confirm('Разблокировать этого учителя?')) return;
-    req('POST', '/users/admin/unblock/' + userId).then(function() {
-        showToast('Учитель разблокирован');
-        loadAllTeachers();
-    }).catch(function(e) { alert('Ошибка: ' + e.message); });
+// ── Студенты: скрыть/показать/удалить ─────────────────────
+function adminHideStudent(uid) {
+    if (!confirm('Скрыть студента?')) return;
+    req('POST', '/users/admin/hide-student/' + uid).then(function() { showAdminToast('Студент скрыт'); loadAllStudents(); }).catch(function(e){ alert(e.message); });
+}
+function adminShowStudent(uid) {
+    req('POST', '/users/admin/show-student/' + uid).then(function() { showAdminToast('Студент активен'); loadAllStudents(); }).catch(function(e){ alert(e.message); });
+}
+function adminDeleteStudent(uid, name) {
+    if (!confirm('Удалить навсегда: ' + name + '?\nВсе данные будут удалены из базы!')) return;
+    req('DELETE', '/users/admin/student/' + uid).then(function() { showAdminToast('Студент удалён'); loadAllStudents(); }).catch(function(e){ alert(e.message); });
 }
 
-function deleteTeacher(userId, name) {
-    if (!confirm('ПОЛНОЕ УДАЛЕНИЕ: ' + name + '\nВсе данные будут удалены навсегда. Продолжить?')) return;
-    if (!confirm('Вы уверены? Это действие НЕОБРАТИМО!')) return;
-    req('DELETE', '/users/admin/teacher/' + userId).then(function() {
-        showToast('Учитель удалён');
-        loadAllTeachers();
-    }).catch(function(e) { alert('Ошибка: ' + e.message); });
-}
-
-function showToast(msg) {
+function showAdminToast(msg) {
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style = 'position:fixed;bottom:24px;right:24px;background:#18A96A;color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;z-index:9999;font-size:14px';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#18A96A;color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;z-index:9999;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.2)';
     document.body.appendChild(t);
-    setTimeout(function() { t.remove(); }, 3000);
+    setTimeout(function(){ t.remove(); }, 3000);
 }
 
 document.getElementById('refresh-all-teachers').addEventListener('click', loadAllTeachers);
