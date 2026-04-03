@@ -1032,21 +1032,7 @@ if (token) {
 }
 
 // Загрузка студентов через endpoint
-function loadAllStudents() {
-    var el = document.getElementById('all-students-table');
-    req('GET', '/users/admin/students').then(function(students) {
-        document.getElementById('all-students-cnt').textContent = students.length;
-        if (!students.length) { el.innerHTML='<div class="empty-state"><div class="empty-title">Студентов пока нет</div></div>'; return; }
-        var rows = students.map(function(s) {
-            return '<tr>'+
-                '<td><div class="user-cell">'+adminAv(s)+'<div><div class="user-name">'+s.first_name+' '+s.last_name+'</div><div class="user-email">'+s.email+'</div></div></div></td>'+
-                '<td style="font-weight:600;color:var(--g2)">'+parseFloat(s.balance||0).toLocaleString('ru')+' смн</td>'+
-                '<td>'+(s.courses_count||0)+' курсов</td>'+
-                '<td>'+new Date(s.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})+'</td></tr>';
-        }).join('');
-        el.innerHTML='<table><thead><tr><th>Студент</th><th>Баланс</th><th>Курсы</th><th>Дата рег.</th></tr></thead><tbody>'+rows+'</tbody></table>';
-    }).catch(function(e){ el.innerHTML='<div class="empty-state"><div class="empty-title" style="color:var(--red)">Ошибка: '+e.message+'</div></div>'; });
-}
+// loadAllStudents — см. выше
 </script>
 </body>
 </html>
