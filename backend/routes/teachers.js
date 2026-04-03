@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
         let sql = `
             SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.created_at,
                    tp.id AS profile_id, tp.subject, tp.bio, tp.tags, tp.price,
-                   tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated,
+                   tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated, tp.is_visible, tp.user_id,
                    tp.rating, tp.review_count, tp.student_count, tp.video_url, tp.conditions
             FROM users u
             JOIN teacher_profiles tp ON tp.user_id = u.id
@@ -52,7 +52,7 @@ router.get('/:id', async (req, res) => {
         const [rows] = await db.query(
             `SELECT u.id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url, u.created_at,
                     tp.id AS profile_id, tp.subject, tp.bio, tp.tags, tp.price,
-                    tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated,
+                    tp.platforms, tp.work_days, tp.work_hours, tp.is_moderated, tp.is_visible, tp.user_id,
                     tp.rating, tp.review_count, tp.student_count, tp.teacher_type, tp.video_url, tp.conditions
              FROM users u JOIN teacher_profiles tp ON tp.user_id = u.id
              WHERE u.id = ? AND u.is_active = 1`, [req.params.id]
@@ -804,7 +804,7 @@ function fmt(t) {
         tags: safeJson(t.tags, []), platforms: safeJson(t.platforms, []), workDays: safeJson(t.work_days, []),
         workHours: t.work_hours, price: parseFloat(t.price)||0, videoUrl: t.video_url||null,
         conditions: safeJson(t.conditions, {trial:false,guarantee:false,homework:false,certificate:false}),
-        isModerated: !!t.is_moderated, rating: parseFloat(t.rating)||0,
+        isModerated: !!t.is_moderated, isVisible: !!t.is_visible, userId: t.user_id || t.id, rating: parseFloat(t.rating)||0,
         reviewCount: t.review_count, studentCount: t.student_count, createdAt: t.created_at,
     };
 }
