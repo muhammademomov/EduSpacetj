@@ -450,7 +450,7 @@ router.get('/admin/students', auth, async (req, res) => {
             FROM users u
             LEFT JOIN student_profiles sp ON sp.user_id = u.id
             LEFT JOIN enrollments e ON e.student_id = u.id
-            WHERE u.role = 'student' AND u.is_active = 1
+            WHERE u.role = 'student'
             GROUP BY u.id
             ORDER BY u.created_at DESC
         `);
@@ -459,43 +459,52 @@ router.get('/admin/students', auth, async (req, res) => {
 });
 
 
-// ─── POST /admin/block/:userId — заблокировать учителя ───────────
+// ─── POST /admin/block/:userId — скрыть учителя ──────────
 router.post('/admin/block/:userId', auth, adminOnly, async (req, res) => {
     try {
-        await db.query(
-            'UPDATE teacher_profiles SET is_visible=0, is_moderated=0 WHERE user_id=?',
-            [req.params.userId]
-        );
-        res.json({ message: 'Учитель заблокирован' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошибка сервера' });
-    }
+        await db.query('UPDATE teacher_profiles SET is_visible=0 WHERE user_id=?', [req.params.userId]);
+        res.json({ message: 'Учитель скрыт' });
+    } catch(err) { res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
-// ─── POST /admin/unblock/:userId — разблокировать учителя ─────────
+// ─── POST /admin/unblock/:userId — показать учителя ───────
 router.post('/admin/unblock/:userId', auth, adminOnly, async (req, res) => {
     try {
-        await db.query(
-            'UPDATE teacher_profiles SET is_visible=1, is_moderated=1 WHERE user_id=?',
-            [req.params.userId]
-        );
-        res.json({ message: 'Учитель разблокирован' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошибка сервера' });
-    }
+        await db.query('UPDATE teacher_profiles SET is_visible=1 WHERE user_id=?', [req.params.userId]);
+        res.json({ message: 'Учитель показан' });
+    } catch(err) { res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
-// ─── DELETE /admin/teacher/:userId — полное удаление учителя ──────
+// ─── DELETE /admin/teacher/:userId — удалить учителя ──────
 router.delete('/admin/teacher/:userId', auth, adminOnly, async (req, res) => {
     try {
         await db.query('DELETE FROM users WHERE id=?', [req.params.userId]);
         res.json({ message: 'Учитель удалён' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошибка сервера' });
-    }
+    } catch(err) { res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /admin/hide-student/:userId — скрыть студента ───
+router.post('/admin/hide-student/:userId', auth, adminOnly, async (req, res) => {
+    try {
+        await db.query('UPDATE users SET is_active=0 WHERE id=?', [req.params.userId]);
+        res.json({ message: 'Студент скрыт' });
+    } catch(err) { res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── POST /admin/show-student/:userId — показать студента ─
+router.post('/admin/show-student/:userId', auth, adminOnly, async (req, res) => {
+    try {
+        await db.query('UPDATE users SET is_active=1 WHERE id=?', [req.params.userId]);
+        res.json({ message: 'Студент показан' });
+    } catch(err) { res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// ─── DELETE /admin/student/:userId — удалить студента ─────
+router.delete('/admin/student/:userId', auth, adminOnly, async (req, res) => {
+    try {
+        await db.query('DELETE FROM users WHERE id=?', [req.params.userId]);
+        res.json({ message: 'Студент удалён' });
+    } catch(err) { res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
 module.exports = router;
