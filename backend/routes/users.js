@@ -444,7 +444,7 @@ router.get('/admin/students', auth, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Нет доступа' });
     try {
         const [students] = await db.query(`
-            SELECT u.id, u.first_name, u.last_name, u.email, u.initials, u.color, u.avatar_url, u.created_at,
+            SELECT u.id, u.first_name, u.last_name, u.email, u.initials, u.color, u.avatar_url, u.created_at, u.is_active,
                    sp.balance, sp.total_spent,
                    COUNT(DISTINCT e.id) AS courses_count
             FROM users u
@@ -486,7 +486,8 @@ router.delete('/admin/teacher/:userId', auth, adminOnly, async (req, res) => {
 // ─── POST /admin/hide-student/:userId — скрыть студента ───
 router.post('/admin/hide-student/:userId', auth, adminOnly, async (req, res) => {
     try {
-        await db.query('UPDATE users SET is_active=0 WHERE id=?', [req.params.userId]);
+        // is_active=2 означает "заблокирован администратором"
+        await db.query('UPDATE users SET is_active=2 WHERE id=?', [req.params.userId]);
         res.json({ message: 'Студент скрыт' });
     } catch(err) { res.status(500).json({ error: 'Ошибка сервера' }); }
 });
