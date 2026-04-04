@@ -655,7 +655,7 @@ function loadAllStudents() {
         document.getElementById('all-students-cnt').textContent = students.length;
         if (!students.length) { el.innerHTML = '<div class="empty-state"><div class="empty-title">Студентов пока нет</div></div>'; return; }
         var rows = students.map(function(s) {
-            var hidden = s.is_active === 0 || s.is_active === false;
+            var hidden = s.is_active === 2;
             var statusHtml = hidden
                 ? '<span class="badge" style="background:#fef3c7;color:#92400e">👁 Скрыт</span>'
                 : '<span class="badge active">✓ Активен</span>';
