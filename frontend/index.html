@@ -1160,10 +1160,10 @@ input,select,textarea{font-family:inherit}
 .home-see-all{font-size:13px;font-weight:700;color:var(--g);cursor:pointer;text-decoration:none;white-space:nowrap}
 .cats-carousel-wrap{position:relative;overflow:hidden}
 .cats-track{display:flex;gap:14px;transition:transform .4s ease;padding:4px 2px 8px}
-.cat-card{min-width:90px;flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:.9rem .6rem;text-align:center;cursor:pointer;transition:all .25s;box-shadow:var(--sh0)}
+.cat-card{min-width:120px;flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all .25s;box-shadow:var(--sh0)}
 .cat-card:hover{border-color:var(--g);box-shadow:0 8px 24px rgba(37,99,235,.15);transform:translateY(-4px)}
-.cat-icon{font-size:26px;margin-bottom:6px}
-.cat-name{font-size:12px;font-weight:700;color:var(--text)}
+.cat-icon{font-size:36px;margin-bottom:10px}
+.cat-name{font-size:13px;font-weight:700;color:var(--text)}
 .cats-arrow{position:absolute;top:50%;transform:translateY(-50%);background:var(--white);border:1.5px solid var(--border);color:var(--text);font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh1);transition:all .2s}
 .cats-arrow:hover{border-color:var(--g);color:var(--g)}
 .cats-prev{left:-12px}.cats-next{right:-12px}
@@ -3282,12 +3282,35 @@ function go(p, skipHistory) {
     if (!skipHistory && typeof currentPage !== 'undefined' && currentPage !== p) {
         prevPage = currentPage;
     }
+
+    // History API — браузерная кнопка назад работает внутри сайта
+    if (!skipHistory && typeof currentPage !== 'undefined' && currentPage !== p) {
+        var publicPages = ['home','catalog','about','login','register','for-students','for-teachers','terms'];
+        if (publicPages.includes(p)) {
+            history.pushState({page: p}, '', '#' + p);
+        } else {
+            // Защищённые страницы не меняем URL (курс, дашборд и тд)
+            history.pushState({page: p}, '', window.location.pathname);
+        }
+    }
+
     currentPage = p;
 
     if (p === 'catalog') loadCatalog();
     if (p === 'home') loadHomeStats();
     if (p === 'terms') window.scrollTo(0, 0);
 }
+
+// Слушаем браузерную кнопку Назад
+window.addEventListener('popstate', function(e) {
+    if (e.state && e.state.page) {
+        // Переходим на страницу из истории без добавления в стек
+        go(e.state.page, true);
+    } else {
+        // Нет state — идём на главную
+        go('home', true);
+    }
+});
 
 
 
