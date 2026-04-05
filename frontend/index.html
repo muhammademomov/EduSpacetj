@@ -192,7 +192,7 @@ input,select,textarea{font-family:inherit}
 .cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:16px}
 .ccard{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .25s;box-shadow:var(--sh0)}
 .ccard:hover{box-shadow:var(--sh2);border-color:rgba(37,99,235,.3);transform:translateY(-3px)}
-.ccard-img{height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--gl2)}
+.ccard-img{height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--gl2);overflow:hidden}
 .ccard-body{padding:.9rem 1rem}
 .ccard-cat{font-size:10px;font-weight:800;color:var(--g2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
 .ccard-title{font-size:14px;font-weight:700;margin-bottom:6px;line-height:1.35}
@@ -682,8 +682,8 @@ input,select,textarea{font-family:inherit}
   .home-hero{padding:2.5rem 1rem 2.5rem}
   .home-hero h1{font-size:30px;letter-spacing:-.5px}
   .home-hero .sub{font-size:14px}
-  .hero-btns{flex-direction:column;align-items:center}
-  .hero-btns .btn-lg{width:100%;max-width:280px;justify-content:center}
+  .hero-btns{flex-direction:row;flex-wrap:wrap;justify-content:center}
+  .hero-btns .btn-lg{width:auto;padding:0 18px;height:42px;font-size:13px}
   .hero-stats{gap:1.5rem;flex-wrap:wrap}
   .hs-num{font-size:26px}
   .hiw-grid{grid-template-columns:1fr}
@@ -1113,10 +1113,10 @@ input,select,textarea{font-family:inherit}
 .home-see-all{font-size:13px;font-weight:700;color:var(--g);cursor:pointer;text-decoration:none;white-space:nowrap}
 .cats-carousel-wrap{position:relative;overflow:hidden}
 .cats-track{display:flex;gap:14px;transition:transform .4s ease;padding:4px 2px 8px}
-.cat-card{min-width:160px;flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all .25s;box-shadow:var(--sh0)}
+.cat-card{min-width:90px;flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:.9rem .6rem;text-align:center;cursor:pointer;transition:all .25s;box-shadow:var(--sh0)}
 .cat-card:hover{border-color:var(--g);box-shadow:0 8px 24px rgba(37,99,235,.15);transform:translateY(-4px)}
-.cat-icon{font-size:36px;margin-bottom:10px}
-.cat-name{font-size:13px;font-weight:700;color:var(--text)}
+.cat-icon{font-size:26px;margin-bottom:6px}
+.cat-name{font-size:12px;font-weight:700;color:var(--text)}
 .cats-arrow{position:absolute;top:50%;transform:translateY(-50%);background:var(--white);border:1.5px solid var(--border);color:var(--text);font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh1);transition:all .2s}
 .cats-arrow:hover{border-color:var(--g);color:var(--g)}
 .cats-prev{left:-12px}.cats-next{right:-12px}
@@ -4157,7 +4157,7 @@ async function loadMyCourses() {
                 ? '<img src="' + e.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
                 : (e.initials || '?');
             return '<div class="ccard" onclick="openCourse(\'' + cid + '\')" style="cursor:pointer">' +
-                '<div class="ccard-img">' + (e.emoji || '📖') + '</div>' +
+                '<div class="ccard-img" style="background:'+(e.teacherColor||'var(--gl2)')+';position:relative;overflow:hidden">' +'<div style="width:68px;height:68px;border-radius:50%;background:'+(e.teacherColor||'var(--g)')+';display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;border:3px solid rgba(255,255,255,.4)">'+(e.teacherInitials||e.emoji||'📖')+'</div>' +'<div style="position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.9);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:800;color:var(--g2)">'+(e.category||'Курс')+'</div>' +'</div>' +
                 '<div class="ccard-body">' +
                     '<div class="ccard-cat">' + (e.category || '') + '</div>' +
                     '<div class="ccard-title">' + e.title + '</div>' +
@@ -5460,7 +5460,7 @@ function buildCcard(c) {
     var studentCount = c.student_count || c.studentCount || 0;
 
     return '<div class="ccard" onclick="openProfile(\'' + teacherId + '\')" style="cursor:pointer">' +
-        '<div class="ccard-img">' + (c.emoji || '📖') + '</div>' +
+        '<div class="ccard-img" style="background:'+(c.teacherColor||'var(--gl2)')+';position:relative;overflow:hidden">' +'<div style="width:68px;height:68px;border-radius:50%;background:'+(c.teacherColor||'var(--g)')+';display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;border:3px solid rgba(255,255,255,.4)">'+(c.teacherInitials||c.emoji||'📖')+'</div>' +'<div style="position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.9);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:800;color:var(--g2)">'+(c.category||'Курс')+'</div>' +'</div>' +
         '<div class="ccard-body">' +
             '<div class="ccard-cat">' + (c.category || '') + '</div>' +
             '<div class="ccard-title">' + c.title + '</div>' +
@@ -7796,14 +7796,25 @@ function renderCoursesCarousel(trackId, courses) {
         return;
     }
     track.innerHTML = courses.map(function(c) {
-        return '<div class="ccard" onclick="openCourse(\''+c.id+'\')" style="min-width:228px;flex-shrink:0">' +
-            '<div class="ccard-img"><span style="font-size:40px">'+(c.emoji||'📖')+'</span></div>' +
+        var tColor = c.teacherColor || (c.teacher && c.teacher.color) || '#18A96A';
+        var tInitials = c.teacherInitials || (c.teacher && c.teacher.initials) || '?';
+        var tName = c.teacherName || (c.teacher ? ((c.teacher.firstName||'') + ' ' + (c.teacher.lastName||'')).trim() : '');
+        var tAvatar = c.teacherAvatarUrl || (c.teacher && c.teacher.avatarUrl) || null;
+        var avatarHtml = tAvatar
+            ? '<img src="' + tAvatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
+            : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff">' + tInitials + '</div>';
+        return '<div class="ccard" onclick="openCourse(\''+c.id+'\')" style="min-width:clamp(148px,44vw,228px);flex-shrink:0">' +
+            '<div class="ccard-img" style="background:'+tColor+';position:relative;overflow:hidden">' +
+            '<div style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.5);box-shadow:0 2px 12px rgba(0,0,0,.2)">' + avatarHtml + '</div>' +
+            '<div style="position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.92);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:800;color:var(--g2)">'+(c.category||'Курс')+'</div>' +
+            '</div>' +
             '<div class="ccard-body">' +
-            '<div class="ccard-cat">'+(c.category||'')+'</div>' +
-            '<div class="ccard-title">'+(c.title||'')+'</div>' +
-            '<div class="ccard-teacher"><div class="t-dot" style="background:'+(c.teacherColor||'#2563EB')+'">'+(c.teacherInitials||'?')+'</div>'+(c.teacherName||'')+'</div>' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
-            '<span style="font-size:15px;font-weight:800;color:var(--g)">'+(c.price||0)+' смн</span>' +
+            '<div class="ccard-title" style="font-size:13px">'+(c.title||'')+'</div>' +
+            '<div class="ccard-teacher"><div class="t-dot" style="background:'+tColor+';overflow:hidden;padding:0">' +
+            (tAvatar ? '<img src="'+tAvatar+'" style="width:100%;height:100%;object-fit:cover">' : tInitials) +
+            '</div>' + tName + '</div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">' +
+            '<span style="font-size:14px;font-weight:800;color:var(--g)">'+(c.price||0)+' смн</span>' +
             (c.rating>0?'<span style="font-size:12px;color:#F59E0B">★ '+parseFloat(c.rating).toFixed(1)+'</span>':'') +
             '</div></div></div>';
     }).join('');
