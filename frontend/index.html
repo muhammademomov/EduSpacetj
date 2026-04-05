@@ -10,11 +10,11 @@
    Цвета, типографика, компоненты, страницы
 ═══════════════════════════════════════════════════════ */
 :root{
-  --g:#18A96A;--g2:#0F7A4D;--g3:#0B5C3A;
-  --gl:#D1FAE5;--gl2:#ECFDF5;
-  --text:#0C1810;--text2:#4A5E52;--text3:#8FA89A;
-  --bg:#F4F8F5;--white:#FFFFFF;
-  --border:#DDE8E2;--border2:#EBF3EE;
+  --g:#2563EB;--g2:#1D4ED8;--g3:#1E3A8A;
+  --gl:#DBEAFE;--gl2:#EFF6FF;
+  --text:#0C1A2E;--text2:#3D5A7A;--text3:#7A9BB5;
+  --bg:#F0F6FF;--white:#FFFFFF;
+  --border:#C7DCFA;--border2:#E0EEFF;
   --sh0:0 1px 3px rgba(0,0,0,.04);
   --sh1:0 4px 20px rgba(0,0,0,.07);
   --sh2:0 16px 48px rgba(0,0,0,.1);
@@ -53,10 +53,10 @@ input,select,textarea{font-family:inherit}
 
 /* ── COMMON BUTTONS ── */
 .btn-lg{height:44px;padding:0 22px;border-radius:10px;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
-.btn-lg.green{background:var(--g);color:#fff;box-shadow:0 4px 12px rgba(24,169,106,.25)}.btn-lg.green:hover{background:var(--g2);transform:translateY(-1px)}
+.btn-lg.green{background:var(--g);color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.25)}.btn-lg.green:hover{background:var(--g2);transform:translateY(-1px)}
 .btn-lg.white{background:var(--white);color:var(--text);border:1.5px solid var(--border)}.btn-lg.white:hover{border-color:var(--g);color:var(--g2)}
 .btn-full{width:100%;height:44px;border-radius:10px;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .2s}
-.btn-full.green{background:var(--g);color:#fff;box-shadow:0 4px 12px rgba(24,169,106,.2)}.btn-full.green:hover{background:var(--g2)}
+.btn-full.green{background:var(--g);color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.2)}.btn-full.green:hover{background:var(--g2)}
 .btn-full.outline{background:transparent;border:1.5px solid var(--border);color:var(--text2)}.btn-full.outline:hover{border-color:var(--g);color:var(--g2)}
 .btn-full:disabled{background:var(--border);cursor:not-allowed;color:var(--text3)}
 
@@ -64,7 +64,7 @@ input,select,textarea{font-family:inherit}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;letter-spacing:.2px;text-transform:uppercase}
 .field input,.field select,.field textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;color:var(--text);background:var(--white);outline:none;transition:border-color .2s,box-shadow .2s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(24,169,106,.1)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .field input::placeholder,.field textarea::placeholder{color:var(--text3)}
 .field textarea{resize:vertical;line-height:1.6}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -82,8 +82,8 @@ input,select,textarea{font-family:inherit}
 
 /* ── HOME HERO ── */
 .home-hero{background:var(--white);border-bottom:1px solid var(--border);padding:5rem 2rem 4rem;text-align:center;position:relative;overflow:hidden}
-.home-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(24,169,106,.07) 0%,transparent 70%);pointer-events:none}
-.hero-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;background:var(--gl2);border:1px solid rgba(24,169,106,.2);font-size:12px;font-weight:700;color:var(--g2);margin-bottom:20px;letter-spacing:.3px}
+.home-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(37,99,235,.07) 0%,transparent 70%);pointer-events:none}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;background:var(--gl2);border:1px solid rgba(37,99,235,.2);font-size:12px;font-weight:700;color:var(--g2);margin-bottom:20px;letter-spacing:.3px}
 .home-hero h1{font-family:'Instrument Serif',serif;font-size:52px;line-height:1.1;letter-spacing:-.8px;margin-bottom:14px;max-width:700px;margin-left:auto;margin-right:auto}
 .home-hero h1 em{color:var(--g);font-style:italic}
 .home-hero .sub{font-size:16px;color:var(--text2);line-height:1.75;max-width:500px;margin:0 auto 2.5rem}
@@ -105,8 +105,8 @@ input,select,textarea{font-family:inherit}
 .hiw-desc{font-size:13px;color:var(--text2);line-height:1.6}
 
 /* ── CTA ── */
-.cta-block{background:linear-gradient(135deg,#0C1810 0%,#0F2E1C 60%,#0C1810 100%);padding:5rem 2rem;text-align:center;position:relative;overflow:hidden}
-.cta-block::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(24,169,106,.18) 0%,transparent 70%);pointer-events:none}
+.cta-block{background:linear-gradient(135deg,#0C1A2E 0%,#1E3A8A 60%,#0C1A2E 100%);padding:5rem 2rem;text-align:center;position:relative;overflow:hidden}
+.cta-block::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(37,99,235,.18) 0%,transparent 70%);pointer-events:none}
 .cta-block h2{font-family:'Instrument Serif',serif;color:#fff;font-size:36px;margin-bottom:10px;position:relative}
 .cta-block p{color:rgba(255,255,255,.65);font-size:15px;margin-bottom:2.5rem;position:relative}
 .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative}
@@ -120,12 +120,12 @@ input,select,textarea{font-family:inherit}
 
 /* ── CATALOG ── */
 .cat-hero{background:var(--white);border-bottom:1px solid var(--border);padding:3rem 2.5rem 2.5rem;text-align:center;position:relative;overflow:hidden}
-.cat-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 60% 70% at 50% 0%,rgba(24,169,106,.06) 0%,transparent 70%);pointer-events:none}
+.cat-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 60% 70% at 50% 0%,rgba(37,99,235,.06) 0%,transparent 70%);pointer-events:none}
 .cat-hero h1{font-family:'Instrument Serif',serif;font-size:36px;letter-spacing:-.4px;margin-bottom:8px}
 .cat-hero h1 em{color:var(--g);font-style:italic}
 .cat-hero p{font-size:14.5px;color:var(--text2);margin-bottom:2rem}
 .cat-search-box{display:flex;max-width:600px;margin:0 auto;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--sh1);background:var(--white);transition:border-color .2s}
-.cat-search-box:focus-within{border-color:var(--g);box-shadow:0 0 0 3px rgba(24,169,106,.1),var(--sh1)}
+.cat-search-box:focus-within{border-color:var(--g);box-shadow:0 0 0 3px rgba(37,99,235,.1),var(--sh1)}
 .cat-search-box input{flex:1;border:none;outline:none;padding:14px 18px;font-size:14.5px;color:var(--text);background:transparent}
 .cat-search-box input::placeholder{color:var(--text3)}
 .cat-search-box button{background:var(--g);color:#fff;border:none;padding:0 26px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}.cat-search-box button:hover{background:var(--g2)}
@@ -164,14 +164,14 @@ input,select,textarea{font-family:inherit}
 /* TEACHER CARDS */
 .tc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .tccard{background:var(--white);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;cursor:pointer;transition:all .3s;box-shadow:var(--sh0)}
-.tccard:hover{box-shadow:var(--sh2);border-color:rgba(24,169,106,.35);transform:translateY(-4px)}
-.tccard.verified{border-color:rgba(24,169,106,.25)}
+.tccard:hover{box-shadow:var(--sh2);border-color:rgba(37,99,235,.35);transform:translateY(-4px)}
+.tccard.verified{border-color:rgba(37,99,235,.25)}
 .tcc-cover{height:70px;position:relative;overflow:hidden;flex-shrink:0}
 .tcc-cover-bg{width:100%;height:100%;transition:transform .4s}
 .tccard:hover .tcc-cover-bg{transform:scale(1.06)}
 .tcc-av{width:56px;height:56px;border-radius:14px;border:3px solid var(--white);box-shadow:0 4px 12px rgba(0,0,0,.15);overflow:hidden;flex-shrink:0;margin:-20px 0 0 16px;position:relative;z-index:2;background:var(--gl2)}
 .tcc-badge{position:absolute;top:8px;right:8px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;backdrop-filter:blur(10px)}
-.tcc-badge.new{background:rgba(24,169,106,.85);color:#fff}
+.tcc-badge.new{background:rgba(37,99,235,.85);color:#fff}
 .tcc-badge.top{background:rgba(12,24,16,.72);color:#fff}
 .tcc-body{padding:10px 16px 16px}
 .tcc-name{font-size:14.5px;font-weight:800;margin-bottom:2px;letter-spacing:-.2px}
@@ -183,13 +183,13 @@ input,select,textarea{font-family:inherit}
 .tcc-foot{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border2)}
 .tcc-price{font-size:16px;font-weight:800;letter-spacing:-.3px}
 .tcc-price-lbl{font-size:10px;color:var(--text3)}
-.btn-vp{height:34px;padding:0 14px;background:var(--gl2);border:1.5px solid rgba(24,169,106,.3);border-radius:8px;font-size:12.5px;font-weight:700;color:var(--g2);cursor:pointer;transition:all .2s}
+.btn-vp{height:34px;padding:0 14px;background:var(--gl2);border:1.5px solid rgba(37,99,235,.3);border-radius:8px;font-size:12.5px;font-weight:700;color:var(--g2);cursor:pointer;transition:all .2s}
 .btn-vp:hover{background:var(--g);border-color:var(--g);color:#fff}
 
 /* COURSE CARDS */
 .cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:16px}
 .ccard{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .25s;box-shadow:var(--sh0)}
-.ccard:hover{box-shadow:var(--sh2);border-color:rgba(24,169,106,.3);transform:translateY(-3px)}
+.ccard:hover{box-shadow:var(--sh2);border-color:rgba(37,99,235,.3);transform:translateY(-3px)}
 .ccard-img{height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--gl2)}
 .ccard-body{padding:.9rem 1rem}
 .ccard-cat{font-size:10px;font-weight:800;color:var(--g2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
@@ -220,7 +220,7 @@ input,select,textarea{font-family:inherit}
 .pp-hsubj{font-size:14px;color:var(--text2);margin-bottom:10px}
 .pp-hbadges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .pp-hbadge{padding:3px 11px;border-radius:20px;font-size:11px;font-weight:700}
-.pp-hbadge.g{background:var(--gl);color:var(--g2);border:1px solid rgba(24,169,106,.2)}
+.pp-hbadge.g{background:var(--gl);color:var(--g2);border:1px solid rgba(37,99,235,.2)}
 .pp-hbadge.au{background:#FEF3C7;color:#92400E;border:1px solid #FCD34D}
 .pp-hbadge.gr{background:var(--border2);color:var(--text2)}
 .pp-hstats{display:flex;gap:20px;flex-wrap:wrap}
@@ -230,7 +230,7 @@ input,select,textarea{font-family:inherit}
 .pp-hstat-label{font-size:11px;color:var(--text3);margin-top:2px}
 .pp-hstat-sep{width:1px;background:var(--border)}
 .pp-hactions{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-.btn-bk{height:42px;padding:0 20px;background:var(--g);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;box-shadow:0 4px 12px rgba(24,169,106,.25)}.btn-bk:hover{background:var(--g2);transform:translateY(-1px)}
+.btn-bk{height:42px;padding:0 20px;background:var(--g);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;box-shadow:0 4px 12px rgba(37,99,235,.25)}.btn-bk:hover{background:var(--g2);transform:translateY(-1px)}
 .btn-mb{height:42px;padding:0 20px;background:transparent;border:1.5px solid var(--border);color:var(--text2);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}.btn-mb:hover{border-color:var(--text);color:var(--text)}
 .btn-fav{height:42px;width:42px;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}.btn-fav:hover,.btn-fav.saved{border-color:#EF4444;background:#FEF2F2}
 .pp-body{max-width:1100px;margin:22px auto 60px;padding:0 2rem;display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start}
@@ -243,7 +243,7 @@ input,select,textarea{font-family:inherit}
 .pp-desc{font-size:14px;color:var(--text2);line-height:1.75}
 .plat-chips{display:flex;gap:8px;flex-wrap:wrap}
 .plat-chip{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:12px;font-weight:600;color:var(--text2)}
-.plat-chip.on{border-color:rgba(24,169,106,.35);background:var(--gl2);color:var(--g2)}
+.plat-chip.on{border-color:rgba(37,99,235,.35);background:var(--gl2);color:var(--g2)}
 .day-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .day-chip{padding:5px 12px;border-radius:7px;border:1.5px solid var(--border);font-size:12px;font-weight:700;color:var(--text3)}
 .day-chip.on{border-color:var(--g);background:var(--gl2);color:var(--g2)}
@@ -270,7 +270,7 @@ input,select,textarea{font-family:inherit}
 .ri-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 .ri-tag{padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;background:var(--gl2);color:var(--g2)}
 .docs-list{display:flex;flex-direction:column;gap:9px}
-.doc-row{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:10px;border:1.5px solid rgba(24,169,106,.25);background:var(--gl2);transition:all .2s}
+.doc-row{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:10px;border:1.5px solid rgba(37,99,235,.25);background:var(--gl2);transition:all .2s}
 .doc-row:hover{border-color:var(--g)}
 .doc-ico{width:38px;height:38px;border-radius:9px;background:var(--white);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .doc-info{flex:1}
@@ -288,14 +288,14 @@ input,select,textarea{font-family:inherit}
 .ppc-feat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
 .ppc-feat-ico{width:20px;height:20px;border-radius:6px;background:var(--gl2);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
 .ppc-div{height:1px;background:var(--border2);margin:12px 0}
-.btn-bkf{width:100%;height:44px;background:var(--g);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;margin-bottom:8px;box-shadow:0 4px 12px rgba(24,169,106,.25);cursor:pointer;transition:all .2s}.btn-bkf:hover{background:var(--g2)}
-.btn-trial{width:100%;height:40px;background:var(--gl2);color:var(--g2);border:1.5px solid rgba(24,169,106,.3);border-radius:10px;font-size:13px;font-weight:700;margin-bottom:10px;cursor:pointer;transition:all .2s}.btn-trial:hover{background:var(--gl);border-color:var(--g)}
+.btn-bkf{width:100%;height:44px;background:var(--g);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;margin-bottom:8px;box-shadow:0 4px 12px rgba(37,99,235,.25);cursor:pointer;transition:all .2s}.btn-bkf:hover{background:var(--g2)}
+.btn-trial{width:100%;height:40px;background:var(--gl2);color:var(--g2);border:1.5px solid rgba(37,99,235,.3);border-radius:10px;font-size:13px;font-weight:700;margin-bottom:10px;cursor:pointer;transition:all .2s}.btn-trial:hover{background:var(--gl);border-color:var(--g)}
 .ppc-guar{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;color:var(--text3)}
 .avail-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rlg);padding:16px;box-shadow:var(--sh0);margin-bottom:12px}
 .avail-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .avail-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 .avail-slot{padding:7px 5px;border-radius:7px;border:1.5px solid var(--border);font-size:11px;font-weight:600;text-align:center;transition:all .2s;color:var(--text2)}
-.avail-slot.free{border-color:rgba(24,169,106,.3);background:var(--gl2);color:var(--g2);cursor:pointer}.avail-slot.free:hover{border-color:var(--g);background:var(--gl)}
+.avail-slot.free{border-color:rgba(37,99,235,.3);background:var(--gl2);color:var(--g2);cursor:pointer}.avail-slot.free:hover{border-color:var(--g);background:var(--gl)}
 .avail-slot.busy{background:var(--border2);color:var(--text3);opacity:.6}
 
 /* ── AUTH ── */
@@ -313,7 +313,7 @@ input,select,textarea{font-family:inherit}
 .phone-wrap input{border:none;outline:none;flex:1;padding:11px 14px;font-size:14px;background:transparent;color:var(--text)}
 .sms-inputs{display:flex;gap:10px;justify-content:center;margin:1.25rem 0}
 .sms-box{width:54px;height:60px;border:1.5px solid var(--border);border-radius:10px;font-size:24px;font-weight:800;text-align:center;color:var(--text);background:var(--white);outline:none;transition:border-color .2s}.sms-box:focus,.sms-box.filled{border-color:var(--g);background:var(--gl2)}
-.sms-info{background:var(--gl2);border:1px solid rgba(24,169,106,.3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--g2);display:flex;gap:8px;margin-bottom:14px}
+.sms-info{background:var(--gl2);border:1px solid rgba(37,99,235,.3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--g2);display:flex;gap:8px;margin-bottom:14px}
 .resend-row{text-align:center;font-size:13px;color:var(--text2);margin-top:8px}
 .tmr-txt{font-weight:800;color:var(--text)}
 .suc-icon{width:66px;height:66px;background:var(--gl2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:28px;border:2px solid var(--g)}
@@ -362,7 +362,7 @@ input,select,textarea{font-family:inherit}
 .day-btn{padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:700;color:var(--text2);background:var(--white);cursor:pointer;transition:all .2s}.day-btn.on{background:var(--gl2);border-color:var(--g);color:var(--g2)}
 .form-nav{display:flex;gap:10px;margin-top:1.75rem}
 .btn-back-nav{flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;background:var(--white);border:1.5px solid var(--border);color:var(--text);cursor:pointer;transition:all .2s}.btn-back-nav:hover{border-color:var(--g);color:var(--g2)}
-.btn-next-nav{flex:2;padding:12px;border-radius:10px;font-size:14px;font-weight:800;background:var(--g);color:#fff;border:none;cursor:pointer;transition:background .2s;box-shadow:0 4px 12px rgba(24,169,106,.25)}.btn-next-nav:hover{background:var(--g2)}
+.btn-next-nav{flex:2;padding:12px;border-radius:10px;font-size:14px;font-weight:800;background:var(--g);color:#fff;border:none;cursor:pointer;transition:background .2s;box-shadow:0 4px 12px rgba(37,99,235,.25)}.btn-next-nav:hover{background:var(--g2)}
 
 /* ── STUDENT DASH ── */
 .dash-layout{display:flex;height:calc(100vh - 60px)}
@@ -397,7 +397,7 @@ input,select,textarea{font-family:inherit}
 .d-metric-sub{font-size:11px;color:var(--text3);margin-top:2px}
 .d-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .dash-hero{background:linear-gradient(135deg,#0C1810 0%,#102818 50%,#0C1810 100%);border-radius:var(--rlg);padding:26px 30px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;overflow:hidden;position:relative}
-.dash-hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(24,169,106,.2) 0%,transparent 70%);border-radius:50%}
+.dash-hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(37,99,235,.2) 0%,transparent 70%);border-radius:50%}
 .dh-greet{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:5px}
 .dh-name{font-family:'Instrument Serif',serif;font-size:26px;color:#fff;margin-bottom:16px;line-height:1.1}
 .dh-name span{color:var(--g)}
@@ -412,13 +412,13 @@ input,select,textarea{font-family:inherit}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--g),#059669);border-radius:3px}
 .chart-bars{display:flex;align-items:flex-end;gap:5px;height:80px;margin-top:10px}
 .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.bar{background:var(--gl2);border-radius:4px 4px 0 0;width:100%;cursor:pointer;transition:background .2s;border:1px solid rgba(24,169,106,.1)}.bar:hover{background:var(--g)}
+.bar{background:var(--gl2);border-radius:4px 4px 0 0;width:100%;cursor:pointer;transition:background .2s;border:1px solid rgba(37,99,235,.1)}.bar:hover{background:var(--g)}
 .bar-lbl{font-size:10px;color:var(--text3);font-weight:600}
 
 /* ── BALANCE & PAYMENT ── */
 .bal-layout{display:grid;grid-template-columns:300px 1fr;gap:18px}
 .bal-card{background:linear-gradient(145deg,#0C1810 0%,#112918 100%);border-radius:var(--rlg);padding:26px;position:relative;overflow:hidden;box-shadow:var(--sh2)}
-.bal-card::before{content:'';position:absolute;right:-20px;bottom:-30px;width:130px;height:130px;background:radial-gradient(circle,rgba(24,169,106,.25) 0%,transparent 70%);border-radius:50%}
+.bal-card::before{content:'';position:absolute;right:-20px;bottom:-30px;width:130px;height:130px;background:radial-gradient(circle,rgba(37,99,235,.25) 0%,transparent 70%);border-radius:50%}
 .bal-label{font-size:11px;color:rgba(255,255,255,.45);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:9px;position:relative;z-index:1}
 .bal-amount{font-family:'Instrument Serif',serif;font-size:38px;color:#fff;margin-bottom:3px;position:relative;z-index:1;line-height:1}
 .bal-amount span{font-size:17px;color:rgba(255,255,255,.4);font-weight:400;margin-left:3px}
@@ -460,12 +460,12 @@ input,select,textarea{font-family:inherit}
 .pr-row .lbl{color:var(--text2)}.pr-row.total .lbl{color:var(--text)}
 .comm-badge-sm{font-size:11px;background:var(--gl2);color:var(--g2);padding:2px 8px;border-radius:20px}
 .bal-check{border-radius:var(--r);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:13.5px}
-.bal-check.ok{background:var(--gl2);border:1px solid rgba(24,169,106,.3)}.bal-check.err{background:#FCEBEB;border:1px solid rgba(220,38,38,.3)}
+.bal-check.ok{background:var(--gl2);border:1px solid rgba(37,99,235,.3)}.bal-check.err{background:#FCEBEB;border:1px solid rgba(220,38,38,.3)}
 .bc-title{font-weight:700}.bal-check.ok .bc-title{color:var(--g2)}.bal-check.err .bc-title{color:#991B1B}
 .bc-sub{font-size:12px;color:var(--text2)}
 .btn-topup-sm{padding:5px 14px;background:var(--g);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .suc-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rlg);padding:2.5rem 2rem;text-align:center;margin-bottom:12px;box-shadow:var(--sh0)}
-.suc-big-icon{width:66px;height:66px;background:var(--gl2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;border:1.5px solid rgba(24,169,106,.3)}
+.suc-big-icon{width:66px;height:66px;background:var(--gl2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;border:1.5px solid rgba(37,99,235,.3)}
 .receipt-rows{background:var(--bg);border-radius:var(--r);padding:1rem;margin-bottom:1.75rem;text-align:left}
 .receipt-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border2)}.receipt-row:last-child{border-bottom:none}
 .receipt-row .rl{color:var(--text2)}.receipt-row .rv{font-weight:700}.receipt-row .rv.g{color:var(--g2)}
@@ -516,7 +516,7 @@ input,select,textarea{font-family:inherit}
 .tc-grid{display:flex;flex-direction:column;gap:12px}
 .tc2card{background:var(--white);border:1px solid var(--border);border-radius:16px;display:flex;align-items:stretch;cursor:pointer;transition:all .25s;box-shadow:0 2px 8px rgba(0,0,0,.05);overflow:hidden}
 .tc2card:hover{box-shadow:0 8px 32px rgba(0,0,0,.1);border-color:rgba(24,169,106,.4);transform:translateY(-2px)}
-.tc2card.verified{border-color:rgba(24,169,106,.2)}
+.tc2card.verified{border-color:rgba(37,99,235,.2)}
 .tc2-photo-wrap{width:140px;min-height:160px;flex-shrink:0;position:relative;overflow:hidden;background:var(--gl2)}
 .tc2-check{position:absolute;bottom:8px;right:8px;width:24px;height:24px;background:var(--g);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:800;border:2px solid var(--white)}
 .tc2-body{flex:1;padding:16px 18px;min-width:0}
@@ -607,7 +607,7 @@ input,select,textarea{font-family:inherit}
 ═══════════════════════════════════════════════════════ */
 .dash-hero{background:linear-gradient(135deg,#0C1810 0%,#0d2318 40%,#0a1f15 100%)}
 .d-metric{background:var(--white);border:1.5px solid var(--border);transition:all .2s}
-.d-metric:hover{border-color:rgba(24,169,106,.3);box-shadow:0 4px 16px rgba(0,0,0,.06);transform:translateY(-1px)}
+.d-metric:hover{border-color:rgba(37,99,235,.3);box-shadow:0 4px 16px rgba(0,0,0,.06);transform:translateY(-1px)}
 .d-metric-icon{font-size:22px;margin-bottom:6px}
 .d-metric-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .d-metric-val{font-size:24px;font-weight:800;letter-spacing:-.5px}
@@ -867,7 +867,7 @@ input,select,textarea{font-family:inherit}
 
 /* Hero */
 .cp-hero{background:linear-gradient(135deg,#0C1810 0%,#0d2318 60%,#091a10 100%);padding:2rem;position:relative;overflow:hidden}
-.cp-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(24,169,106,.18) 0%,transparent 70%);border-radius:50%;pointer-events:none}
+.cp-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(37,99,235,.18) 0%,transparent 70%);border-radius:50%;pointer-events:none}
 .cp-hero-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:1.5rem;position:relative;z-index:1}
 .cp-emoji{font-size:52px;flex-shrink:0;line-height:1}
 .cp-hero-info{flex:1;min-width:0}
@@ -905,8 +905,8 @@ input,select,textarea{font-family:inherit}
 
 /* Lesson item */
 .cp-lesson{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--white);border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .2s}
-.cp-lesson:hover{border-color:rgba(24,169,106,.3);box-shadow:0 2px 12px rgba(0,0,0,.06)}
-.cp-lesson.done{background:var(--gl2);border-color:rgba(24,169,106,.25)}
+.cp-lesson:hover{border-color:rgba(37,99,235,.3);box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.cp-lesson.done{background:var(--gl2);border-color:rgba(37,99,235,.25)}
 .cp-lesson-num{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--text3);flex-shrink:0;transition:all .2s}
 .cp-lesson.done .cp-lesson-num{background:var(--g);border-color:var(--g);color:#fff}
 .cp-lesson-info{flex:1}
@@ -925,12 +925,12 @@ input,select,textarea{font-family:inherit}
 .cp-sched-link{display:inline-block;margin-top:8px;padding:5px 14px;background:var(--g);color:#fff;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none}
 
 /* Info card */
-.cp-info-card{background:var(--gl2);border:1px solid rgba(24,169,106,.25);border-radius:12px;padding:16px}
+.cp-info-card{background:var(--gl2);border:1px solid rgba(37,99,235,.25);border-radius:12px;padding:16px}
 .cp-info-title{font-size:13px;font-weight:700;color:var(--g2);margin-bottom:10px}
 
 /* Homework */
 .cp-hw-card{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px}
-.cp-hw-card.submitted{border-color:rgba(24,169,106,.3)}
+.cp-hw-card.submitted{border-color:rgba(37,99,235,.3)}
 .cp-hw-card.pending{border-color:rgba(245,158,11,.3)}
 .cp-hw-hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
 .cp-hw-ico{width:36px;height:36px;border-radius:9px;background:var(--gl2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
@@ -946,7 +946,7 @@ input,select,textarea{font-family:inherit}
 
 /* Materials */
 .cp-mat-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--white);border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;text-decoration:none;color:inherit;transition:all .2s}
-.cp-mat-card:hover{border-color:rgba(24,169,106,.3);box-shadow:0 2px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
+.cp-mat-card:hover{border-color:rgba(37,99,235,.3);box-shadow:0 2px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
 .cp-mat-ico{width:40px;height:40px;border-radius:10px;background:var(--gl2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .cp-mat-info{flex:1}
 .cp-mat-title{font-size:14px;font-weight:700;margin-bottom:2px}
@@ -1018,7 +1018,7 @@ input,select,textarea{font-family:inherit}
 /* ── Review Comments Thread ─────────────────────── */
 .rev-thread-wrap { display:flex; flex-direction:column; gap:.5rem; margin:.75rem 0 .25rem; border-left:2px solid var(--border2); padding-left:.75rem; }
 .rev-comment { display:flex; gap:.6rem; align-items:flex-start; }
-.rev-comment--teacher .rev-cmt-body { background:rgba(24,169,106,.07); border-radius:10px; }
+.rev-comment--teacher .rev-cmt-body { background:rgba(37,99,235,.07); border-radius:10px; }
 .rev-cmt-av { width:28px; height:28px; min-width:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:10px; overflow:hidden; }
 .rev-cmt-body { flex:1; background:var(--bg); border-radius:10px; padding:.5rem .75rem; }
 .rev-cmt-meta { display:flex; align-items:center; gap:.4rem; margin-bottom:.25rem; flex-wrap:wrap; }
@@ -1075,6 +1075,128 @@ input,select,textarea{font-family:inherit}
   #topup-preview,#bal-after-disp{ font-size:15px !important; }
   #topup-btn-main{ font-size:13px; width:100%; box-sizing:border-box; }
 }
+
+/* ── HERO CAROUSEL ──────────────────────────────────────── */
+.hero-carousel{position:relative;height:520px;overflow:hidden}
+.hc-slides{display:flex;height:100%;transition:transform .6s cubic-bezier(.4,0,.2,1)}
+.hc-slide{min-width:100%;height:100%;position:relative;background-size:cover;background-position:center}
+.hc-slide-1{background-image:url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&auto=format&fit=crop')}
+.hc-slide-2{background-image:url('https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1400&auto=format&fit=crop')}
+.hc-slide-3{background-image:url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1400&auto=format&fit=crop')}
+.hc-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(12,26,46,.82) 0%,rgba(30,58,138,.6) 100%)}
+.hc-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:3rem 4rem;max-width:720px;color:#fff;z-index:2}
+.hc-content h1{font-family:'Instrument Serif',serif;font-size:52px;line-height:1.1;letter-spacing:-.8px;margin-bottom:14px;margin-top:12px;color:#fff}
+.hc-content h1 em{color:#93C5FD;font-style:italic}
+.hc-content p{font-size:16px;color:rgba(255,255,255,.85);line-height:1.75;margin-bottom:2rem;max-width:480px}
+.hc-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-lg.blue{background:var(--g);color:#fff;box-shadow:0 4px 16px rgba(37,99,235,.4)}.btn-lg.blue:hover{background:var(--g2);transform:translateY(-2px)}
+.btn-lg.wh{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4);backdrop-filter:blur(8px)}.btn-lg.wh:hover{background:rgba(255,255,255,.25)}
+.hc-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:32px;width:48px;height:48px;border-radius:50%;cursor:pointer;z-index:10;transition:background .2s;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;line-height:1}
+.hc-arrow:hover{background:rgba(255,255,255,.3)}
+.hc-prev{left:16px}.hc-next{right:16px}
+.hc-dots{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
+.hc-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:all .3s}
+.hc-dot.active{background:#fff;width:24px;border-radius:4px}
+.hero-stats-bar{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;gap:0;height:64px;border-top:1px solid rgba(37,99,235,.1);z-index:10}
+.hsb-item{display:flex;align-items:center;gap:10px;padding:0 2.5rem}
+.hsb-num{font-size:22px;font-weight:900;color:var(--g);font-family:'Instrument Serif',serif}
+.hsb-lbl{font-size:13px;color:var(--text2);font-weight:600}
+.hsb-sep{width:1px;height:30px;background:var(--border)}
+
+/* ── CATEGORIES CAROUSEL ──────────────────────────────── */
+.home-cats-section{padding:3rem 2rem;max-width:1180px;margin:0 auto}
+.home-section-hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem}
+.home-sec-title{font-family:'Instrument Serif',serif;font-size:28px;letter-spacing:-.3px;color:var(--text)}
+.home-sec-sub{font-size:14px;color:var(--text2);margin-top:4px}
+.home-see-all{font-size:13px;font-weight:700;color:var(--g);cursor:pointer;text-decoration:none;white-space:nowrap}
+.cats-carousel-wrap{position:relative;overflow:hidden}
+.cats-track{display:flex;gap:14px;transition:transform .4s ease;padding:4px 2px 8px}
+.cat-card{min-width:160px;flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all .25s;box-shadow:var(--sh0)}
+.cat-card:hover{border-color:var(--g);box-shadow:0 8px 24px rgba(37,99,235,.15);transform:translateY(-4px)}
+.cat-icon{font-size:36px;margin-bottom:10px}
+.cat-name{font-size:13px;font-weight:700;color:var(--text)}
+.cats-arrow{position:absolute;top:50%;transform:translateY(-50%);background:var(--white);border:1.5px solid var(--border);color:var(--text);font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh1);transition:all .2s}
+.cats-arrow:hover{border-color:var(--g);color:var(--g)}
+.cats-prev{left:-12px}.cats-next{right:-12px}
+
+/* ── COURSES CAROUSEL ────────────────────────────────── */
+.home-courses-section{background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3rem 2rem}
+.home-courses-section .home-section-hdr{max-width:1180px;margin:0 auto 1.5rem}
+.courses-carousel-wrap{position:relative;overflow:hidden;max-width:1180px;margin:0 auto}
+.cc-track{display:flex;gap:16px;transition:transform .4s ease;padding:4px 2px 8px}
+.cc-arrow{position:absolute;top:50%;transform:translateY(-50%);background:var(--white);border:1.5px solid var(--border);color:var(--text);font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh1);transition:all .2s}
+.cc-arrow:hover{border-color:var(--g);color:var(--g)}
+.cc-prev{left:-12px}.cc-next{right:-12px}
+.home-loading{font-size:14px;color:var(--text3);padding:2rem}
+
+/* ── ADVANTAGES ──────────────────────────────────────── */
+.home-adv-section{padding:3.5rem 2rem;max-width:1180px;margin:0 auto}
+.adv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:1rem}
+.adv-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.75rem 1.5rem;transition:all .25s;box-shadow:var(--sh0)}
+.adv-card:hover{border-color:var(--g);box-shadow:0 8px 24px rgba(37,99,235,.12);transform:translateY(-3px)}
+.adv-icon{font-size:36px;margin-bottom:14px}
+.adv-title{font-size:15px;font-weight:800;margin-bottom:8px;color:var(--text)}
+.adv-desc{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* ── LANDING PAGES ───────────────────────────────────── */
+.lp-hero{position:relative;height:480px;overflow:hidden}
+.lp-hero-students{background-image:url('https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=1400&auto=format&fit=crop');background-size:cover;background-position:center}
+.lp-hero-teachers{background-image:url('https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1400&auto=format&fit=crop');background-size:cover;background-position:center}
+.lp-hero-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(12,26,46,.85) 0%,rgba(30,58,138,.65) 100%)}
+.lp-hero-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:3rem 4rem;max-width:680px;color:#fff;z-index:2}
+.lp-hero-content h1{font-family:'Instrument Serif',serif;font-size:48px;line-height:1.1;letter-spacing:-.6px;margin:12px 0 16px;color:#fff}
+.lp-hero-content h1 em{color:#93C5FD;font-style:italic}
+.lp-hero-content p{font-size:15px;color:rgba(255,255,255,.85);line-height:1.75;margin-bottom:2rem;max-width:460px}
+.lp-adv-carousel-wrap{position:relative;overflow:hidden}
+.lp-adv-track{display:flex;gap:20px;transition:transform .4s ease;padding:4px 2px 8px}
+.lp-adv-card{min-width:calc(25% - 15px);flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:2rem 1.5rem;box-shadow:var(--sh0)}
+.lp-adv-icon{font-size:40px;margin-bottom:14px}
+.lp-adv-title{font-size:15px;font-weight:800;margin-bottom:10px;color:var(--text)}
+.lp-adv-desc{font-size:13.5px;color:var(--text2);line-height:1.7}
+.lp-dots{display:flex;gap:8px;justify-content:center;margin-top:1.5rem}
+
+/* ── HOW IT WORKS STEPS ──────────────────────────────── */
+.how-steps{display:flex;justify-content:center;gap:0;max-width:800px;margin:2.5rem auto 0;position:relative}
+.how-step{flex:1;text-align:center;position:relative;padding:0 1rem}
+.how-step-num{width:52px;height:52px;border-radius:50%;background:var(--g);color:#fff;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 16px rgba(37,99,235,.35);position:relative;z-index:2}
+.how-step-line{position:absolute;top:26px;left:calc(50% + 26px);right:calc(-50% + 26px);height:2px;background:linear-gradient(90deg,var(--g),var(--gl));z-index:1}
+.how-step-line-last{display:none}
+.how-step-title{font-size:15px;font-weight:800;margin-bottom:8px;color:var(--text)}
+.how-step-desc{font-size:13px;color:var(--text2);line-height:1.65}
+
+/* ── REVIEW CARD ─────────────────────────────────────── */
+.review-card{min-width:calc(33% - 14px);flex-shrink:0;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--sh0)}
+.review-stars{color:#F59E0B;font-size:14px;margin-bottom:10px}
+.review-text{font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.review-author{display:flex;align-items:center;gap:10px}
+.review-av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.review-name{font-size:13px;font-weight:700;color:var(--text)}
+.review-course{font-size:11px;color:var(--text3)}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media(max-width:900px){
+  .adv-grid{grid-template-columns:repeat(2,1fr)}
+  .hero-carousel{height:420px}
+  .hc-content{padding:2rem}
+  .hc-content h1{font-size:36px}
+  .hsb-item{padding:0 1.2rem}
+  .lp-adv-card{min-width:calc(50% - 10px)}
+  .review-card{min-width:calc(50% - 8px)}
+}
+@media(max-width:640px){
+  .adv-grid{grid-template-columns:1fr}
+  .hero-carousel{height:380px}
+  .hc-content h1{font-size:28px}
+  .hc-content p{font-size:14px}
+  .hsb-item{padding:0 .8rem}
+  .hsb-num{font-size:18px}
+  .lp-adv-card{min-width:calc(100% - 0px)}
+  .review-card{min-width:calc(100% - 0px)}
+  .how-steps{flex-direction:column;gap:1.5rem}
+  .how-step-line{display:none}
+  .lp-hero-content{padding:2rem 1.5rem}
+  .lp-hero-content h1{font-size:32px}
+}
 </style>
 
 <!-- ═══ NAV ═══ -->
@@ -1086,6 +1208,8 @@ input,select,textarea{font-family:inherit}
   <div class="nav-links">
     <button class="nav-link active" id="nl-home" onclick="go('home')">Главная</button>
     <button class="nav-link" id="nl-catalog" onclick="go('catalog')">Каталог</button>
+    <button class="nav-link" id="nl-for-students" onclick="go('for-students')">Для студентов</button>
+    <button class="nav-link" id="nl-for-teachers" onclick="go('for-teachers')">Для учителей</button>
     <button class="nav-link" id="nl-about" onclick="go('about')">О нас</button>
   </div>
   <button class="nav-hamburger" id="nav-ham" onclick="toggleMobileMenu()" aria-label="Меню"><span></span><span></span><span></span></button>
@@ -1109,6 +1233,8 @@ input,select,textarea{font-family:inherit}
   <div class="nav-mobile-links">
     <button class="nav-mobile-link active" id="mnl-home" onclick="go('home');closeMobileMenu()">🏠 Главная</button>
     <button class="nav-mobile-link" id="mnl-catalog" onclick="go('catalog');closeMobileMenu()">🔍 Каталог</button>
+    <button class="nav-mobile-link" id="mnl-for-students" onclick="go('for-students');closeMobileMenu()">🎓 Для студентов</button>
+    <button class="nav-mobile-link" id="mnl-for-teachers" onclick="go('for-teachers');closeMobileMenu()">👨‍🏫 Для учителей</button>
     <button class="nav-mobile-link" id="mnl-about" onclick="go('about');closeMobileMenu()">ℹ️ О нас</button>
   </div>
   <div id="mob-menu-guest" class="nav-mobile-btns">
@@ -1123,66 +1249,325 @@ input,select,textarea{font-family:inherit}
 
 <!-- ═══ HOME ═══ -->
 <div class="page active" id="page-home">
-  <div class="home-hero">
-    <div class="hero-tag">🇹🇯 Первый маркетплейс курсов Таджикистана</div>
-    <h1>Учись онлайн у лучших<br><em>преподавателей</em></h1>
-    <p class="sub">Найди своего учителя, запишись на курс и учись из дома. Безопасная оплата, живые занятия.</p>
-    <div class="hero-btns">
-      <button class="btn-lg green" onclick="go('catalog')">Найти преподавателя</button>
-      <button class="btn-lg white" onclick="go('register')">Зарегистрироваться</button>
-    </div>
-    <div class="hero-stats" id="home-stats">
-      <div class="hs-stat"><div class="hs-num" id="hs-teachers">0<span>+</span></div><div class="hs-label">Преподавателей</div></div>
-      <div class="hs-stat"><div class="hs-num" id="hs-students">0<span>+</span></div><div class="hs-label">Учеников</div></div>
-      <div class="hs-stat"><div class="hs-num" id="hs-courses">0<span>+</span></div><div class="hs-label">Курсов</div></div>
-    </div>
-  </div>
 
-  <div class="hiw">
-    <div style="text-align:center;margin-bottom:2rem;max-width:1180px;margin-left:auto;margin-right:auto">
-      <div class="section-title">Как это работает</div>
-      <div class="section-sub">Четыре простых шага до первого урока</div>
-    </div>
-    <div class="hiw-grid">
-      <div class="hiw-step"><div class="hiw-num">1</div><div class="hiw-title">Выберите преподавателя</div><div class="hiw-desc">Изучите профиль, отзывы и цену. Отправьте запрос.</div></div>
-      <div class="hiw-step"><div class="hiw-num">2</div><div class="hiw-title">Пополните баланс</div><div class="hiw-desc">Безопасная оплата в сомони через карту или банк.</div></div>
-      <div class="hiw-step"><div class="hiw-num">3</div><div class="hiw-title">Учитесь онлайн</div><div class="hiw-desc">Занятия через Zoom, Meet или Telegram в удобное время.</div></div>
-      <div class="hiw-step"><div class="hiw-num">4</div><div class="hiw-title">Оставьте отзыв</div><div class="hiw-desc">Помогите другим найти лучшего преподавателя.</div></div>
-    </div>
-  </div>
-
-  <div style="background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3rem 2rem">
-    <div style="max-width:1180px;margin:0 auto">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.5rem">
-        <div class="section-title">Наши преподаватели</div>
-        <a style="font-size:13px;font-weight:700;color:var(--g);cursor:pointer" onclick="go('catalog')">Все преподаватели →</a>
-      </div>
-      <div id="home-teachers-preview" class="tc-grid"></div>
-      <div style="text-align:center;margin-top:1.5rem" id="home-no-teachers" style="display:none">
-        <div style="font-size:14px;color:var(--text3)">Преподаватели появятся здесь после регистрации</div>
+<!-- ── HERO CAROUSEL ─────────────────────────────────── -->
+<div class="hero-carousel" id="hero-carousel">
+  <div class="hc-slides">
+    <div class="hc-slide hc-slide-1">
+      <div class="hc-overlay"></div>
+      <div class="hc-content">
+        <div class="hero-tag">🇹🇯 Первый маркетплейс курсов Таджикистана</div>
+        <h1>Учись онлайн у лучших<br><em>преподавателей</em></h1>
+        <p>Найди своего учителя, запишись на курс и учись из дома. Безопасная оплата, живые занятия.</p>
+        <div class="hc-btns">
+          <button class="btn-lg blue" onclick="go('catalog')">Найти преподавателя</button>
+          <button class="btn-lg wh" onclick="go('register')">Зарегистрироваться</button>
+        </div>
       </div>
     </div>
+    <div class="hc-slide hc-slide-2">
+      <div class="hc-overlay"></div>
+      <div class="hc-content">
+        <div class="hero-tag">📚 Тысячи курсов по любым предметам</div>
+        <h1>Занимайся онлайн<br><em>из любой точки</em></h1>
+        <p>Zoom, Telegram, Google Meet — учись так, как удобно тебе. Без дороги и лишних затрат.</p>
+        <div class="hc-btns">
+          <button class="btn-lg blue" onclick="go('for-students')">Узнать больше</button>
+          <button class="btn-lg wh" onclick="go('catalog')">Смотреть курсы</button>
+        </div>
+      </div>
+    </div>
+    <div class="hc-slide hc-slide-3">
+      <div class="hc-overlay"></div>
+      <div class="hc-content">
+        <div class="hero-tag">💰 Зарабатывай, обучая других</div>
+        <h1>Стань преподавателем<br><em>на EduSpace.tj</em></h1>
+        <p>Создай профиль, добавь курсы и начни получать учеников со всего Таджикистана.</p>
+        <div class="hc-btns">
+          <button class="btn-lg blue" onclick="go('for-teachers')">Для учителей</button>
+          <button class="btn-lg wh" onclick="go('register')">Создать профиль</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="hc-arrow hc-prev" onclick="heroSlide(-1)">&#8249;</button>
+  <button class="hc-arrow hc-next" onclick="heroSlide(1)">&#8250;</button>
+  <div class="hc-dots" id="hc-dots">
+    <span class="hc-dot active" onclick="heroGoTo(0)"></span>
+    <span class="hc-dot" onclick="heroGoTo(1)"></span>
+    <span class="hc-dot" onclick="heroGoTo(2)"></span>
+  </div>
+  <!-- Stats bar -->
+  <div class="hero-stats-bar" id="home-stats">
+    <div class="hsb-item"><span class="hsb-num" id="hs-teachers">0</span><span class="hsb-lbl">Преподавателей</span></div>
+    <div class="hsb-sep"></div>
+    <div class="hsb-item"><span class="hsb-num" id="hs-students">0</span><span class="hsb-lbl">Учеников</span></div>
+    <div class="hsb-sep"></div>
+    <div class="hsb-item"><span class="hsb-num" id="hs-courses">0</span><span class="hsb-lbl">Курсов</span></div>
+  </div>
+</div>
+
+<!-- ── CATEGORIES ─────────────────────────────────────── -->
+<div class="home-cats-section">
+  <div class="home-section-hdr">
+    <div>
+      <div class="home-sec-title">Прокачай свои знания</div>
+      <div class="home-sec-sub">Выберите направление и найдите лучшего преподавателя</div>
+    </div>
+  </div>
+  <div class="cats-carousel-wrap">
+    <button class="cats-arrow cats-prev" onclick="catsSlide(-1)">&#8249;</button>
+    <div class="cats-track" id="cats-track">
+      <div class="cat-card" onclick="filterCatalogCat('IT / Прогр.')"><div class="cat-icon">💻</div><div class="cat-name">IT</div></div>
+      <div class="cat-card" onclick="filterCatalogCat('Английский')"><div class="cat-icon">🌍</div><div class="cat-name">Языки</div></div>
+      <div class="cat-card" onclick="filterCatalogCat('Математика')"><div class="cat-icon">📐</div><div class="cat-name">Математика</div></div>
+      <div class="cat-card" onclick="filterCatalogCat('Физика')"><div class="cat-icon">⚗️</div><div class="cat-name">Физика</div></div>
+      <div class="cat-card" onclick="filterCatalogCat('Бизнес')"><div class="cat-icon">📈</div><div class="cat-name">Бизнес</div></div>
+      <div class="cat-card" onclick="filterCatalogCat('Дизайн')"><div class="cat-icon">🎨</div><div class="cat-name">Дизайн</div></div>
+      <div class="cat-card" onclick="filterCatalogCat('Таджикский')"><div class="cat-icon">🇹🇯</div><div class="cat-name">Таджикский</div></div>
+      <div class="cat-card" onclick="filterCatalogCat('Русский')"><div class="cat-icon">📝</div><div class="cat-name">Русский</div></div>
+    </div>
+    <button class="cats-arrow cats-next" onclick="catsSlide(1)">&#8250;</button>
+  </div>
+</div>
+
+<!-- ── COURSES CAROUSEL ───────────────────────────────── -->
+<div class="home-courses-section">
+  <div class="home-section-hdr">
+    <div>
+      <div class="home-sec-title">Популярные курсы</div>
+      <div class="home-sec-sub">Присоединяйтесь к тысячам учеников</div>
+    </div>
+    <a class="home-see-all" onclick="go('catalog')">Все курсы →</a>
+  </div>
+  <div class="courses-carousel-wrap">
+    <button class="cc-arrow cc-prev" onclick="coursesSlide(-1)">&#8249;</button>
+    <div class="cc-track" id="home-courses-track">
+      <div class="home-loading">Загрузка курсов...</div>
+    </div>
+    <button class="cc-arrow cc-next" onclick="coursesSlide(1)">&#8250;</button>
+  </div>
+</div>
+
+<!-- ── OUR ADVANTAGES ─────────────────────────────────── -->
+<div class="home-adv-section">
+  <div class="home-section-hdr" style="text-align:center;display:block">
+    <div class="home-sec-title">Наше преимущество</div>
+    <div class="home-sec-sub">Почему выбирают EduSpace.tj</div>
+  </div>
+  <div class="adv-grid">
+    <div class="adv-card">
+      <div class="adv-icon">🔍</div>
+      <div class="adv-title">Удобный поиск</div>
+      <div class="adv-desc">Студенты легко находят подходящего преподавателя, а учителя могут представить свои курсы и опыт.</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-icon">💻</div>
+      <div class="adv-title">Современная платформа</div>
+      <div class="adv-desc">EduSpace объединяет преподавателей и студентов в одном удобном пространстве для обучения.</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-icon">🤝</div>
+      <div class="adv-title">Соединяем знания</div>
+      <div class="adv-desc">Мы создаём место, где преподаватели могут делиться знаниями, а студенты — находить качественное обучение.</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-icon">🔒</div>
+      <div class="adv-title">Безопасная оплата</div>
+      <div class="adv-desc">Все платежи проходят через защищённую систему EduSpace. Ваши деньги в безопасности.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CTA ────────────────────────────────────────────── -->
+<div class="cta-block">
+  <h2>Вы преподаватель?</h2>
+  <p>Зарегистрируйтесь и начните зарабатывать. Платформа берёт 15% комиссии.</p>
+  <div class="cta-btns">
+    <button class="btn-cw" onclick="go('register')">Стать преподавателем</button>
+    <button class="btn-co" onclick="go('for-teachers')">Узнать подробнее</button>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="logo"><div class="logo-mark" style="width:26px;height:26px;border-radius:7px"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 1L1 5l7 4 7-4-7-4zM1 9l7 4 7-4M1 12l7 4 7-4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="logo-name" style="font-size:15px">Edu<em>Space</em>.tj</div></div>
+  <div class="footer-links">
+    <a onclick="go('about')">О нас</a>
+    <a onclick="go('for-students')">Для студентов</a>
+    <a onclick="go('for-teachers')">Для учителей</a>
+    <a onclick="go('terms')">Условия</a>
+    <a href="https://t.me/eduspacetj" target="_blank">Поддержка</a>
+  </div>
+  <div class="footer-copy">© 2025 EduSpace.tj · Душанбе, Таджикистан</div>
+</footer>
+</div>
+
+<!-- ═══ FOR STUDENTS ═══ -->
+<div class="page" id="page-for-students">
+  <!-- Hero -->
+  <div class="lp-hero lp-hero-students">
+    <div class="lp-hero-overlay"></div>
+    <div class="lp-hero-content">
+      <div class="hero-tag">🎓 Для студентов</div>
+      <h1>Найди своего<br><em>идеального учителя</em></h1>
+      <p>Учись онлайн у лучших преподавателей Таджикистана. Удобно, доступно, эффективно.</p>
+      <button class="btn-lg blue" onclick="go('catalog')">Найти преподавателя</button>
+    </div>
   </div>
 
+  <!-- Преимущества — 4 блока -->
+  <div class="home-adv-section">
+    <div class="home-section-hdr" style="text-align:center;display:block">
+      <div class="home-sec-title">Почему студенты выбирают нас</div>
+      <div class="home-sec-sub">4 причины учиться на EduSpace.tj</div>
+    </div>
+    <div class="adv-grid">
+      <div class="adv-card">
+        <div class="adv-icon">🔍</div>
+        <div class="adv-title">Найдите подходящего учителя</div>
+        <div class="adv-desc">Выбирайте преподавателей по предмету, опыту, рейтингу и стоимости занятий. Сотни профилей с отзывами реальных учеников.</div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon">⭐</div>
+        <div class="adv-title">Реальные отзывы и достижения</div>
+        <div class="adv-desc">Изучайте профили преподавателей, их сертификаты, опыт и отзывы других студентов перед записью.</div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon">💻</div>
+        <div class="adv-title">Учитесь удобно онлайн</div>
+        <div class="adv-desc">Проходите занятия из дома в удобное для вас время. Без дороги и лишних затрат через Zoom или Telegram.</div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon">📚</div>
+        <div class="adv-title">Большой выбор курсов</div>
+        <div class="adv-desc">На платформе представлены курсы по языкам, школьным предметам, IT и другим направлениям.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Курсы карусель -->
+  <div class="home-courses-section" style="background:var(--bg)">
+    <div class="home-section-hdr">
+      <div>
+        <div class="home-sec-title">Популярные курсы</div>
+        <div class="home-sec-sub">Начни обучение прямо сейчас</div>
+      </div>
+      <a class="home-see-all" onclick="go('catalog')">Все курсы →</a>
+    </div>
+    <div class="courses-carousel-wrap">
+      <button class="cc-arrow cc-prev" onclick="studCoursesSlide(-1)">&#8249;</button>
+      <div class="cc-track" id="stud-courses-track">
+        <div class="home-loading">Загрузка...</div>
+      </div>
+      <button class="cc-arrow cc-next" onclick="studCoursesSlide(1)">&#8250;</button>
+    </div>
+  </div>
+
+  <!-- Отзывы карусель -->
+  <div class="home-adv-section">
+    <div class="home-section-hdr" style="text-align:center;display:block">
+      <div class="home-sec-title">Что говорят наши студенты</div>
+      <div class="home-sec-sub">Последние отзывы с платформы</div>
+    </div>
+    <div class="lp-adv-carousel-wrap">
+      <button class="cc-arrow cc-prev" onclick="reviewsSlide(-1)">&#8249;</button>
+      <div class="lp-adv-track" id="reviews-track">
+        <div class="home-loading">Загрузка отзывов...</div>
+      </div>
+      <button class="cc-arrow cc-next" onclick="reviewsSlide(1)">&#8250;</button>
+    </div>
+    <div class="lp-dots" id="reviews-dots"></div>
+  </div>
+
+  <!-- CTA -->
   <div class="cta-block">
-    <h2>Вы преподаватель?</h2>
-    <p>Зарегистрируйтесь и начните зарабатывать. Платформа берёт 15% комиссии.</p>
+    <h2>Готовы начать учиться?</h2>
+    <p>Регистрация бесплатная — найдите своего учителя за 5 минут</p>
     <div class="cta-btns">
-      <button class="btn-cw" onclick="go('register')">Стать преподавателем</button>
+      <button class="btn-cw" onclick="go('register')">Зарегистрироваться</button>
+      <button class="btn-co" onclick="go('catalog')">Смотреть каталог</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOR TEACHERS ═══ -->
+<div class="page" id="page-for-teachers">
+  <!-- Hero -->
+  <div class="lp-hero lp-hero-teachers">
+    <div class="lp-hero-overlay"></div>
+    <div class="lp-hero-content">
+      <div class="hero-tag">👨‍🏫 Для учителей</div>
+      <h1>Зарабатывай,<br><em>обучая других</em></h1>
+      <p>Создай профиль, добавь курсы и получай учеников со всего Таджикистана. Платформа берёт только 15%.</p>
+      <button class="btn-lg blue" onclick="go('register')">Создать профиль</button>
+    </div>
+  </div>
+
+  <!-- Преимущества -->
+  <div class="home-adv-section">
+    <div class="home-section-hdr" style="text-align:center;display:block">
+      <div class="home-sec-title">Почему учителя выбирают нас</div>
+      <div class="home-sec-sub">3 причины стать преподавателем на EduSpace.tj</div>
+    </div>
+    <div class="adv-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="adv-card">
+        <div class="adv-icon">🚀</div>
+        <div class="adv-title">Найдите новых учеников</div>
+        <div class="adv-desc">Создайте профиль на платформе и получайте студентов, которые ищут обучение по вашему предмету.</div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon">💰</div>
+        <div class="adv-title">Зарабатывайте онлайн</div>
+        <div class="adv-desc">Проводите занятия онлайн, устанавливайте свою цену и управляйте своим расписанием сами.</div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon">📚</div>
+        <div class="adv-title">Создавайте курсы</div>
+        <div class="adv-desc">Публикуйте курсы и делитесь своими знаниями со студентами со всей страны.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Как это работает -->
+  <div class="home-courses-section" style="background:var(--bg)">
+    <div class="home-section-hdr" style="text-align:center;display:block">
+      <div class="home-sec-title">Как это работает?</div>
+      <div class="home-sec-sub">Три шага до первого ученика</div>
+    </div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-step-num">1</div>
+        <div class="how-step-line"></div>
+        <div class="how-step-title">Зарегистрируйтесь</div>
+        <div class="how-step-desc">Создайте профиль преподавателя — расскажите о себе, загрузите документы</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">2</div>
+        <div class="how-step-line"></div>
+        <div class="how-step-title">Получите одобрение</div>
+        <div class="how-step-desc">Наша команда проверит профиль в течение 1–2 рабочих дней</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">3</div>
+        <div class="how-step-line how-step-line-last"></div>
+        <div class="how-step-title">Начните зарабатывать</div>
+        <div class="how-step-desc">Принимайте учеников и получайте 85% от стоимости каждого курса</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:2.5rem">
+      <button class="btn-lg blue" style="height:52px;padding:0 40px;font-size:16px" onclick="go('register')">Создать профиль преподавателя →</button>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-block">
+    <h2>Готовы начать зарабатывать?</h2>
+    <p>Регистрация бесплатная — платформа берёт только 15% комиссии</p>
+    <div class="cta-btns">
+      <button class="btn-cw" onclick="go('register')">Зарегистрироваться</button>
       <button class="btn-co" onclick="go('about')">Узнать подробнее</button>
     </div>
   </div>
-
-  <footer class="site-footer">
-    <div class="logo"><div class="logo-mark" style="width:26px;height:26px;border-radius:7px"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 1L1 5l7 4 7-4-7-4zM1 9l7 4 7-4M1 12l7 4 7-4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="logo-name" style="font-size:15px">Edu<em>Space</em>.tj</div></div>
-    <div class="footer-links">
-      <a onclick="go('about')">О нас</a>
-      <a onclick="go('terms')">Условия</a>
-      <a href="https://t.me/eduspacetj" target="_blank">Поддержка</a>
-      <a href="/cdn-cgi/l/email-protection#7c1918090f0c1d1f1918090f141d121e193c1b111d1510521f1311">Email</a>
-    </div>
-    <div class="footer-copy">© 2025 EduSpace.tj · Душанбе, Таджикистан</div>
-  </footer>
 </div>
 
 <!-- ═══ CATALOG ═══ -->
@@ -1369,7 +1754,7 @@ input,select,textarea{font-family:inherit}
       <div id="pp-docs" style="display:none">
         <div class="pp-card">
           <div class="pp-sec"><div class="pp-sec-ico">📄</div>Документы и квалификация</div>
-          <div style="padding:10px 14px;background:var(--gl2);border-radius:9px;font-size:13px;color:var(--g2);margin-bottom:14px;border:1px solid rgba(24,169,106,.2)">🔒 Документы проверены командой EduSpace.tj. Ученики видят только статус проверки.</div>
+          <div style="padding:10px 14px;background:var(--gl2);border-radius:9px;font-size:13px;color:var(--g2);margin-bottom:14px;border:1px solid rgba(37,99,235,.2)">🔒 Документы проверены командой EduSpace.tj. Ученики видят только статус проверки.</div>
           <div class="docs-list" id="pp-docs-list">
             <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Документы не загружены</div>
           </div>
@@ -1685,7 +2070,7 @@ input,select,textarea{font-family:inherit}
       <div id="doc-dip"><div class="file-drop"><input type="file" accept=".pdf,.jpg,.png" onchange="prevFile(this,'dip')"><div style="font-size:24px;margin-bottom:6px">📎</div><div style="font-size:14px;font-weight:700;margin-bottom:3px">Нажмите или перетащите файл</div><div style="font-size:12px;color:var(--text2)">PDF, JPG, PNG · до 10 МБ</div></div><div class="file-prev" id="fp-dip"><span style="font-size:16px">📄</span><span class="file-prev-name" id="fn-dip"></span><button class="rm-file" onclick="rmFile('dip')">✕</button></div></div>
       <div id="doc-cert" style="display:none"><div class="file-drop"><input type="file" accept=".pdf,.jpg,.png" onchange="prevFile(this,'cert')"><div style="font-size:24px;margin-bottom:6px">📎</div><div style="font-size:14px;font-weight:700;margin-bottom:3px">Сертификат курса или тренинга</div><div style="font-size:12px;color:var(--text2)">PDF, JPG, PNG · до 10 МБ</div></div><div class="file-prev" id="fp-cert"><span style="font-size:16px">📄</span><span class="file-prev-name" id="fn-cert"></span><button class="rm-file" onclick="rmFile('cert')">✕</button></div></div>
       <div id="doc-work" style="display:none"><div class="file-drop"><input type="file" accept=".pdf,.jpg,.png" onchange="prevFile(this,'work')"><div style="font-size:24px;margin-bottom:6px">📎</div><div style="font-size:14px;font-weight:700;margin-bottom:3px">Трудовая книжка или справка с работы</div><div style="font-size:12px;color:var(--text2)">PDF, JPG, PNG · до 10 МБ</div></div><div class="file-prev" id="fp-work"><span style="font-size:16px">📄</span><span class="file-prev-name" id="fn-work"></span><button class="rm-file" onclick="rmFile('work')">✕</button></div></div>
-      <div style="margin-top:12px;padding:10px 14px;background:var(--gl2);border-radius:9px;font-size:12px;color:var(--g2);border:1px solid rgba(24,169,106,.2)">🔒 Конфиденциально — только для проверки модераторами EduSpace.tj</div>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--gl2);border-radius:9px;font-size:12px;color:var(--g2);border:1px solid rgba(37,99,235,.2)">🔒 Конфиденциально — только для проверки модераторами EduSpace.tj</div>
     </div>
     <div class="form-nav"><button class="btn-back-nav" onclick="goSetup(1)">← Назад</button><button class="btn-next-nav" onclick="goSetup(3)">Далее →</button></div>
   </div>
@@ -2740,7 +3125,7 @@ async function init() {
             return;
         }
         // Public pages
-        var publicPages = ['catalog','about','login','register'];
+        var publicPages = ['catalog','about','login','register','for-students','for-teachers'];
         if (publicPages.includes(hash)) {
             go(hash, true);
             return;
@@ -2778,11 +3163,11 @@ function go(p, skipHistory) {
     }
     document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
     document.getElementById('page-' + p)?.classList.add('active');
-    ['home','catalog','about'].forEach(x => {
+    ['home','catalog','about','for-students','for-teachers'].forEach(x => {
         document.getElementById('nl-'+x)?.classList.remove('active');
         document.getElementById('mnl-'+x)?.classList.remove('active');
     });
-    if (['home','catalog','about'].includes(p)) {
+    if (['home','catalog','about','for-students','for-teachers'].includes(p)) {
         document.getElementById('nl-'+p)?.classList.add('active');
         document.getElementById('mnl-'+p)?.classList.add('active');
     }
@@ -2808,7 +3193,7 @@ function go(p, skipHistory) {
 function restorePageFromHash() {
     var hash = window.location.hash.replace('#', '');
     if (!hash || hash === 'home') return null;
-    var publicPages = ['catalog', 'about', 'login', 'register'];
+    var publicPages = ['catalog', 'about', 'login', 'register', 'for-students', 'for-teachers'];
     if (publicPages.includes(hash)) return hash;
     return null; // protected pages need auth check
 }
@@ -7264,6 +7649,236 @@ async function submitResetPassword() {
 }
 
 init();
+
+// ═══════════════════════════════════════════════════════
+// HERO CAROUSEL
+// ═══════════════════════════════════════════════════════
+var heroIdx = 0;
+var heroTotal = 3;
+var heroTimer = null;
+
+function heroSlide(dir) {
+    heroIdx = (heroIdx + dir + heroTotal) % heroTotal;
+    heroRender();
+    heroResetTimer();
+}
+function heroGoTo(i) {
+    heroIdx = i;
+    heroRender();
+    heroResetTimer();
+}
+function heroRender() {
+    var slides = document.querySelector('.hc-slides');
+    if (slides) slides.style.transform = 'translateX(-' + (heroIdx * 100) + '%)';
+    document.querySelectorAll('.hc-dot').forEach(function(d, i) {
+        d.classList.toggle('active', i === heroIdx);
+    });
+}
+function heroResetTimer() {
+    clearInterval(heroTimer);
+    heroTimer = setInterval(function() { heroSlide(1); }, 5000);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    heroResetTimer();
+});
+
+// ═══════════════════════════════════════════════════════
+// CATEGORIES CAROUSEL
+// ═══════════════════════════════════════════════════════
+var catsOffset = 0;
+function catsSlide(dir) {
+    var track = document.getElementById('cats-track');
+    if (!track) return;
+    var cardW = 174;
+    var visible = Math.floor(track.parentElement.offsetWidth / cardW);
+    var maxOffset = Math.max(0, 8 - visible);
+    catsOffset = Math.max(0, Math.min(maxOffset, catsOffset + dir));
+    track.style.transform = 'translateX(-' + (catsOffset * cardW) + 'px)';
+}
+
+function filterCatalogCat(cat) {
+    go('catalog');
+    setTimeout(function() {
+        var chips = document.querySelectorAll('.chip');
+        chips.forEach(function(c) {
+            if (c.textContent.trim() === cat) { c.click(); }
+        });
+    }, 300);
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME COURSES CAROUSEL
+// ═══════════════════════════════════════════════════════
+var homeCoursesIdx = 0;
+var homeCoursesData = [];
+
+function coursesSlide(dir) {
+    var track = document.getElementById('home-courses-track');
+    if (!track) return;
+    var cardW = 244;
+    var visible = Math.floor(track.parentElement.offsetWidth / cardW);
+    var max = Math.max(0, homeCoursesData.length - visible);
+    homeCoursesIdx = Math.max(0, Math.min(max, homeCoursesIdx + dir));
+    track.style.transform = 'translateX(-' + (homeCoursesIdx * cardW) + 'px)';
+}
+
+async function loadHomeCourses() {
+    try {
+        var data = await get('/courses?status=active&limit=12');
+        var courses = data.courses || data || [];
+        homeCoursesData = courses;
+        renderCoursesCarousel('home-courses-track', courses);
+    } catch(e) {
+        var t = document.getElementById('home-courses-track');
+        if (t) t.innerHTML = '<div class="home-loading">Курсы скоро появятся</div>';
+    }
+}
+
+function renderCoursesCarousel(trackId, courses) {
+    var track = document.getElementById(trackId);
+    if (!track) return;
+    if (!courses.length) {
+        track.innerHTML = '<div class="home-loading">Курсов пока нет</div>';
+        return;
+    }
+    track.innerHTML = courses.map(function(c) {
+        return '<div class="ccard" onclick="openCourse(\''+c.id+'\')" style="min-width:228px;flex-shrink:0">' +
+            '<div class="ccard-img"><span style="font-size:40px">'+(c.emoji||'📖')+'</span></div>' +
+            '<div class="ccard-body">' +
+            '<div class="ccard-cat">'+(c.category||'')+'</div>' +
+            '<div class="ccard-title">'+(c.title||'')+'</div>' +
+            '<div class="ccard-teacher"><div class="t-dot" style="background:'+(c.teacherColor||'#2563EB')+'">'+(c.teacherInitials||'?')+'</div>'+(c.teacherName||'')+'</div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
+            '<span style="font-size:15px;font-weight:800;color:var(--g)">'+(c.price||0)+' смн</span>' +
+            (c.rating>0?'<span style="font-size:12px;color:#F59E0B">★ '+parseFloat(c.rating).toFixed(1)+'</span>':'') +
+            '</div></div></div>';
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// STUDENT PAGE CAROUSELS
+// ═══════════════════════════════════════════════════════
+var studAdvIdx = 0;
+function studAdvSlide(dir) {
+    var track = document.getElementById('stud-adv-track');
+    if (!track) return;
+    var cards = track.querySelectorAll('.lp-adv-card');
+    var cardW = track.querySelector('.lp-adv-card').offsetWidth + 20;
+    var visible = Math.floor(track.parentElement.offsetWidth / cardW);
+    studAdvIdx = Math.max(0, Math.min(cards.length - visible, studAdvIdx + dir));
+    track.style.transform = 'translateX(-' + (studAdvIdx * cardW) + 'px)';
+    updateDots('stud-adv-dots', studAdvIdx, cards.length);
+}
+function studAdvGoTo(i) { studAdvIdx = i; studAdvSlide(0); }
+
+var studCoursesIdx = 0;
+function studCoursesSlide(dir) {
+    var track = document.getElementById('stud-courses-track');
+    if (!track) return;
+    var cardW = 244;
+    var visible = Math.floor(track.parentElement.offsetWidth / cardW);
+    var max = Math.max(0, homeCoursesData.length - visible);
+    studCoursesIdx = Math.max(0, Math.min(max, studCoursesIdx + dir));
+    track.style.transform = 'translateX(-' + (studCoursesIdx * cardW) + 'px)';
+}
+
+// ═══════════════════════════════════════════════════════
+// REVIEWS CAROUSEL
+// ═══════════════════════════════════════════════════════
+var reviewsIdx = 0;
+var reviewsData = [];
+
+function reviewsSlide(dir) {
+    var track = document.getElementById('reviews-track');
+    if (!track || !reviewsData.length) return;
+    var cardW = track.querySelector('.review-card') ? track.querySelector('.review-card').offsetWidth + 20 : 300;
+    var visible = Math.floor(track.parentElement.offsetWidth / cardW);
+    reviewsIdx = Math.max(0, Math.min(reviewsData.length - visible, reviewsIdx + dir));
+    track.style.transform = 'translateX(-' + (reviewsIdx * cardW) + 'px)';
+    updateDots('reviews-dots', reviewsIdx, reviewsData.length);
+}
+function updateDots(dotsId, idx, total) {
+    var dots = document.querySelectorAll('#' + dotsId + ' .hc-dot');
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+}
+
+async function loadReviews() {
+    try {
+        var data = await get('/teachers?limit=20');
+        var teachers = data || [];
+        var allReviews = [];
+        // Get last reviews from teachers with reviews
+        for (var t of teachers.slice(0, 5)) {
+            if (t.reviewCount > 0) {
+                try {
+                    var rv = await get('/teachers/' + t.userId + '/reviews');
+                    (rv || []).forEach(function(r) {
+                        allReviews.push({...r, teacherName: t.firstName + ' ' + t.lastName, subject: t.subject});
+                    });
+                } catch(e) {}
+            }
+        }
+        reviewsData = allReviews.slice(0, 10);
+        renderReviews();
+    } catch(e) {
+        var t = document.getElementById('reviews-track');
+        if (t) t.innerHTML = '<div class="home-loading">Отзывы скоро появятся</div>';
+    }
+}
+
+function renderReviews() {
+    var track = document.getElementById('reviews-track');
+    var dotsEl = document.getElementById('reviews-dots');
+    if (!track) return;
+    if (!reviewsData.length) {
+        track.innerHTML = '<div class="home-loading">Отзывов пока нет</div>';
+        return;
+    }
+    track.innerHTML = reviewsData.map(function(r) {
+        var stars = '★'.repeat(r.stars || 5) + '☆'.repeat(5 - (r.stars || 5));
+        var initials = (r.studentName || 'А').substring(0, 2).toUpperCase();
+        return '<div class="review-card">' +
+            '<div class="review-stars">' + stars + '</div>' +
+            '<div class="review-text">' + (r.text || 'Отличный преподаватель!') + '</div>' +
+            '<div class="review-author">' +
+            '<div class="review-av" style="background:var(--g)">' + initials + '</div>' +
+            '<div><div class="review-name">' + (r.studentName || 'Студент') + '</div>' +
+            '<div class="review-course">' + (r.subject || '') + '</div></div>' +
+            '</div></div>';
+    }).join('');
+    if (dotsEl) {
+        dotsEl.innerHTML = reviewsData.map(function(_, i) {
+            return '<span class="hc-dot' + (i===0?' active':'') + '" onclick="reviewsGoTo('+i+')"></span>';
+        }).join('');
+    }
+}
+function reviewsGoTo(i) { reviewsIdx = i; reviewsSlide(0); }
+
+// Load for student page when opened
+var origGo = go;
+// Patch go() to load data for new pages
+var _goPatched = false;
+function patchGoForNewPages() {
+    if (_goPatched) return;
+    _goPatched = true;
+    var _origGoFn = window.go;
+    window.go = function(p, skipHistory) {
+        _origGoFn(p, skipHistory);
+        if (p === 'home') { loadHomeCourses(); }
+        if (p === 'for-students') {
+            loadHomeCourses();
+            setTimeout(function() {
+                renderCoursesCarousel('stud-courses-track', homeCoursesData);
+            }, 300);
+            loadReviews();
+        }
+    };
+}
+document.addEventListener('DOMContentLoaded', function() {
+    patchGoForNewPages();
+    loadHomeCourses();
+});
+
 </script>
 </body>
 </html>
