@@ -6520,12 +6520,38 @@ let currentCourseData = null;
 let currentHwId      = null;
 
 async function openCourse(courseId) {
-    if (!currentUser) { go('login'); return; }
+    // Если не авторизован — показываем страницу курса/преподавателя
+    // чтобы студент мог узнать о курсе перед регистрацией
+    if (!currentUser) {
+        // Ищем курс в homeCoursesData чтобы узнать teacherId
+        var course = homeCoursesData.find(function(c) { return c.id === courseId; });
+        if (course) {
+            var teacherId = course.teacherId || (course.teacher && course.teacher.id);
+            if (teacherId) {
+                // Открываем профиль преподавателя — там видно курс
+                await openProfile(teacherId);
+                // Сохраняем выбранный курс для оплаты после входа
+                localStorage.setItem('pendingCourseId', courseId);
+                return;
+            }
+        }
+        // Если не нашли teacher — просто показываем профиль через API
+        try {
+            var data = await get('/courses/' + courseId + '/info');
+            if (data && data.teacherId) {
+                await openProfile(data.teacherId);
+                localStorage.setItem('pendingCourseId', courseId);
+                return;
+            }
+        } catch(e) {}
+        // Последний вариант — на страницу регистрации
+        go('register');
+        return;
+    }
     currentCourseId = courseId;
     go('course');
     await loadCourseData();
     // Start polling for new messages from teacher
-    // teacherId is set after loadCourseData in currentCourseData
     if (currentCourseData && currentCourseData.course && currentCourseData.course.teacher) {
         startCourseChatPoll(currentCourseData.course.teacher.id, 'cp-chat-btn');
     }
