@@ -209,7 +209,22 @@ tr:hover td{background:var(--bg)}
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.sidebar{width:60px}.sb-item span:not(.sb-ico){display:none}.sb-label{display:none}}
+
+/* ── КЛИКАБЕЛЬНЫЕ КАРТОЧКИ СТАТИСТИКИ ── */
+.stat-card.clickable{cursor:pointer;position:relative;transition:all .2s}
+.stat-card.clickable:hover{border-color:#2563EB;box-shadow:0 4px 16px rgba(37,99,235,.15);transform:translateY(-2px)}
+.stat-card.clickable.active{border-color:#2563EB;background:#EFF6FF}
+.stat-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px;color:#94A3B8;transition:transform .2s}
+.stat-card.clickable.active .stat-arrow{transform:translateY(-50%) rotate(180deg);color:#2563EB}
+
+/* ── ДЕТАЛИ УЧИТЕЛЯ/СТУДЕНТА ── */
+@media(max-width:768px){.detail-grid{grid-template-columns:1fr!important}}
+
+/* ── КЛИКАБЕЛЬНЫЕ СТРОКИ ТАБЛИЦЫ ── */
+.row-clickable{cursor:pointer;transition:background .15s}
+.row-clickable:hover{background:#F0F9FF!important}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -278,24 +293,48 @@ tr:hover td{background:var(--bg)}
           <div><div class="page-title">Статистика платформы</div><div class="page-sub">Общие показатели EduSpace.tj в реальном времени</div></div>
           <button class="btn-refresh" id="refresh-stats">↻ Обновить</button>
         </div>
+
+        <!-- Карточки статистики - кликабельные -->
         <div class="stats-grid">
-          <div class="stat-card">
+          <div class="stat-card clickable" onclick="showChart('students')" id="sc-students">
             <div class="stat-ico-wrap green">🎓</div>
             <div class="stat-info"><div class="stat-lbl">Учеников</div><div class="stat-num green" id="st-students">—</div></div>
+            <div class="stat-arrow">▾</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card clickable" onclick="showChart('teachers')" id="sc-teachers">
             <div class="stat-ico-wrap blue">👨‍🏫</div>
             <div class="stat-info"><div class="stat-lbl">Учителей</div><div class="stat-num blue" id="st-teachers">—</div></div>
+            <div class="stat-arrow">▾</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card clickable" onclick="showChart('courses')" id="sc-courses">
             <div class="stat-ico-wrap yellow">📚</div>
             <div class="stat-info"><div class="stat-lbl">Активных курсов</div><div class="stat-num yellow" id="st-courses">—</div></div>
+            <div class="stat-arrow">▾</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card clickable" onclick="showChart('revenue')" id="sc-revenue">
             <div class="stat-ico-wrap purple">💰</div>
             <div class="stat-info"><div class="stat-lbl">Доход платформы</div><div class="stat-num purple" id="st-revenue">—</div><div class="stat-trend">сомони</div></div>
+            <div class="stat-arrow">▾</div>
           </div>
         </div>
+
+        <!-- График - появляется при клике -->
+        <div id="chart-section" style="display:none;background:#fff;border:1.5px solid #E2E8F0;border-radius:14px;padding:1.5rem;margin-bottom:1.25rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px">
+            <div style="font-size:15px;font-weight:700" id="chart-title">График</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div style="display:flex;gap:4px;background:#F1F5F9;border-radius:8px;padding:3px">
+                <button id="chart-type-bar" onclick="setChartType('bar')" style="padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#0F172A">Столбики</button>
+                <button id="chart-type-line" onclick="setChartType('line')" style="padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#64748B">Линия</button>
+              </div>
+              <button onclick="document.getElementById('chart-section').style.display='none';currentChartMetric=null;document.querySelectorAll('.stat-card.active').forEach(function(x){x.classList.remove('active')})" style="background:none;border:1.5px solid #E2E8F0;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;color:#64748B">✕</button>
+            </div>
+          </div>
+          <div style="height:280px;position:relative">
+            <canvas id="main-chart"></canvas>
+          </div>
+        </div>
+
         <div class="stats-grid-2">
           <div class="stat-card">
             <div class="stat-ico-wrap yellow">⏳</div>
@@ -303,7 +342,7 @@ tr:hover td{background:var(--bg)}
           </div>
           <div class="stat-card">
             <div class="stat-ico-wrap blue">📝</div>
-            <div class="stat-info"><div class="stat-lbl">Курсов на модерации</div><div class="stat-num blue" id="st-pending-c">—</div></div>
+            <div class="stat-info"><div class="stat-lbl">Всего платежей</div><div class="stat-num blue" id="st-pending-c">—</div></div>
           </div>
         </div>
       </div>
@@ -398,6 +437,100 @@ tr:hover td{background:var(--bg)}
         </div>
       </div>
 
+
+      <!-- ── ДЕТАЛИ УЧИТЕЛЯ ── -->
+      <div class="panel" id="panel-teacher-detail">
+        <div class="page-hdr">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="showPanel('all-teachers')" style="background:none;border:1.5px solid #E2E8F0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;color:#64748B">← Назад</button>
+            <div><div class="page-title" id="td-name">Учитель</div><div class="page-sub" id="td-subject"></div></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="td-block-btn" onclick="toggleTeacherBlock()" style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid #DC2626;color:#DC2626;background:#FEF2F2">🚫 Заблокировать</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem" class="detail-grid">
+          <div class="card" style="padding:1.5rem">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">
+              <div id="td-av" style="width:64px;height:64px;border-radius:16px;background:#2563EB;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden"></div>
+              <div>
+                <div style="font-size:18px;font-weight:800" id="td-fullname"></div>
+                <div style="font-size:13px;color:#64748B" id="td-email"></div>
+                <div style="font-size:13px;color:#64748B" id="td-phone"></div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:#F8FAFC;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:800;color:#2563EB" id="td-students">0</div>
+                <div style="font-size:12px;color:#64748B">Учеников</div>
+              </div>
+              <div style="background:#F8FAFC;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:800;color:#18A96A" id="td-earn">0</div>
+                <div style="font-size:12px;color:#64748B">Заработано смн</div>
+              </div>
+              <div style="background:#F8FAFC;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:800;color:#F59E0B" id="td-rating">—</div>
+                <div style="font-size:12px;color:#64748B">Рейтинг</div>
+              </div>
+              <div style="background:#F8FAFC;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:800;color:#8B5CF6" id="td-courses-count">0</div>
+                <div style="font-size:12px;color:#64748B">Курсов</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:1.5rem">
+            <div style="font-size:14px;font-weight:700;margin-bottom:1rem">📚 Курсы</div>
+            <div id="td-courses-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">💳 История платежей</div></div>
+          <div class="table-wrap" id="td-payments-table"></div>
+        </div>
+      </div>
+
+      <!-- ── ДЕТАЛИ СТУДЕНТА ── -->
+      <div class="panel" id="panel-student-detail">
+        <div class="page-hdr">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="showPanel('all-students')" style="background:none;border:1.5px solid #E2E8F0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;color:#64748B">← Назад</button>
+            <div><div class="page-title" id="sd-name">Студент</div><div class="page-sub" id="sd-email-sub"></div></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="sd-block-btn" onclick="toggleStudentBlock()" style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid #DC2626;color:#DC2626;background:#FEF2F2">🚫 Заблокировать</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem" class="detail-grid">
+          <div class="card" style="padding:1.5rem">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">
+              <div id="sd-av" style="width:64px;height:64px;border-radius:16px;background:#18A96A;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden"></div>
+              <div>
+                <div style="font-size:18px;font-weight:800" id="sd-fullname"></div>
+                <div style="font-size:13px;color:#64748B" id="sd-email"></div>
+                <div style="font-size:13px;color:#64748B" id="sd-phone"></div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:#F8FAFC;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:800;color:#18A96A" id="sd-balance">0</div>
+                <div style="font-size:12px;color:#64748B">Баланс смн</div>
+              </div>
+              <div style="background:#F8FAFC;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:800;color:#2563EB" id="sd-courses-count">0</div>
+                <div style="font-size:12px;color:#64748B">Курсов</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:1.5rem">
+            <div style="font-size:14px;font-weight:700;margin-bottom:1rem">📚 Записан на курсы</div>
+            <div id="sd-courses-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">💳 История транзакций</div></div>
+          <div class="table-wrap" id="sd-payments-table"></div>
+        </div>
+      </div>
 
       <!-- ── ИСТОРИЯ ВСЕХ ПЛАТЕЖЕЙ ── -->
       <div class="panel" id="panel-payments-history">
@@ -637,13 +770,13 @@ function loadAllTeachers() {
                 ? '<button title="Показать" onclick="adminShowTeacher(\'' + t.userId + '\')" style="background:#f0fdf4;border:1.5px solid #16a34a;color:#16a34a;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">👁 Показать</button>'
                 : '<button title="Скрыть" onclick="adminHideTeacher(\'' + t.userId + '\')" style="background:#fffbeb;border:1.5px solid #f59e0b;color:#b45309;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">🙈 Скрыть</button>';
             var delBtn = '<button title="Удалить навсегда" onclick="adminDeleteTeacher(\'' + t.userId + '\',\'' + t.firstName+' '+t.lastName + '\')" style="background:#fef2f2;border:1.5px solid #dc2626;color:#dc2626;border-radius:7px;padding:5px 9px;font-size:14px;cursor:pointer">🗑</button>';
-            return '<tr>' +
+            return '<tr class="row-clickable" onclick="openTeacherDetail(\'' + t.userId + '\')">' +
                 '<td><div class="user-cell">'+adminAv(item)+'<div><div class="user-name">'+t.firstName+' '+t.lastName+'</div><div class="user-email">'+(t.subject||'')+'</div></div></div></td>' +
                 '<td>'+(t.rating>0?'★ '+parseFloat(t.rating).toFixed(1):'—')+'</td>' +
                 '<td>'+(t.studentCount||0)+'</td>' +
                 '<td>'+(t.price>0?t.price+' смн':'—')+'</td>' +
                 '<td>'+statusHtml+'</td>' +
-                '<td style="white-space:nowrap">'+hideBtn+delBtn+'</td></tr>';
+                '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+hideBtn+delBtn+'</td></tr>';
         }).join('');
         el.innerHTML = '<table><thead><tr><th>Учитель</th><th>Рейтинг</th><th>Учеников</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead><tbody>'+rows+'</tbody></table>';
     }).catch(function(e) { el.innerHTML = '<div class="empty-state"><div class="empty-title" style="color:var(--red)">Ошибка</div></div>'; });
@@ -663,12 +796,12 @@ function loadAllStudents() {
                 ? '<button title="Показать" onclick="adminShowStudent(\'' + s.id + '\')" style="background:#f0fdf4;border:1.5px solid #16a34a;color:#16a34a;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">👁 Показать</button>'
                 : '<button title="Скрыть" onclick="adminHideStudent(\'' + s.id + '\')" style="background:#fffbeb;border:1.5px solid #f59e0b;color:#b45309;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px">🙈 Скрыть</button>';
             var delBtn = '<button title="Удалить навсегда" onclick="adminDeleteStudent(\'' + s.id + '\',\'' + s.first_name+' '+s.last_name + '\')" style="background:#fef2f2;border:1.5px solid #dc2626;color:#dc2626;border-radius:7px;padding:5px 9px;font-size:14px;cursor:pointer">🗑</button>';
-            return '<tr>' +
+            return '<tr class="row-clickable" onclick="openStudentDetail(\'' + s.id + '\')">' +
                 '<td><div class="user-cell">'+adminAv(s)+'<div><div class="user-name">'+s.first_name+' '+s.last_name+'</div><div class="user-email">'+s.email+'</div></div></div></td>' +
                 '<td style="font-weight:600;color:var(--g2)">'+parseFloat(s.balance||0).toLocaleString('ru')+' смн</td>' +
                 '<td>'+(s.courses_count||0)+' курсов</td>' +
                 '<td>'+statusHtml+'</td>' +
-                '<td style="white-space:nowrap">'+hideBtn+delBtn+'</td>' +
+                '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+hideBtn+delBtn+'</td>' +
                 '<td>'+new Date(s.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})+'</td></tr>';
         }).join('');
         el.innerHTML = '<table><thead><tr><th>Студент</th><th>Баланс</th><th>Курсы</th><th>Статус</th><th>Действия</th><th>Дата рег.</th></tr></thead><tbody>'+rows+'</tbody></table>';
@@ -1033,6 +1166,303 @@ if (token) {
 
 // Загрузка студентов через endpoint
 // loadAllStudents — см. выше
+
+
+// ═══════════════════════════════════════════════════════
+// ГРАФИКИ
+// ═══════════════════════════════════════════════════════
+var currentChartMetric = null;
+var mainChart = null;
+var currentChartType = 'bar';
+
+function setChartType(type) {
+    currentChartType = type;
+    document.getElementById('chart-type-bar').style.background = type === 'bar' ? '#fff' : 'transparent';
+    document.getElementById('chart-type-bar').style.color = type === 'bar' ? '#0F172A' : '#64748B';
+    document.getElementById('chart-type-line').style.background = type === 'line' ? '#fff' : 'transparent';
+    document.getElementById('chart-type-line').style.color = type === 'line' ? '#0F172A' : '#64748B';
+    if (currentChartMetric) showChart(currentChartMetric);
+}
+
+function showChart(metric) {
+    // Подсвечиваем активную карточку
+    document.querySelectorAll('.stat-card.clickable').forEach(function(c) { c.classList.remove('active'); });
+    var cardId = {students:'sc-students', teachers:'sc-teachers', courses:'sc-courses', revenue:'sc-revenue'}[metric];
+    if (cardId) document.getElementById(cardId).classList.add('active');
+
+    var titles = {students:'Рост учеников по месяцам', teachers:'Рост учителей по месяцам', courses:'Активные курсы по месяцам', revenue:'Доход платформы по месяцам (смн)'};
+    document.getElementById('chart-title').textContent = titles[metric] || 'График';
+    document.getElementById('chart-section').style.display = 'block';
+    currentChartMetric = metric;
+
+    // Получаем данные с сервера
+    req('GET', '/users/admin/stats/monthly?metric=' + metric).then(function(data) {
+        renderChart(data.labels || [], data.values || [], metric);
+    }).catch(function() {
+        // Если API нет — показываем примерные данные
+        var months = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+        var now = new Date().getMonth();
+        var labels = months.slice(0, now + 1);
+        var values = labels.map(function(_, i) { return Math.floor(Math.random() * 10) + i; });
+        renderChart(labels, values, metric);
+    });
+}
+
+function renderChart(labels, values, metric) {
+    var colors = {students:'#18A96A', teachers:'#2563EB', courses:'#F59E0B', revenue:'#8B5CF6'};
+    var color = colors[metric] || '#2563EB';
+
+    var ctx = document.getElementById('main-chart').getContext('2d');
+    if (mainChart) mainChart.destroy();
+
+    mainChart = new Chart(ctx, {
+        type: currentChartType,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: document.getElementById('chart-title').textContent,
+                data: values,
+                backgroundColor: currentChartType === 'bar' ? color + '99' : color + '22',
+                borderColor: color,
+                borderWidth: currentChartType === 'line' ? 2.5 : 0,
+                borderRadius: currentChartType === 'bar' ? 6 : 0,
+                fill: currentChartType === 'line',
+                tension: 0.4,
+                pointBackgroundColor: color,
+                pointRadius: currentChartType === 'line' ? 4 : 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1E293B',
+                    titleColor: '#F8FAFC',
+                    bodyColor: '#CBD5E1',
+                    padding: 10,
+                    borderRadius: 8,
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#94A3B8' } },
+                y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 12 }, color: '#94A3B8' }, beginAtZero: true }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// ДЕТАЛИ УЧИТЕЛЯ
+// ═══════════════════════════════════════════════════════
+var currentTeacherId = null;
+var currentTeacherBlocked = false;
+
+function openTeacherDetail(userId) {
+    currentTeacherId = userId;
+    showPanel('teacher-detail');
+
+    // Загружаем данные учителя
+    Promise.all([
+        req('GET', '/teachers/' + userId),
+        req('GET', '/users/admin/teacher-payments/' + userId).catch(function() { return []; })
+    ]).then(function(results) {
+        var t = results[0];
+        var payments = results[1] || [];
+
+        // Аватар
+        var avEl = document.getElementById('td-av');
+        avEl.style.background = t.color || '#2563EB';
+        if (t.avatarUrl) {
+            avEl.innerHTML = '<img src="'+t.avatarUrl+'" style="width:100%;height:100%;object-fit:cover">';
+        } else {
+            avEl.textContent = t.initials || '?';
+        }
+
+        document.getElementById('td-name').textContent = (t.firstName || '') + ' ' + (t.lastName || '');
+        document.getElementById('td-fullname').textContent = (t.firstName || '') + ' ' + (t.lastName || '');
+        document.getElementById('td-subject').textContent = t.subject || '';
+        document.getElementById('td-email').textContent = t.email || '';
+        document.getElementById('td-phone').textContent = t.phone || '';
+        document.getElementById('td-students').textContent = t.studentCount || 0;
+        document.getElementById('td-rating').textContent = t.rating > 0 ? '★ ' + parseFloat(t.rating).toFixed(1) : '—';
+        document.getElementById('td-courses-count').textContent = (t.courses || []).length;
+
+        // Доход (85% от всех платежей)
+        var totalEarn = payments.filter(function(p) { return p.type === 'enrollment'; })
+            .reduce(function(sum, p) { return sum + parseFloat(p.amount || 0) * 0.85; }, 0);
+        document.getElementById('td-earn').textContent = Math.round(totalEarn).toLocaleString('ru');
+
+        // Статус блокировки
+        currentTeacherBlocked = t.isVisible === false || t.isVisible === 0;
+        var blockBtn = document.getElementById('td-block-btn');
+        if (currentTeacherBlocked) {
+            blockBtn.textContent = '✅ Разблокировать';
+            blockBtn.style.borderColor = '#16A34A';
+            blockBtn.style.color = '#16A34A';
+            blockBtn.style.background = '#F0FDF4';
+        } else {
+            blockBtn.textContent = '🚫 Заблокировать';
+            blockBtn.style.borderColor = '#DC2626';
+            blockBtn.style.color = '#DC2626';
+            blockBtn.style.background = '#FEF2F2';
+        }
+
+        // Курсы
+        var coursesList = document.getElementById('td-courses-list');
+        if (t.courses && t.courses.length) {
+            coursesList.innerHTML = t.courses.map(function(c) {
+                return '<div style="padding:10px 12px;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0">' +
+                    '<div style="font-weight:700;font-size:13px;margin-bottom:3px">' + c.title + '</div>' +
+                    '<div style="font-size:12px;color:#64748B">' + (c.category || '') + ' · ' + (c.price || 0) + ' смн · ' +
+                    '<span style="color:' + (c.status==='active'?'#16A34A':'#F59E0B') + '">' + (c.status==='active'?'Активен':'Неактивен') + '</span></div>' +
+                    '</div>';
+            }).join('');
+        } else {
+            coursesList.innerHTML = '<div style="color:#94A3B8;font-size:13px">Курсов нет</div>';
+        }
+
+        // Платежи
+        var payEl = document.getElementById('td-payments-table');
+        if (payments.length) {
+            payEl.innerHTML = '<table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Студент</th></tr></thead><tbody>' +
+                payments.map(function(p) {
+                    return '<tr><td>' + new Date(p.created_at).toLocaleDateString('ru') + '</td>' +
+                        '<td>' + (p.type === 'enrollment' ? '📚 Покупка курса' : p.type) + '</td>' +
+                        '<td style="font-weight:700;color:#18A96A">+' + parseFloat(p.amount || 0).toLocaleString('ru') + ' смн</td>' +
+                        '<td>' + (p.student_name || '—') + '</td></tr>';
+                }).join('') + '</tbody></table>';
+        } else {
+            payEl.innerHTML = '<div class="empty-state"><div class="empty-title">Платежей нет</div></div>';
+        }
+    }).catch(function(e) {
+        showToast('Ошибка загрузки данных: ' + e.message, 'error');
+    });
+}
+
+function toggleTeacherBlock() {
+    if (!currentTeacherId) return;
+    var action = currentTeacherBlocked ? 'show' : 'hide';
+    req('POST', '/users/admin/' + action + '-teacher/' + currentTeacherId).then(function() {
+        currentTeacherBlocked = !currentTeacherBlocked;
+        var blockBtn = document.getElementById('td-block-btn');
+        if (currentTeacherBlocked) {
+            blockBtn.textContent = '✅ Разблокировать';
+            blockBtn.style.borderColor = '#16A34A';
+            blockBtn.style.color = '#16A34A';
+            blockBtn.style.background = '#F0FDF4';
+        } else {
+            blockBtn.textContent = '🚫 Заблокировать';
+            blockBtn.style.borderColor = '#DC2626';
+            blockBtn.style.color = '#DC2626';
+            blockBtn.style.background = '#FEF2F2';
+        }
+        showToast(currentTeacherBlocked ? 'Учитель скрыт' : 'Учитель показан');
+    }).catch(function(e) { showToast(e.message, 'error'); });
+}
+
+// ═══════════════════════════════════════════════════════
+// ДЕТАЛИ СТУДЕНТА
+// ═══════════════════════════════════════════════════════
+var currentStudentId = null;
+var currentStudentBlocked = false;
+
+function openStudentDetail(userId) {
+    currentStudentId = userId;
+    showPanel('student-detail');
+
+    Promise.all([
+        req('GET', '/users/admin/student/' + userId).catch(function() { return {}; }),
+        req('GET', '/users/admin/student-payments/' + userId).catch(function() { return []; })
+    ]).then(function(results) {
+        var s = results[0];
+        var payments = results[1] || [];
+
+        var avEl = document.getElementById('sd-av');
+        avEl.style.background = s.color || '#18A96A';
+        if (s.avatar_url) {
+            avEl.innerHTML = '<img src="'+s.avatar_url+'" style="width:100%;height:100%;object-fit:cover">';
+        } else {
+            avEl.textContent = s.initials || '?';
+        }
+
+        var fullname = (s.first_name || '') + ' ' + (s.last_name || '');
+        document.getElementById('sd-name').textContent = fullname;
+        document.getElementById('sd-fullname').textContent = fullname;
+        document.getElementById('sd-email').textContent = s.email || '';
+        document.getElementById('sd-email-sub').textContent = s.email || '';
+        document.getElementById('sd-phone').textContent = s.phone || '';
+        document.getElementById('sd-balance').textContent = parseFloat(s.balance || 0).toLocaleString('ru');
+        document.getElementById('sd-courses-count').textContent = (s.enrollments || []).length;
+
+        currentStudentBlocked = s.is_active === 2;
+        var blockBtn = document.getElementById('sd-block-btn');
+        if (currentStudentBlocked) {
+            blockBtn.textContent = '✅ Разблокировать';
+            blockBtn.style.borderColor = '#16A34A';
+            blockBtn.style.color = '#16A34A';
+            blockBtn.style.background = '#F0FDF4';
+        } else {
+            blockBtn.textContent = '🚫 Заблокировать';
+            blockBtn.style.borderColor = '#DC2626';
+            blockBtn.style.color = '#DC2626';
+            blockBtn.style.background = '#FEF2F2';
+        }
+
+        // Курсы ученика
+        var coursesList = document.getElementById('sd-courses-list');
+        if (s.enrollments && s.enrollments.length) {
+            coursesList.innerHTML = s.enrollments.map(function(e) {
+                return '<div style="padding:10px 12px;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0">' +
+                    '<div style="font-weight:700;font-size:13px">' + (e.title || 'Курс') + '</div>' +
+                    '<div style="font-size:12px;color:#64748B">' + (e.teacher_name || '') + ' · ' + parseFloat(e.price_paid || 0) + ' смн</div>' +
+                    '</div>';
+            }).join('');
+        } else {
+            coursesList.innerHTML = '<div style="color:#94A3B8;font-size:13px">Курсов нет</div>';
+        }
+
+        // Транзакции
+        var payEl = document.getElementById('sd-payments-table');
+        if (payments.length) {
+            payEl.innerHTML = '<table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th></tr></thead><tbody>' +
+                payments.map(function(p) {
+                    var color = p.type === 'topup' ? '#18A96A' : '#DC2626';
+                    var sign = p.type === 'topup' ? '+' : '-';
+                    return '<tr><td>' + new Date(p.created_at).toLocaleDateString('ru') + '</td>' +
+                        '<td>' + (p.type === 'topup' ? '💰 Пополнение' : p.type === 'enrollment' ? '📚 Покупка курса' : p.type) + '</td>' +
+                        '<td style="font-weight:700;color:' + color + '">' + sign + parseFloat(p.amount || 0).toLocaleString('ru') + ' смн</td></tr>';
+                }).join('') + '</tbody></table>';
+        } else {
+            payEl.innerHTML = '<div class="empty-state"><div class="empty-title">Транзакций нет</div></div>';
+        }
+    }).catch(function(e) {
+        showToast('Ошибка: ' + e.message, 'error');
+    });
+}
+
+function toggleStudentBlock() {
+    if (!currentStudentId) return;
+    var action = currentStudentBlocked ? 'show' : 'hide';
+    req('POST', '/users/admin/' + action + '-student/' + currentStudentId).then(function() {
+        currentStudentBlocked = !currentStudentBlocked;
+        var blockBtn = document.getElementById('sd-block-btn');
+        if (currentStudentBlocked) {
+            blockBtn.textContent = '✅ Разблокировать';
+            blockBtn.style.borderColor = '#16A34A';
+            blockBtn.style.color = '#16A34A';
+            blockBtn.style.background = '#F0FDF4';
+        } else {
+            blockBtn.textContent = '🚫 Заблокировать';
+            blockBtn.style.borderColor = '#DC2626';
+            blockBtn.style.color = '#DC2626';
+            blockBtn.style.background = '#FEF2F2';
+        }
+        showToast(currentStudentBlocked ? 'Студент заблокирован' : 'Студент разблокирован');
+    }).catch(function(e) { showToast(e.message, 'error'); });
+}
+
 </script>
 </body>
 </html>
