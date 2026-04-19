@@ -107,6 +107,32 @@ router.get('/:id', async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// ─── Telegram уведомление ──────────────────────────────────────────
+async function tgNotify(text) {
+    const token  = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!token || !chatId) return;
+    return new Promise((resolve) => {
+        const https = require('https');
+        const body  = JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' });
+        const opts  = {
+            hostname: 'api.telegram.org',
+            path: `/bot${token}/sendMessage`,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+        };
+        const req = https.request(opts, (res) => {
+            let data = '';
+            res.on('data', d => data += d);
+            res.on('end', () => resolve());
+        });
+        req.on('error', () => resolve());
+        req.write(body);
+        req.end();
+    });
+}
+
 // ─── PUT /api/teachers/profile/update ─────────────────────────────
 router.put('/profile/update', auth, teacherOnly, async (req, res) => {
     const { subject, bio, tags, price, platforms, workDays, workHours, teacherType, firstName, lastName, conditions } = req.body;
@@ -139,6 +165,26 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
                 [firstName, lastName, req.user.id]
             );
         }
+
+        // Telegram уведомление при первом заполнении профиля (setup)
+        if (subject) {
+            try {
+                const [u] = await db.query(
+                    'SELECT first_name, last_name, id FROM users WHERE id = ?', [req.user.id]
+                );
+                if (u.length) {
+                    const name = `${u[0].first_name} ${u[0].last_name}`.trim();
+                    const profileUrl = `https://eduspace.tj/#profile/${u[0].id}`;
+                    const msg =
+                        '👨‍🏫 <b>Новый преподаватель!</b>\n\n' +
+                        `👤 <b>Имя:</b> ${name}\n` +
+                        `📚 <b>Предмет:</b> ${subject}\n` +
+                        `🔗 <a href="${profileUrl}">Открыть профиль</a>`;
+                    await tgNotify(msg);
+                }
+            } catch(e) { console.error('TG notify error:', e.message); }
+        }
+
         res.json({ message: 'Профиль обновлён' });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
