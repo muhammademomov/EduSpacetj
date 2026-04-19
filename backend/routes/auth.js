@@ -7,6 +7,28 @@ const { body, validationResult } = require('express-validator');
 const db = require('../db');
 const { auth } = require('../middleware/auth');
 
+
+// ─── Telegram уведомление ──────────────────────────────────────────
+async function tgNotify(text) {
+    const token  = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!token || !chatId) return;
+    return new Promise((resolve) => {
+        const https = require('https');
+        const body  = JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' });
+        const opts  = {
+            hostname: 'api.telegram.org',
+            path: `/bot${token}/sendMessage`,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+        };
+        const req = https.request(opts, (res) => { res.on('data', ()=>{}); res.on('end', () => resolve()); });
+        req.on('error', () => resolve());
+        req.write(body);
+        req.end();
+    });
+}
+
 const COLORS = ['#18A96A','#7C3AED','#2563EB','#DC2626','#D97706','#059669','#0891B2'];
 const randColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 const newId = () => require('crypto').randomUUID();
@@ -63,6 +85,17 @@ router.post('/register', [
                     'INSERT INTO teacher_profiles (id, user_id, subject) VALUES (?, ?, ?)',
                     [newId(), userId, subject || null]
                 );
+                // Telegram уведомление — новый учитель зарегистрировался
+                try {
+                    const profileUrl = `https://eduspace.tj/#profile/${userId}`;
+                    const msg =
+                        '🎉 <b>Новый преподаватель зарегистрировался!</b>\n\n' +
+                        `👤 <b>Имя:</b> ${firstName} ${lastName}\n` +
+                        `📚 <b>Предмет:</b> ${subject || 'не указан'}\n` +
+                        `✉️ <b>Email:</b> ${email}\n` +
+                        `🔗 <a href="${profileUrl}">Открыть профиль</a>`;
+                    tgNotify(msg).catch(() => {});
+                } catch(e) {}
                 const [admins] = await conn.execute("SELECT id FROM users WHERE role='admin' LIMIT 1");
                 if (admins.length) {
                     await conn.execute(
