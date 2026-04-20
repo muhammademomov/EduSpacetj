@@ -3328,6 +3328,12 @@ function restorePageFromHash() {
 function goDash() {
     if (!currentUser) { go('login'); return; }
     if (currentUser.role === 'teacher') {
+        // Если профиль не заполнен (нет bio или price) — отправляем на setup
+        var profileFilled = currentUser.bio && currentUser.price && parseFloat(currentUser.price) > 0;
+        if (!profileFilled) {
+            go('setup');
+            return;
+        }
         go('teacher-dash');
         loadTeacherDash();
     } else {
@@ -4129,7 +4135,7 @@ async function finishSetup() {
     const courseLvl = document.getElementById('s-course-lvl')?.value || 'Начинающий';
     const courseDesc = document.getElementById('s-course-desc')?.value || '';
     try {
-        await put('/teachers/profile/update', { bio, tags, price, platforms, workDays: days, workHours: timeFrom+'–'+timeTo, teacherType: setupTp });
+        await put('/teachers/profile/update', { bio, tags, price, platforms, workDays: days, workHours: timeFrom+'–'+timeTo, teacherType: setupTp, setupComplete: true });
         const photoInput = document.querySelector('#setup-photo input[type=file]');
         if (photoInput?.files?.[0]) {
             const fd = new FormData(); fd.append('photo', photoInput.files[0]);
