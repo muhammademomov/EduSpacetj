@@ -135,7 +135,7 @@ async function tgNotify(text) {
 
 // ─── PUT /api/teachers/profile/update ─────────────────────────────
 router.put('/profile/update', auth, teacherOnly, async (req, res) => {
-    const { subject, bio, tags, price, platforms, workDays, workHours, teacherType, firstName, lastName, conditions } = req.body;
+    const { subject, bio, tags, price, platforms, workDays, workHours, teacherType, firstName, lastName, conditions, setupComplete } = req.body;
     try {
         await db.query(
             `UPDATE teacher_profiles SET
@@ -166,21 +166,33 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
             );
         }
 
-        // Telegram уведомление при первом заполнении профиля (setup)
-        if (subject) {
+        // Telegram уведомление — только когда учитель нажал "Отправить на проверку"
+        // Фронтенд передаёт setupComplete: true только из finishSetup()
+        if (setupComplete) {
             try {
                 const [u] = await db.query(
-                    'SELECT first_name, last_name, id FROM users WHERE id = ?', [req.user.id]
+                    `SELECT u.first_name, u.last_name, u.id, u.email,
+                            tp.subject, tp.price, tp.is_notified
+                     FROM users u
+                     JOIN teacher_profiles tp ON tp.user_id = u.id
+                     WHERE u.id = ?`, [req.user.id]
                 );
-                if (u.length) {
+                // Отправляем ТОЛЬКО ОДИН РАЗ
+                if (u.length && !u[0].is_notified) {
                     const name = `${u[0].first_name} ${u[0].last_name}`.trim();
                     const profileUrl = `https://eduspace.tj/#profile/${u[0].id}`;
                     const msg =
-                        '👨‍🏫 <b>Новый преподаватель!</b>\n\n' +
+                        '🎉 <b>Преподаватель заполнил анкету!</b>\n\n' +
                         `👤 <b>Имя:</b> ${name}\n` +
-                        `📚 <b>Предмет:</b> ${subject}\n` +
+                        `📚 <b>Предмет:</b> ${u[0].subject || subject || '—'}\n` +
+                        `✉️ <b>Email:</b> ${u[0].email}\n` +
+                        `💰 <b>Цена:</b> ${u[0].price || price || '—'} смн\n` +
                         `🔗 <a href="${profileUrl}">Открыть профиль</a>`;
                     await tgNotify(msg);
+                    await db.query(
+                        'UPDATE teacher_profiles SET is_notified = 1 WHERE user_id = ?',
+                        [req.user.id]
+                    );
                 }
             } catch(e) { console.error('TG notify error:', e.message); }
         }
