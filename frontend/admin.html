@@ -810,6 +810,7 @@ function loadPendingTeachers() {
                 '<td>'+new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})+'</td>' +
                 '<td><div class="action-btns">' +
                 '<button class="btn-sm btn-detail" onclick="openDetail(\''+t.id+'\',\''+t.first_name+' '+t.last_name+'\')">🔍 Подробнее</button>' +
+                '<button class="btn-sm" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE" onclick="openChatFromModeration(\''+t.id+'\',\''+t.first_name+' '+t.last_name+'\',\''+t.subject+'\')">💬 Написать</button>' +
                 '<button class="btn-sm btn-approve" onclick="approveTeacher(\''+t.id+'\',this)">✓</button>' +
                 '<button class="btn-sm btn-reject" onclick="rejectTeacher(\''+t.id+'\',this)">✕</button>' +
                 '</div></td></tr>';
@@ -1755,6 +1756,13 @@ function escapeHtml(text) {
 }
 
 // Также загружаем чаты при открытии панели
+
+
+// Открыть чат из панели модерации
+function openChatFromModeration(userId, name, subject) {
+    showPanel('admin-chats');
+    openAdminChat(userId, name, subject || '', '#2563EB', '');
+}
 
 </script>
 </body>
