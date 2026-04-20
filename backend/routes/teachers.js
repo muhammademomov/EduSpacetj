@@ -186,15 +186,29 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
         // Telegram уведомление — только когда учитель нажал "Отправить на проверку"
         if (setupComplete) {
             try {
+                // Сначала создаём колонку is_notified если нет
+                try {
+                    await db.query('ALTER TABLE teacher_profiles ADD COLUMN is_notified TINYINT(1) DEFAULT 0');
+                } catch(e) { /* уже есть */ }
+
                 const [u] = await db.query(
                     `SELECT u.first_name, u.last_name, u.id, u.email,
-                            tp.subject, tp.price, tp.is_notified
+                            tp.subject, tp.price
                      FROM users u
                      JOIN teacher_profiles tp ON tp.user_id = u.id
                      WHERE u.id = ?`, [req.user.id]
                 );
-                // Отправляем ТОЛЬКО ОДИН РАЗ
-                if (u.length && !u[0].is_notified) {
+
+                // Проверяем is_notified отдельно (на случай если колонка только что создана)
+                let alreadyNotified = false;
+                try {
+                    const [chk] = await db.query(
+                        'SELECT is_notified FROM teacher_profiles WHERE user_id = ?', [req.user.id]
+                    );
+                    alreadyNotified = chk.length && chk[0].is_notified == 1;
+                } catch(e) { alreadyNotified = false; }
+
+                if (u.length && !alreadyNotified) {
                     const name = `${u[0].first_name} ${u[0].last_name}`.trim();
                     const profileUrl = `https://eduspace.tj/#profile/${u[0].id}`;
                     const msg =
@@ -205,10 +219,15 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
                         `💰 <b>Цена:</b> ${u[0].price || price || '—'} смн\n` +
                         `🔗 <a href="${profileUrl}">Открыть профиль</a>`;
                     await tgNotify(msg);
-                    await db.query(
-                        'UPDATE teacher_profiles SET is_notified = 1 WHERE user_id = ?',
-                        [req.user.id]
-                    );
+                    console.log('TG уведомление отправлено для:', name);
+                    try {
+                        await db.query(
+                            'UPDATE teacher_profiles SET is_notified = 1 WHERE user_id = ?',
+                            [req.user.id]
+                        );
+                    } catch(e) { console.error('is_notified update error:', e.message); }
+                } else {
+                    console.log('TG: уведомление уже было отправлено, пропускаем');
                 }
             } catch(e) { console.error('TG notify error:', e.message); }
         }
