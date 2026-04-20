@@ -1572,7 +1572,20 @@ var chatListData        = [];
 // Загрузить список всех чатов
 async function loadAdminChats() {
     try {
-        var data = await req('GET', '/users/chats');
+        var raw = await req('GET', '/users/chats');
+        // Нормализуем поля - API возвращает first_name/last_name, нам нужен name/otherId
+        var data = raw.map(function(c) {
+            return {
+                otherId:   c.id || c.otherId,
+                name:      c.name || ((c.first_name || '') + ' ' + (c.last_name || '')).trim() || 'Учитель',
+                initials:  c.initials || '',
+                color:     c.color || '#2563EB',
+                avatarUrl: c.avatar_url || c.avatarUrl || '',
+                lastMsg:   c.last_msg || c.lastMsg || '',
+                lastTime:  c.last_time || c.lastTime || null,
+                unread:    c.unread || 0,
+            };
+        });
         chatListData = data;
         renderChatList(data);
         // Обновляем счётчик непрочитанных
@@ -1587,28 +1600,38 @@ async function loadAdminChats() {
 
 function renderChatList(chats) {
     var el = document.getElementById('admin-chat-list');
+    el.innerHTML = '';
     if (!chats.length) {
         el.innerHTML = '<div class="chat-empty-state"><div style="font-size:32px">&#x1F4AC;</div><div style="font-size:13px">Нет активных чатов</div></div>';
         return;
     }
-    var rows = '';
     chats.forEach(function(c) {
-        var isActive = c.otherId === activeChatTeacherId;
-        var time = c.lastTime ? new Date(c.lastTime).toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'}) : '';
-        var avHtml = c.avatarUrl ? '<img src="' + c.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (c.initials || '?');
+        // API возвращает: id, first_name, last_name, initials, color, avatar_url, last_msg, last_time, unread
+        var uid  = c.id || c.otherId;
+        var name = c.first_name ? (c.first_name + ' ' + (c.last_name||'')) : (c.name||'Учитель');
+        var av   = c.avatar_url || c.avatarUrl || '';
+        var init = c.initials || (name[0]||'?');
+        var clr  = c.color || '#2563EB';
+        var last = c.last_msg || c.lastMsg || 'Нет сообщений';
+        var time = (c.last_time||c.lastTime) ? new Date(c.last_time||c.lastTime).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}) : '';
+        var unread = c.unread || 0;
+        var isActive = uid === activeChatTeacherId;
+
+        var avHtml = av ? '<img src="' + av + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : init;
+
         var div = document.createElement('div');
         div.className = 'chat-list-item' + (isActive ? ' active' : '');
         div.innerHTML =
-            '<div class="chat-av" style="background:' + (c.color||'#2563EB') + '">' + avHtml + '</div>' +
+            '<div class="chat-av" style="background:' + clr + '">' + avHtml + '</div>' +
             '<div style="flex:1;min-width:0">' +
-                '<div class="chat-list-name">' + (c.name||'Учитель') + '</div>' +
-                '<div class="chat-list-preview">' + (c.lastMsg||'Нет сообщений') + '</div>' +
+                '<div class="chat-list-name">' + name + '</div>' +
+                '<div class="chat-list-preview">' + last + '</div>' +
             '</div>' +
-            (c.unread > 0 ? '<div class="chat-unread">' + c.unread + '</div>' : '') +
+            (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '') +
             '<div class="chat-list-time">' + time + '</div>';
-        div.addEventListener('click', (function(oid, nm, sb, cl, av) {
-            return function() { openAdminChat(oid, nm, sb, cl, av); };
-        })(c.otherId, c.name||'', c.subject||'', c.color||'#2563EB', c.avatarUrl||''));
+        div.addEventListener('click', (function(oid, nm, cl, a) {
+            return function() { openAdminChat(oid, nm, '', cl, a); };
+        })(uid, name.trim(), clr, av));
         el.appendChild(div);
     });
 }
@@ -1616,7 +1639,8 @@ function renderChatList(chats) {
 function filterChatList(q) {
     if (!q) { renderChatList(chatListData); return; }
     var filtered = chatListData.filter(function(c) {
-        return (c.name||'').toLowerCase().includes(q.toLowerCase());
+        var name = c.first_name ? (c.first_name + ' ' + (c.last_name||'')) : (c.name||'');
+        return name.toLowerCase().includes(q.toLowerCase());
     });
     renderChatList(filtered);
 }
