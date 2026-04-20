@@ -143,4 +143,4 @@ async function sendHomeworkEmail(student, teacherName, courseTitle, hwTitle) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendWelcomeEmail, sendTopupApprovedEmail, sendNewStudentEmail, sendHomeworkEmail };
+module.exports = { sendEmail, sendVerificationEmail, sendWelcomeEmail, sendTopupApprovedEmail, sendNewStudentEmail, sendHomeworkEmail };
