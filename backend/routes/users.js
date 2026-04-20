@@ -502,44 +502,41 @@ router.post('/chat/:teacherId', auth, async (req, res) => {
                 // Email на почту — если отправитель администратор
                 if (sender[0].role === 'admin') {
                     try {
+                        console.log('📧 Отправляем email учителю, receiverId:', receiverId);
                         const [receiver] = await db.query(
                             'SELECT email, first_name FROM users WHERE id=?', [receiverId]
                         );
-                        if (receiver.length) {
+                        if (!receiver.length) {
+                            console.log('❌ Получатель не найден:', receiverId);
+                        } else {
+                            console.log('📧 Получатель:', receiver[0].email);
+                            const { Resend } = require('resend');
+                            const resend = new Resend(process.env.RESEND_API_KEY);
                             const dashUrl = 'https://eduspace.tj/#teacher-dash';
-                            const emailHtml = `
-                            <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#f9fafb;padding:32px;border-radius:16px">
-                              <div style="text-align:center;margin-bottom:20px">
-                                <h2 style="color:#18A96A;margin:0">EduSpace.tj</h2>
-                              </div>
+                            await resend.emails.send({
+                                from: process.env.FROM_EMAIL || 'EduSpace.tj <onboarding@resend.dev>',
+                                to: receiver[0].email,
+                                subject: '💬 Сообщение от администрации EduSpace.tj',
+                                html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#f9fafb;padding:32px;border-radius:16px">
+                              <div style="text-align:center;margin-bottom:20px"><h2 style="color:#18A96A;margin:0">EduSpace.tj</h2></div>
                               <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px">
                                 <h3 style="color:#042C53;margin:0 0 12px">💬 Новое сообщение от администратора</h3>
                                 <p style="color:#4A5E52;line-height:1.7;margin:0 0 16px">
                                   Здравствуйте, <b>${receiver[0].first_name}</b>!<br>
                                   Администрация EduSpace.tj отправила вам сообщение:
                                 </p>
-                                <div style="background:#F0FDF4;border-left:4px solid #18A96A;padding:14px 18px;border-radius:0 8px 8px 0;color:#065F46;font-size:15px;line-height:1.7;margin-bottom:20px">
-                                  ${msgText}
-                                </div>
+                                <div style="background:#F0FDF4;border-left:4px solid #18A96A;padding:14px 18px;border-radius:0 8px 8px 0;color:#065F46;font-size:15px;line-height:1.7;margin-bottom:20px">${msgText}</div>
                                 <div style="text-align:center">
-                                  <a href="${dashUrl}" style="background:#18A96A;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">
-                                    Ответить в кабинете →
-                                  </a>
+                                  <a href="${dashUrl}" style="background:#18A96A;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">Ответить в кабинете →</a>
                                 </div>
                               </div>
-                              <p style="color:#999;font-size:12px;text-align:center;margin:0">
-                                EduSpace.tj · Душанбе, Тоҷикистон
-                              </p>
-                            </div>`;
-                            await sendEmail({
-                                to: receiver[0].email,
-                                subject: '💬 Сообщение от администрации EduSpace.tj',
-                                html: emailHtml
+                              <p style="color:#999;font-size:12px;text-align:center;margin:0">EduSpace.tj · Душанбе, Тоҷикистон</p>
+                            </div>`
                             });
-                            console.log('✅ Email уведомление о чате отправлено:', receiver[0].email);
+                            console.log('✅ Email отправлен:', receiver[0].email);
                         }
                     } catch(emailErr) {
-                        console.error('Chat email error:', emailErr.message);
+                        console.error('Chat email error:', emailErr.message, emailErr.stack);
                     }
                 }
             }
