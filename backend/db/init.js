@@ -221,6 +221,11 @@ async function init() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
     console.log('✅ Таблица chat_messages готова');
         // Добавляем is_notified для однократного уведомления
+        
+        try {
+            await db_module.query('ALTER TABLE teacher_profiles ADD COLUMN setup_done TINYINT(1) DEFAULT 0');
+            console.log('✅ Колонка setup_done добавлена');
+        } catch(e) { /* уже есть */ }
         try {
             await db_module.query('ALTER TABLE teacher_profiles ADD COLUMN is_notified TINYINT(1) DEFAULT 0');
             console.log('✅ Колонка is_notified добавлена');
