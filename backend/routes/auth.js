@@ -254,12 +254,12 @@ router.get('/me', auth, async (req, res) => {
             extra = rows[0] || {};
         } else if (req.user.role === 'teacher') {
             const [rows] = await db.query(
-                'SELECT subject, bio, tags, price, platforms, work_days, work_hours, is_moderated, rating, review_count, student_count FROM teacher_profiles WHERE user_id = ?',
+                'SELECT subject, bio, tags, price, platforms, work_days, work_hours, is_moderated, rating, review_count, student_count, setup_done FROM teacher_profiles WHERE user_id = ?',
                 [userId]
             );
             if (rows[0]) {
                 const t = rows[0];
-                extra = { ...t, tags: safeJson(t.tags, []), platforms: safeJson(t.platforms, []), workDays: safeJson(t.work_days, []) };
+                extra = { ...t, tags: safeJson(t.tags, []), platforms: safeJson(t.platforms, []), workDays: safeJson(t.work_days, []), setupDone: !!t.setup_done };
                 try {
                     const [vr] = await db.query('SELECT video_url FROM teacher_profiles WHERE user_id = ?', [userId]);
                     if (vr[0]) extra.videoUrl = vr[0].video_url || null;

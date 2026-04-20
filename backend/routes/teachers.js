@@ -147,7 +147,8 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
                 work_days  = COALESCE(?, work_days),
                 work_hours = COALESCE(?, work_hours),
                 teacher_type = COALESCE(?, teacher_type),
-                conditions = COALESCE(?, conditions)
+                conditions = COALESCE(?, conditions),
+                setup_done = CASE WHEN ? = 1 THEN 1 ELSE setup_done END
              WHERE user_id = ?`,
             [subject || null, bio || null,
              tags ? JSON.stringify(tags) : null,
@@ -157,6 +158,7 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
              workHours || null,
              ['pro','specialist'].includes(teacherType) ? teacherType : null,
              conditions ? JSON.stringify(conditions) : null,
+             setupComplete ? 1 : 0,
              req.user.id]
         );
         if (firstName || lastName) {
