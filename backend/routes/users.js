@@ -482,22 +482,23 @@ router.post('/chat/:teacherId', auth, async (req, res) => {
             [senderId, receiverId]
         );
 
-        if (unread[0].cnt <= 1) {
-            // Данные отправителя
-            const [sender] = await db.query(
-                'SELECT first_name, last_name, role FROM users WHERE id=?', [senderId]
-            );
-            if (sender.length) {
-                const name = sender[0].first_name + ' ' + sender[0].last_name;
-                const preview = msgText.length > 50 ? msgText.substring(0, 50) + '...' : msgText;
+        // Данные отправителя
+        const [sender] = await db.query(
+            'SELECT first_name, last_name, role FROM users WHERE id=?', [senderId]
+        );
+        if (sender.length) {
+            const name = sender[0].first_name + ' ' + sender[0].last_name;
+            const preview = msgText.length > 50 ? msgText.substring(0, 50) + '...' : msgText;
 
-                // Уведомление в кабинет
+            // Уведомление в кабинет — только если нет непрочитанных (не спамим)
+            if (unread[0].cnt <= 1) {
                 await db.query(
                     'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
                     [randomUUID(), receiverId, 'new_message',
                      '💬 Новое сообщение от ' + name,
                      preview]
                 );
+            }
 
                 // Email на почту — если отправитель администратор
                 if (sender[0].role === 'admin') {
@@ -539,7 +540,6 @@ router.post('/chat/:teacherId', auth, async (req, res) => {
                         console.error('Chat email error:', emailErr.message, emailErr.stack);
                     }
                 }
-            }
         }
 
         res.json({ message: 'Отправлено' });
