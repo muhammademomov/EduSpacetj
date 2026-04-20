@@ -137,6 +137,7 @@ async function tgNotify(text) {
 router.put('/profile/update', auth, teacherOnly, async (req, res) => {
     const { subject, bio, tags, price, platforms, workDays, workHours, teacherType, firstName, lastName, conditions, setupComplete } = req.body;
     try {
+        // Основной UPDATE профиля
         await db.query(
             `UPDATE teacher_profiles SET
                 subject    = COALESCE(?, subject),
@@ -147,8 +148,7 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
                 work_days  = COALESCE(?, work_days),
                 work_hours = COALESCE(?, work_hours),
                 teacher_type = COALESCE(?, teacher_type),
-                conditions = COALESCE(?, conditions),
-                setup_done = CASE WHEN ? = 1 THEN 1 ELSE setup_done END
+                conditions = COALESCE(?, conditions)
              WHERE user_id = ?`,
             [subject || null, bio || null,
              tags ? JSON.stringify(tags) : null,
@@ -158,9 +158,24 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
              workHours || null,
              ['pro','specialist'].includes(teacherType) ? teacherType : null,
              conditions ? JSON.stringify(conditions) : null,
-             setupComplete ? 1 : 0,
              req.user.id]
         );
+
+        // Отдельно ставим setup_done = 1 при финальном сохранении
+        if (setupComplete) {
+            try {
+                await db.query(
+                    'UPDATE teacher_profiles SET setup_done = 1 WHERE user_id = ?',
+                    [req.user.id]
+                );
+            } catch(e) {
+                // Колонки setup_done ещё нет — добавляем и повторяем
+                try {
+                    await db.query('ALTER TABLE teacher_profiles ADD COLUMN setup_done TINYINT(1) DEFAULT 0');
+                    await db.query('UPDATE teacher_profiles SET setup_done = 1 WHERE user_id = ?', [req.user.id]);
+                } catch(e2) { console.error('setup_done error:', e2.message); }
+            }
+        }
         if (firstName || lastName) {
             await db.query(
                 'UPDATE users SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name) WHERE id = ?',
@@ -169,7 +184,6 @@ router.put('/profile/update', auth, teacherOnly, async (req, res) => {
         }
 
         // Telegram уведомление — только когда учитель нажал "Отправить на проверку"
-        // Фронтенд передаёт setupComplete: true только из finishSetup()
         if (setupComplete) {
             try {
                 const [u] = await db.query(
