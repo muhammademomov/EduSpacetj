@@ -2155,8 +2155,9 @@ input,select,textarea{font-family:inherit}
     <div class="setup-card">
       <div class="setup-sec">🎓 Тип преподавателя</div><div class="setup-sec-sub">Определяет необходимые документы</div>
       <div class="type-grid">
-        <div class="type-opt on" id="tp-pro" onclick="setTp('pro')"><div class="type-opt-ico">🏫</div><div class="type-opt-title">Профессиональный</div><div class="type-opt-sub">Педагогическое образование</div></div>
+        <div class="type-opt" id="tp-pro" onclick="setTp('pro')"><div class="type-opt-ico">🏫</div><div class="type-opt-title">Профессиональный</div><div class="type-opt-sub">Педагогическое образование</div></div>
         <div class="type-opt" id="tp-spec" onclick="setTp('spec')"><div class="type-opt-ico">💼</div><div class="type-opt-title">Специалист-практик</div><div class="type-opt-sub">Разработчик, дизайнер, бизнесмен</div></div>
+        <div id="tp-required-msg" style="display:none;color:#DC2626;font-size:13px;margin-top:6px">⚠️ Выберите тип преподавателя</div>
       </div>
       <div class="field"><label>О себе</label><textarea rows="4" id="s-bio" placeholder="Расскажите об опыте, методике и достижениях..."></textarea></div>
       <div class="field"><label>Теги (через запятую)</label><input type="text" id="s-tags" placeholder="Python, Django, веб-разработка..."></div>
@@ -3186,7 +3187,7 @@ let regTimer, regSec = 59;
 let topupAmt = 1000;
 let pendingCourseId = localStorage.getItem('pendingCourseId') || null;
 let currentProfileId = localStorage.getItem('pendingProfileId') || null;
-let setupTp = 'pro';
+let setupTp = '';
 let acLc = 1;
 
 // ═══════════════════════════════════════════════════════
@@ -3328,9 +3329,8 @@ function restorePageFromHash() {
 function goDash() {
     if (!currentUser) { go('login'); return; }
     if (currentUser.role === 'teacher') {
-        // Если профиль не заполнен (нет bio или price) — отправляем на setup
-        var profileFilled = currentUser.bio && currentUser.price && parseFloat(currentUser.price) > 0;
-        if (!profileFilled) {
+        // setupDone = true только после нажатия "Отправить на проверку"
+        if (!currentUser.setupDone) {
             go('setup');
             return;
         }
@@ -4110,14 +4110,107 @@ async function doLogin() {
 // ═══════════════════════════════════════════════════════
 // TEACHER SETUP
 // ═══════════════════════════════════════════════════════
-function setTp(t) { setupTp=t; document.getElementById('tp-pro').classList.toggle('on',t==='pro'); document.getElementById('tp-spec').classList.toggle('on',t==='spec'); }
+function setTp(t) { setupTp=t; document.getElementById('tp-pro').classList.toggle('on',t==='pro'); document.getElementById('tp-spec').classList.toggle('on',t==='spec'); var msg=document.getElementById('tp-required-msg'); if(msg) msg.style.display='none'; }
 function setDoc(d) { ['dip','cert','work'].forEach(x => { document.getElementById('dt-'+x)?.classList.toggle('on',x===d); document.getElementById('doc-'+x).style.display=x===d?'block':'none'; }); }
 function prevPhoto(input) { if(input.files?.[0]){const r=new FileReader();r.onload=e=>{const img=document.getElementById('setup-ph-img');img.src=e.target.result;img.style.display='block';document.getElementById('setup-ph-ico').style.display='none';};r.readAsDataURL(input.files[0]);} }
 function prevFile(input,type){if(input.files?.[0]){document.getElementById('fn-'+type).textContent=input.files[0].name;document.getElementById('fp-'+type).style.display='flex';}}
 function rmFile(type){document.getElementById('fn-'+type).textContent='';document.getElementById('fp-'+type).style.display='none';}
+function setupShowError(fieldId, msg) {
+    var el = document.getElementById(fieldId);
+    if (!el) return;
+    el.style.border = '1.5px solid #DC2626';
+    el.style.borderRadius = '9px';
+    var err = document.getElementById(fieldId + '-err');
+    if (!err) {
+        err = document.createElement('div');
+        err.id = fieldId + '-err';
+        err.style.cssText = 'color:#DC2626;font-size:12px;margin-top:4px';
+        el.parentNode.insertBefore(err, el.nextSibling);
+    }
+    err.textContent = msg;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function setupClearError(fieldId) {
+    var el = document.getElementById(fieldId);
+    if (el) { el.style.border = ''; }
+    var err = document.getElementById(fieldId + '-err');
+    if (err) err.remove();
+}
+
+function validateSetupStep(n) {
+    // ── Шаг 1 ──
+    if (n === 2) {
+        var ok = true;
+        // Тип преподавателя
+        if (!setupTp) {
+            var msg = document.getElementById('tp-required-msg');
+            if (msg) msg.style.display = 'block';
+            document.querySelector('.type-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            ok = false;
+        }
+        // О себе
+        var bio = document.getElementById('s-bio');
+        if (!bio || !bio.value.trim()) {
+            setupShowError('s-bio', '⚠️ Расскажите о себе — это важно для учеников');
+            ok = false;
+        } else { setupClearError('s-bio'); }
+        return ok;
+    }
+    // ── Шаг 2 ──
+    if (n === 3) {
+        var hasDip  = document.querySelector('#doc-dip input[type=file]')?.files?.length > 0;
+        var hasCert = document.querySelector('#doc-cert input[type=file]')?.files?.length > 0;
+        var hasWork = document.querySelector('#doc-work input[type=file]')?.files?.length > 0;
+        // Также проверяем prevFile уже показанный
+        var hasPreview = document.getElementById('fn-dip')?.textContent ||
+                         document.getElementById('fn-cert')?.textContent ||
+                         document.getElementById('fn-work')?.textContent;
+        if (!hasDip && !hasCert && !hasWork && !hasPreview) {
+            showToast('⚠️ Загрузите хотя бы один документ (диплом, сертификат или трудовую)', 'error');
+            document.querySelector('.doc-tabs').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+        return true;
+    }
+    // ── Шаг 3 ──
+    if (n === 4) {
+        var ok = true;
+        var courseName = document.getElementById('s-course-name');
+        if (!courseName || !courseName.value.trim()) {
+            setupShowError('s-course-name', '⚠️ Введите название курса');
+            ok = false;
+        } else { setupClearError('s-course-name'); }
+
+        var courseCat = document.getElementById('s-course-cat');
+        if (!courseCat || !courseCat.value) {
+            setupShowError('s-course-cat', '⚠️ Выберите категорию');
+            ok = false;
+        } else { setupClearError('s-course-cat'); }
+
+        var courseDesc = document.getElementById('s-course-desc');
+        if (!courseDesc || !courseDesc.value.trim()) {
+            setupShowError('s-course-desc', '⚠️ Добавьте описание курса');
+            ok = false;
+        } else { setupClearError('s-course-desc'); }
+
+        var price = parseFloat(document.getElementById('s-price')?.value);
+        if (!price || price <= 0) {
+            setupShowError('s-price', '⚠️ Укажите цену курса');
+            ok = false;
+        } else { setupClearError('s-price'); }
+        return ok;
+    }
+    return true;
+}
+
 function goSetup(n){
+    // Валидация перед переходом вперёд
+    var current = [1,2,3,4,5].findIndex(i => document.getElementById('setup'+i)?.style.display !== 'none') + 1;
+    if (n > current && !validateSetupStep(n)) return;
+
     [1,2,3,4,5].forEach(i=>document.getElementById('setup'+i).style.display=i===n?'block':'none');
     for(let i=1;i<=4;i++){const c=document.getElementById('pc'+i),l=document.getElementById('pl'+i);if(i<n){c.textContent='✓';c.classList.add('on');l.classList.add('on');}else if(i===n){c.textContent=i;c.classList.add('on');l.classList.add('on');}else{c.textContent=i;c.classList.remove('on');l.classList.remove('on');}const ln=document.getElementById('pln'+i);if(ln)ln.classList.toggle('done',i<n);}
+    window.scrollTo(0, 0);
 }
 function setupComm(){const p=parseInt(document.getElementById('s-price').value)||0;if(p>0){document.getElementById('sc-sum').textContent=Math.round(p*0.15);document.getElementById('sc-earn').textContent=Math.round(p*0.85);document.getElementById('setup-comm').style.display='flex';}else document.getElementById('setup-comm').style.display='none';}
 function togPs(id){const el=document.getElementById('ps-'+id);el.classList.toggle('on');el.querySelector('.ps-ck').textContent=el.classList.contains('on')?'✓':'';}
@@ -4125,6 +4218,18 @@ function togPs(id){const el=document.getElementById('ps-'+id);el.classList.toggl
 async function finishSetup() {
     const platforms = ['zoom','meet','teams','tg','sk'].filter(id => document.getElementById('ps-'+id)?.classList.contains('on'));
     const days = Array.from(document.querySelectorAll('#setup4 .day-btn.on')).map(b => b.textContent);
+
+    // Валидация шага 4
+    if (platforms.length === 0) {
+        showToast('⚠️ Выберите хотя бы одну платформу для занятий', 'error');
+        document.querySelector('.platsel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (days.length === 0) {
+        showToast('⚠️ Выберите хотя бы один рабочий день', 'error');
+        document.querySelector('.days-row').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
     const timeFrom = document.getElementById('s-time-from')?.value || '09:00';
     const timeTo = document.getElementById('s-time-to')?.value || '20:00';
     const bio = document.getElementById('s-bio')?.value || '';
