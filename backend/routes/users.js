@@ -4,6 +4,113 @@ const db = require('../db');
 const { auth, adminOnly } = require('../middleware/auth');
 const { randomUUID } = require('crypto');
 const { uploadPhoto } = require('../cloudinary');
+const { sendEmail } = require('../email');
+
+// ─── Письмо об одобрении преподавателя ────────────────────────────
+async function sendApprovedEmail(teacher) {
+    const { email, firstName, subject } = teacher;
+    const dashUrl = 'https://eduspace.tj/#teacher-dash';
+    const isEnglish = subject && subject.toLowerCase().includes('english') ||
+                      subject && subject.toLowerCase().includes('английск');
+
+    let html;
+
+    if (isEnglish) {
+        // Английский + Таджикский
+        html = `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f9fafb;padding:32px;border-radius:16px">
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:48px">🎉</div>
+            <h2 style="color:#18A96A;margin:8px 0">EduSpace.tj</h2>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px">
+            <h3 style="color:#042C53;margin:0 0 12px">Congratulations, ${firstName}!</h3>
+            <p style="color:#4A5E52;line-height:1.7;margin:0 0 16px">
+              Your teacher profile has been verified and is now visible to all students on EduSpace.tj.
+            </p>
+            <p style="color:#4A5E52;line-height:1.7;margin:0 0 16px">You can now:</p>
+            <ul style="color:#4A5E52;line-height:2;padding-left:20px;margin:0 0 20px">
+              <li>Receive enrollment requests from students</li>
+              <li>Chat with your students</li>
+              <li>Add new courses</li>
+              <li>Manage your schedule</li>
+            </ul>
+            <div style="text-align:center">
+              <a href="${dashUrl}" style="background:#18A96A;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">
+                Go to Dashboard →
+              </a>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px">
+            <h3 style="color:#042C53;margin:0 0 12px">Табрик, ${firstName}!</h3>
+            <p style="color:#4A5E52;line-height:1.7;margin:0 0 16px">
+              Профили муаллими шумо тасдиқ карда шуд ва ҳоло барои ҳамаи хонандагон дар EduSpace.tj намоён аст.
+            </p>
+            <ul style="color:#4A5E52;line-height:2;padding-left:20px;margin:0 0 16px">
+              <li>Аз хонандагон дархостҳо қабул кунед</li>
+              <li>Бо хонандагон чат кунед</li>
+              <li>Курсҳои нав илова кунед</li>
+            </ul>
+          </div>
+
+          <p style="color:#999;font-size:12px;text-align:center;margin:0">
+            EduSpace.tj · Душанбе, Тоҷикистон · <a href="mailto:eduspacedushanbe@gmail.com" style="color:#18A96A">eduspacedushanbe@gmail.com</a>
+          </p>
+        </div>`;
+    } else {
+        // Русский + Таджикский
+        html = `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f9fafb;padding:32px;border-radius:16px">
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:48px">🎉</div>
+            <h2 style="color:#18A96A;margin:8px 0">EduSpace.tj</h2>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px">
+            <h3 style="color:#042C53;margin:0 0 12px">Поздравляем, ${firstName}!</h3>
+            <p style="color:#4A5E52;line-height:1.7;margin:0 0 16px">
+              Ваш профиль преподавателя прошёл проверку и теперь виден всем ученикам на EduSpace.tj.
+            </p>
+            <p style="color:#4A5E52;line-height:1.7;margin:0 0 8px">Теперь вы можете:</p>
+            <ul style="color:#4A5E52;line-height:2;padding-left:20px;margin:0 0 20px">
+              <li>Получать записи от учеников</li>
+              <li>Общаться с ними через чат</li>
+              <li>Добавлять новые курсы</li>
+              <li>Управлять своим расписанием</li>
+            </ul>
+            <div style="text-align:center">
+              <a href="${dashUrl}" style="background:#18A96A;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">
+                Перейти в кабинет →
+              </a>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px">
+            <h3 style="color:#042C53;margin:0 0 12px">Табрик, ${firstName}!</h3>
+            <p style="color:#4A5E52;line-height:1.7;margin:0 0 16px">
+              Профили муаллими шумо тасдиқ карда шуд ва ҳоло барои ҳамаи хонандагон дар EduSpace.tj намоён аст.
+            </p>
+            <ul style="color:#4A5E52;line-height:2;padding-left:20px;margin:0 0 16px">
+              <li>Аз хонандагон дархостҳо қабул кунед</li>
+              <li>Бо хонандагон чат кунед</li>
+              <li>Курсҳои нав илова кунед</li>
+            </ul>
+          </div>
+
+          <p style="color:#999;font-size:12px;text-align:center;margin:0">
+            EduSpace.tj · Душанбе, Тоҷикистон · <a href="mailto:eduspacedushanbe@gmail.com" style="color:#18A96A">eduspacedushanbe@gmail.com</a>
+          </p>
+        </div>`;
+    }
+
+    const subjectLine = isEnglish
+        ? 'Your profile is approved on EduSpace.tj 🎉 | Профили шумо тасдиқ шуд'
+        : 'Ваш профиль одобрен на EduSpace.tj 🎉 | Профили шумо тасдиқ шуд';
+
+    await sendEmail({ to: email, subject: subjectLine, html });
+}
 
 // ─── GET /api/users/favorites ─────────────────────────────────────
 // POST /api/users/profile/photo — загрузить аватарку студента
@@ -112,6 +219,25 @@ router.post('/admin/approve/:userId', auth, adminOnly, async (req, res) => {
                 [req.params.userId]
             );
         });
+        // Отправляем письмо об одобрении
+        try {
+            const [u] = await db.query(
+                `SELECT u.email, u.first_name, tp.subject
+                 FROM users u
+                 JOIN teacher_profiles tp ON tp.user_id = u.id
+                 WHERE u.id = ?`,
+                [req.params.userId]
+            );
+            if (u.length) {
+                await sendApprovedEmail({
+                    email: u[0].email,
+                    firstName: u[0].first_name,
+                    subject: u[0].subject || ''
+                });
+                console.log('✅ Письмо об одобрении отправлено:', u[0].email);
+            }
+        } catch(e) { console.error('Approval email error:', e.message); }
+
         res.json({ message: 'Преподаватель одобрен' });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
@@ -357,19 +483,65 @@ router.post('/chat/:teacherId', auth, async (req, res) => {
         );
 
         if (unread[0].cnt <= 1) {
-            // Get sender name for notification
+            // Данные отправителя
             const [sender] = await db.query(
-                'SELECT first_name, last_name FROM users WHERE id=?', [senderId]
+                'SELECT first_name, last_name, role FROM users WHERE id=?', [senderId]
             );
             if (sender.length) {
                 const name = sender[0].first_name + ' ' + sender[0].last_name;
                 const preview = msgText.length > 50 ? msgText.substring(0, 50) + '...' : msgText;
+
+                // Уведомление в кабинет
                 await db.query(
                     'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?,?,?,?,?)',
                     [randomUUID(), receiverId, 'new_message',
                      '💬 Новое сообщение от ' + name,
                      preview]
                 );
+
+                // Email на почту — если отправитель администратор
+                if (sender[0].role === 'admin') {
+                    try {
+                        const [receiver] = await db.query(
+                            'SELECT email, first_name FROM users WHERE id=?', [receiverId]
+                        );
+                        if (receiver.length) {
+                            const dashUrl = 'https://eduspace.tj/#teacher-dash';
+                            const emailHtml = `
+                            <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#f9fafb;padding:32px;border-radius:16px">
+                              <div style="text-align:center;margin-bottom:20px">
+                                <h2 style="color:#18A96A;margin:0">EduSpace.tj</h2>
+                              </div>
+                              <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px">
+                                <h3 style="color:#042C53;margin:0 0 12px">💬 Новое сообщение от администратора</h3>
+                                <p style="color:#4A5E52;line-height:1.7;margin:0 0 16px">
+                                  Здравствуйте, <b>${receiver[0].first_name}</b>!<br>
+                                  Администрация EduSpace.tj отправила вам сообщение:
+                                </p>
+                                <div style="background:#F0FDF4;border-left:4px solid #18A96A;padding:14px 18px;border-radius:0 8px 8px 0;color:#065F46;font-size:15px;line-height:1.7;margin-bottom:20px">
+                                  ${msgText}
+                                </div>
+                                <div style="text-align:center">
+                                  <a href="${dashUrl}" style="background:#18A96A;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">
+                                    Ответить в кабинете →
+                                  </a>
+                                </div>
+                              </div>
+                              <p style="color:#999;font-size:12px;text-align:center;margin:0">
+                                EduSpace.tj · Душанбе, Тоҷикистон
+                              </p>
+                            </div>`;
+                            await sendEmail({
+                                to: receiver[0].email,
+                                subject: '💬 Сообщение от администрации EduSpace.tj',
+                                html: emailHtml
+                            });
+                            console.log('✅ Email уведомление о чате отправлено:', receiver[0].email);
+                        }
+                    } catch(emailErr) {
+                        console.error('Chat email error:', emailErr.message);
+                    }
+                }
             }
         }
 
