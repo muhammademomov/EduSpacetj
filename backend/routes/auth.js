@@ -85,17 +85,6 @@ router.post('/register', [
                     'INSERT INTO teacher_profiles (id, user_id, subject) VALUES (?, ?, ?)',
                     [newId(), userId, subject || null]
                 );
-                // Telegram уведомление — новый учитель зарегистрировался
-                try {
-                    const profileUrl = `https://eduspace.tj/#profile/${userId}`;
-                    const msg =
-                        '🎉 <b>Новый преподаватель зарегистрировался!</b>\n\n' +
-                        `👤 <b>Имя:</b> ${firstName} ${lastName}\n` +
-                        `📚 <b>Предмет:</b> ${subject || 'не указан'}\n` +
-                        `✉️ <b>Email:</b> ${email}\n` +
-                        `🔗 <a href="${profileUrl}">Открыть профиль</a>`;
-                    tgNotify(msg).catch(() => {});
-                } catch(e) {}
                 const [admins] = await conn.execute("SELECT id FROM users WHERE role='admin' LIMIT 1");
                 if (admins.length) {
                     await conn.execute(
