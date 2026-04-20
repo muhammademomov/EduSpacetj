@@ -1587,25 +1587,29 @@ async function loadAdminChats() {
 function renderChatList(chats) {
     var el = document.getElementById('admin-chat-list');
     if (!chats.length) {
-        el.innerHTML = '<div class="chat-empty-state"><div style="font-size:32px">💬</div><div style="font-size:13px">Нет активных чатов</div><button onclick="openNewChatModal()" style="margin-top:8px;background:var(--gl);border:none;color:var(--g2);font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer">Начать чат</button></div>';
+        el.innerHTML = '<div class="chat-empty-state"><div style="font-size:32px">&#x1F4AC;</div><div style="font-size:13px">Нет активных чатов</div></div>';
         return;
     }
-    el.innerHTML = chats.map(function(c) {
+    var rows = '';
+    chats.forEach(function(c) {
         var isActive = c.otherId === activeChatTeacherId;
         var time = c.lastTime ? new Date(c.lastTime).toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'}) : '';
-        var avHtml = c.avatarUrl
-            ? '<img src="' + c.avatarUrl + '">'
-            : (c.initials || '?');
-        return '<div class="chat-list-item' + (isActive ? ' active' : '') + '" onclick="openAdminChat('' + c.otherId + '','' + (c.name||'').replace(/'/g,"\'") + '','' + (c.subject||'').replace(/'/g,"\'") + '','' + (c.color||'#2563EB') + '','' + (c.avatarUrl||'') + '')">' +
+        var avHtml = c.avatarUrl ? '<img src="' + c.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (c.initials || '?');
+        var div = document.createElement('div');
+        div.className = 'chat-list-item' + (isActive ? ' active' : '');
+        div.innerHTML =
             '<div class="chat-av" style="background:' + (c.color||'#2563EB') + '">' + avHtml + '</div>' +
             '<div style="flex:1;min-width:0">' +
                 '<div class="chat-list-name">' + (c.name||'Учитель') + '</div>' +
                 '<div class="chat-list-preview">' + (c.lastMsg||'Нет сообщений') + '</div>' +
             '</div>' +
             (c.unread > 0 ? '<div class="chat-unread">' + c.unread + '</div>' : '') +
-            '<div class="chat-list-time">' + time + '</div>' +
-            '</div>';
-    }).join('');
+            '<div class="chat-list-time">' + time + '</div>';
+        div.addEventListener('click', (function(oid, nm, sb, cl, av) {
+            return function() { openAdminChat(oid, nm, sb, cl, av); };
+        })(c.otherId, c.name||'', c.subject||'', c.color||'#2563EB', c.avatarUrl||''));
+        el.appendChild(div);
+    });
 }
 
 function filterChatList(q) {
@@ -1705,19 +1709,30 @@ async function openNewChatModal() {
 
 function renderNewChatTeachers(teachers) {
     var el = document.getElementById('new-chat-teachers');
-    if (!teachers.length) { el.innerHTML = '<div style="color:var(--text3);padding:1rem;text-align:center">Учителей не найдено</div>'; return; }
-    el.innerHTML = teachers.map(function(t) {
+    el.innerHTML = '';
+    if (!teachers.length) {
+        el.innerHTML = '<div style="color:var(--text3);padding:1rem;text-align:center">Учителей не найдено</div>';
+        return;
+    }
+    teachers.forEach(function(t) {
         var avHtml = t.avatarUrl
             ? '<img src="' + t.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
             : (t.initials || '?');
-        return '<div onclick="startChatWithTeacher('' + t.userId + '','' + (t.firstName+' '+t.lastName).replace(/'/g,"\'") + '','' + (t.subject||'').replace(/'/g,"\'") + '','' + (t.color||'#2563EB') + '','' + (t.avatarUrl||'') + '')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">' +
+        var div = document.createElement('div');
+        div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s';
+        div.onmouseover = function() { this.style.background = '#F8FAFC'; };
+        div.onmouseout  = function() { this.style.background = 'transparent'; };
+        div.innerHTML =
             '<div class="chat-av" style="background:' + (t.color||'#2563EB') + ';width:36px;height:36px;font-size:12px">' + avHtml + '</div>' +
             '<div>' +
-                '<div style="font-size:13px;font-weight:700">' + t.firstName + ' ' + t.lastName + '</div>' +
+                '<div style="font-size:13px;font-weight:700">' + (t.firstName||'') + ' ' + (t.lastName||'') + '</div>' +
                 '<div style="font-size:12px;color:var(--text3)">' + (t.subject||'') + '</div>' +
-            '</div>' +
             '</div>';
-    }).join('');
+        div.addEventListener('click', (function(uid, nm, sb, cl, av) {
+            return function() { startChatWithTeacher(uid, nm, sb, cl, av); };
+        })(t.userId, (t.firstName||'')+' '+(t.lastName||''), t.subject||'', t.color||'#2563EB', t.avatarUrl||''));
+        el.appendChild(div);
+    });
 }
 
 function filterNewChatTeachers(q) {
