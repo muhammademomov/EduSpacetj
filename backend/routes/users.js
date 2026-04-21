@@ -291,6 +291,33 @@ router.post('/admin/courses/:id/approve', auth, adminOnly, async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
 
+
+// GET /api/users/admin/all-courses — все курсы (модерация + активные)
+router.get('/admin/all-courses', auth, adminOnly, async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT c.id, c.title, c.category, c.price, c.status, c.emoji, c.created_at,
+                    u.first_name, u.last_name, u.email
+             FROM courses c
+             JOIN teacher_profiles tp ON tp.id=c.teacher_id
+             JOIN users u ON u.id=tp.user_id
+             ORDER BY c.created_at DESC`
+        );
+        res.json(rows);
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
+// DELETE /api/users/admin/courses/:id — удалить курс
+router.delete('/admin/courses/:id', auth, adminOnly, async (req, res) => {
+    try {
+        const [c] = await db.query('SELECT title FROM courses WHERE id=?', [req.params.id]);
+        if (!c.length) return res.status(404).json({ error: 'Курс не найден' });
+        await db.query('DELETE FROM courses WHERE id=?', [req.params.id]);
+        console.log('🗑 Курс удалён:', c[0].title);
+        res.json({ message: 'Курс удалён' });
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 // GET /api/users/admin/stats — общая статистика
 router.get('/admin/stats', auth, adminOnly, async (req, res) => {
     try {
