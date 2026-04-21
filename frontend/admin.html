@@ -311,6 +311,7 @@ tr:hover td{background:var(--bg)}
         <button class="sb-item" data-panel="topup-requests"><span class="sb-ico">💰</span> <span>Пополнения</span> <span class="sb-cnt green" id="sb-topup-cnt">0</span></button>
         <button class="sb-item" data-panel="withdraw-requests"><span class="sb-ico">💸</span> <span>Выводы</span> <span class="sb-cnt" id="sb-withdraw-cnt">0</span></button>
         <button class="sb-item" data-panel="payments-history"><span class="sb-ico">📋</span> <span>Все платежи</span></button>
+        <button class="sb-item" data-panel="all-courses"><span class="sb-ico">📚</span> <span>Все курсы</span></button>
         <button class="sb-item" data-panel="admin-chats"><span class="sb-ico">💬</span> <span>Чаты</span> <span class="sb-cnt green" id="sb-chats-cnt" style="display:none">0</span></button>
       </div>
     </aside>
@@ -588,6 +589,24 @@ tr:hover td{background:var(--bg)}
       </div>
 
 
+
+      <!-- ── ВСЕ КУРСЫ ── -->
+      <div class="panel" id="panel-all-courses">
+        <div class="page-hdr">
+          <div>
+            <div class="page-title">Все курсы</div>
+            <div class="page-sub">Опубликованные и на модерации · всего: <span id="all-courses-cnt">0</span></div>
+          </div>
+          <button onclick="loadAllCourses()" style="background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">🔄 Обновить</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button onclick="filterAllCourses('all')" class="course-filter-btn active" data-filter="all" style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--g);color:#fff">Все</button>
+          <button onclick="filterAllCourses('active')" class="course-filter-btn" data-filter="active" style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text2)">✅ Опубликованные</button>
+          <button onclick="filterAllCourses('moderation')" class="course-filter-btn" data-filter="moderation" style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text2)">⏳ На модерации</button>
+        </div>
+        <div class="table-wrap" id="all-courses-table"><div class="loading"><div class="spinner"></div>Загрузка...</div></div>
+      </div>
+
       <!-- ── ЧАТЫ ── -->
       <div class="panel" id="panel-admin-chats">
         <div class="page-hdr">
@@ -835,7 +854,7 @@ function loadPendingCourses() {
                 '<td><div class="user-name">'+c.first_name+' '+c.last_name+'</div><div class="user-email">'+c.email+'</div></td>' +
                 '<td><strong style="color:var(--g2)">'+c.price+' смн</strong></td>' +
                 '<td>'+new Date(c.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'})+'</td>' +
-                '<td><button class="btn-sm btn-approve" onclick="approveCourse(\''+c.id+'\',this)">✓ Одобрить</button></td></tr>';
+                '<td><div class="action-btns"><button class="btn-sm btn-approve" onclick="approveCourse(\''+c.id+'\',this)">✓ Одобрить</button><button class="btn-sm btn-reject" onclick="deleteCourse(\''+c.id+'\',\''+c.title+'\',this)">🗑 Удалить</button></div></td></tr>';
         }).join('');
         el.innerHTML = '<table><thead><tr><th>Курс</th><th>Учитель</th><th>Цена</th><th>Дата</th><th>Действие</th></tr></thead><tbody>'+rows+'</tbody></table>';
     }).catch(function(e) {
@@ -1786,6 +1805,88 @@ function escapeHtml(text) {
 function openChatFromModeration(userId, name, subject) {
     showPanel('admin-chats');
     openAdminChat(userId, name, subject || '', '#2563EB', '');
+}
+
+
+// ═══════════════════════════════════════════════
+// ВСЕ КУРСЫ
+// ═══════════════════════════════════════════════
+var allCoursesData = [];
+var allCoursesFilter = 'all';
+
+function loadAllCourses() {
+    var el = document.getElementById('all-courses-table');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+    req('GET', '/users/admin/all-courses').then(function(courses) {
+        allCoursesData = courses;
+        document.getElementById('all-courses-cnt').textContent = courses.length;
+        renderAllCourses(courses);
+    }).catch(function(e) {
+        el.innerHTML = '<div class="empty-state"><div class="empty-title" style="color:var(--red)">Ошибка: ' + e.message + '</div></div>';
+    });
+}
+
+function filterAllCourses(filter) {
+    allCoursesFilter = filter;
+    // Обновляем кнопки фильтра
+    document.querySelectorAll('.course-filter-btn').forEach(function(btn) {
+        var isActive = btn.dataset.filter === filter;
+        btn.style.background = isActive ? 'var(--g)' : '#fff';
+        btn.style.color = isActive ? '#fff' : 'var(--text2)';
+    });
+    var filtered = filter === 'all' ? allCoursesData : allCoursesData.filter(function(c) { return c.status === filter; });
+    renderAllCourses(filtered);
+}
+
+function renderAllCourses(courses) {
+    var el = document.getElementById('all-courses-table');
+    if (!courses.length) {
+        el.innerHTML = '<div class="empty-state"><div class="empty-ico">📚</div><div class="empty-title">Курсов нет</div></div>';
+        return;
+    }
+    var rows = courses.map(function(c) {
+        var statusBadge = c.status === 'active'
+            ? '<span class="badge active">✅ Опубликован</span>'
+            : '<span class="badge pending">⏳ Модерация</span>';
+        return '<tr>' +
+            '<td><div style="display:flex;align-items:center;gap:8px">' +
+                '<span style="font-size:22px">' + (c.emoji||'📖') + '</span>' +
+                '<div><div style="font-weight:700;font-size:13px">' + c.title + '</div>' +
+                '<div style="font-size:11px;color:var(--text3)">' + (c.category||'') + '</div></div>' +
+            '</div></td>' +
+            '<td><div class="user-name">' + c.first_name + ' ' + c.last_name + '</div>' +
+                '<div class="user-email">' + c.email + '</div></td>' +
+            '<td><strong style="color:var(--g2)">' + c.price + ' смн</strong></td>' +
+            '<td>' + statusBadge + '</td>' +
+            '<td>' + new Date(c.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',year:'numeric'}) + '</td>' +
+            '<td><button class="btn-sm btn-reject" onclick="deleteCourse('' + c.id + '','' + c.title.replace(/'/g, "\'") + '',this)">🗑 Удалить</button></td>' +
+            '</tr>';
+    }).join('');
+    el.innerHTML = '<table><thead><tr>' +
+        '<th>Курс</th><th>Учитель</th><th>Цена</th><th>Статус</th><th>Дата</th><th>Действие</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function deleteCourse(id, title, btn) {
+    if (!confirm('Удалить курс "' + title + '"?
+
+Это действие нельзя отменить!')) return;
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
+    fetch(API + '/users/admin/courses/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function(r) {
+        return r.json().then(function(d) {
+            if (!r.ok) throw new Error(d.error || 'Ошибка');
+            showToast('🗑 Курс удалён');
+            loadAllCourses();
+            loadPendingCourses();
+            loadStats();
+        });
+    }).catch(function(e) {
+        showToast(e.message, 'error');
+        if (btn) { btn.disabled = false; btn.textContent = '🗑 Удалить'; }
+    });
 }
 
 </script>
