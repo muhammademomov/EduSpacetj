@@ -1875,9 +1875,7 @@ function renderAllCourses(courses) {
 }
 
 function deleteCourse(id, title, btn) {
-    if (!confirm('Удалить курс "' + title + '"?
-
-Это действие нельзя отменить!')) return;
+    if (!confirm('Удалить курс ' + title + '? Это действие нельзя отменить!')) return;
     if (btn) { btn.disabled = true; btn.textContent = '...'; }
     fetch(API + '/users/admin/courses/' + id, {
         method: 'DELETE',
