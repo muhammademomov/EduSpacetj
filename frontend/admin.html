@@ -1840,31 +1840,38 @@ function filterAllCourses(filter) {
 
 function renderAllCourses(courses) {
     var el = document.getElementById('all-courses-table');
+    el.innerHTML = '';
     if (!courses.length) {
         el.innerHTML = '<div class="empty-state"><div class="empty-ico">📚</div><div class="empty-title">Курсов нет</div></div>';
         return;
     }
-    var rows = courses.map(function(c) {
+    var table = document.createElement('table');
+    table.innerHTML = '<thead><tr><th>Курс</th><th>Учитель</th><th>Цена</th><th>Статус</th><th>Дата</th><th>Действие</th></tr></thead>';
+    var tbody = document.createElement('tbody');
+    courses.forEach(function(c) {
+        var tr = document.createElement('tr');
         var statusBadge = c.status === 'active'
             ? '<span class="badge active">✅ Опубликован</span>'
             : '<span class="badge pending">⏳ Модерация</span>';
-        return '<tr>' +
+        tr.innerHTML =
             '<td><div style="display:flex;align-items:center;gap:8px">' +
                 '<span style="font-size:22px">' + (c.emoji||'📖') + '</span>' +
                 '<div><div style="font-weight:700;font-size:13px">' + c.title + '</div>' +
                 '<div style="font-size:11px;color:var(--text3)">' + (c.category||'') + '</div></div>' +
             '</div></td>' +
-            '<td><div class="user-name">' + c.first_name + ' ' + c.last_name + '</div>' +
-                '<div class="user-email">' + c.email + '</div></td>' +
+            '<td><div class="user-name">' + c.first_name + ' ' + c.last_name + '</div><div class="user-email">' + c.email + '</div></td>' +
             '<td><strong style="color:var(--g2)">' + c.price + ' смн</strong></td>' +
             '<td>' + statusBadge + '</td>' +
             '<td>' + new Date(c.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',year:'numeric'}) + '</td>' +
-            '<td><button class="btn-sm btn-reject" onclick="deleteCourse('' + c.id + '','' + c.title.replace(/'/g, "\'") + '',this)">🗑 Удалить</button></td>' +
-            '</tr>';
-    }).join('');
-    el.innerHTML = '<table><thead><tr>' +
-        '<th>Курс</th><th>Учитель</th><th>Цена</th><th>Статус</th><th>Дата</th><th>Действие</th>' +
-        '</tr></thead><tbody>' + rows + '</tbody></table>';
+            '<td><button class="btn-sm btn-reject">🗑 Удалить</button></td>';
+        var delBtn = tr.querySelector('button');
+        delBtn.addEventListener('click', (function(id, title) {
+            return function() { deleteCourse(id, title, this); };
+        })(c.id, c.title));
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    el.appendChild(table);
 }
 
 function deleteCourse(id, title, btn) {
