@@ -176,7 +176,7 @@ router.get('/', async (req, res) => {
         let sql = `
             SELECT c.id, c.title, c.description, c.category, c.level, c.price, c.emoji,
                    c.rating, c.review_count, c.student_count, c.created_at,
-                   u.id AS teacher_user_id, u.first_name, u.last_name, u.initials, u.color
+                   u.id AS teacher_user_id, u.first_name, u.last_name, u.initials, u.color, u.avatar_url
             FROM courses c
             JOIN teacher_profiles tp ON tp.id = c.teacher_id
             JOIN users u ON u.id = tp.user_id
@@ -190,7 +190,7 @@ router.get('/', async (req, res) => {
             id:c.id, title:c.title, description:c.description, category:c.category, level:c.level,
             price:parseFloat(c.price), emoji:c.emoji, rating:parseFloat(c.rating)||0,
             reviewCount:c.review_count, studentCount:c.student_count,
-            teacher:{ id:c.teacher_user_id, firstName:c.first_name, lastName:c.last_name, initials:c.initials, color:c.color },
+            teacher:{ id:c.teacher_user_id, firstName:c.first_name, lastName:c.last_name, initials:c.initials, color:c.color, avatarUrl:c.avatar_url||null },
         })));
     } catch (err) { console.error(err); res.status(500).json({ error: 'Ошибка сервера' }); }
 });
