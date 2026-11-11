@@ -1,0 +1,9 @@
+{
+  "name": "eduspace",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "postinstall": "cd backend && npm install --omit=dev",
+    "start": "cd backend && node server.js"
+  }
+}

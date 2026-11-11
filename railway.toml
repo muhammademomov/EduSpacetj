@@ -1,5 +1,5 @@
 [build]
-builder = "NIXPACKS"
+builder = "RAILPACK"  # Node 22 (для базы-файла node:sqlite); Nixpacks давал только Node 18
 
 [deploy]
 startCommand = "cd backend && node server.js"
