@@ -20,7 +20,10 @@ app.use('/api/teachers', require('./routes/teachers'));
 app.use('/api/courses',  require('./routes/courses'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/users',    require('./routes/users'));
-app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
+app.get('/api/health', async (req, res) => {  // «здоров» — только когда база готова (Railway ждёт этого перед переключением)
+    try { await require('./db').query('SELECT 1'); res.json({ status: 'ok', time: new Date() }); }
+    catch (e) { res.status(503).json({ status: 'db error' }); }
+});
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
 
 app.use((err, req, res, next) => {
